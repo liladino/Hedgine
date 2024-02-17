@@ -42,6 +42,10 @@
 *.idb
 *.pdb
 
+# notes and test files
+*.fen
+*.pgn
+
 # Kernel Module Compile Results
 *.mod*
 *.cmd
