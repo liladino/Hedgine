@@ -35,7 +35,6 @@
 *.i*86
 *.x86_64
 *.hex
-*.*
 
 # Debug files
 *.dSYM/
@@ -47,6 +46,7 @@
 *.fen
 *.pgn
 meta/
+ex/
 
 # Kernel Module Compile Results
 *.mod*
