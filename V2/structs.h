@@ -134,12 +134,11 @@ typedef struct move_array{
 } move_array;
 
 typedef enum evalflag{
-	flagExact, flagAlpha, flagBeta
+	flagExact = 1, flagAlpha = 2, flagBeta = 3
 }evalflag;
 
 typedef struct hashentry{
-	u64 position; //key
-	//u64 next;//maybe aint neccesary
+	u64 pos; //key
 	int eval;
 	evalflag flag;
 	int depth;

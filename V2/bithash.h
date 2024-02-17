@@ -23,7 +23,7 @@ u64 hashPosition(bitboard board, bool tomove);
 
 hashentry* lookup(u64 position);
 
-void storePos(u64 pos, u64 nextpos, int eval, move m);
+void storePos(u64 pos, int eval, evalflag flag, int depth, move m);
 
 void hashPieceIO(bitboard *board, int sq, int piece);
 
@@ -33,7 +33,10 @@ void hashEnPassantIO(bitboard *board, int file);
 
 void hashCastleO(bitboard *board, int dir);
 
-void printBestLine(u64 pos);
+void printBestLine(char board[12][12], bool tomove, int castling[4], squarenums enpass);
 
+
+/*
 void clearTransTable();
+* */
 #endif

@@ -287,10 +287,6 @@ move randomBot(bitboard board, bool tomove){
 	#endif
 	return m;
 }
-/*
-static int min(int a, int b){
-	return (a < b ? a : b);
-}*/
 
 
 bitboard next;
@@ -300,10 +296,6 @@ move nextm;
 int maxdepth;
 
 int capturesearch(bitboard board, bool tomove, int alpha, int beta){
-	/*#ifdef DEBUG
-	printf("%c\n", (tomove == white ? 'w' : 'b'));
-	printBitBoard2d(board);
-	#endif*/
 	int eval = fulleval(board, tomove);
 	if (eval >= beta) return beta;
 	alpha = max(alpha, eval);
@@ -311,11 +303,6 @@ int capturesearch(bitboard board, bool tomove, int alpha, int beta){
 	u64 attackedsquares = 0;
 	bitGenerateLegalmoves(&legalmoves, board, tomove, &attackedsquares, true);
 	if (legalmoves.size == 0){
-		/*#ifdef DEBUG
-		printf("%c\n", (tomove == white ? 'w' : 'b'));
-		printBitBoard2d(board);
-		printf("eval: %f\n", eval * 0.01);
-		#endif*/
 		return eval;
 	}
 	
@@ -338,13 +325,7 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	if (depth == 0){
 		return capturesearch(board, tomove, alpha, beta);
 	}
-	/*move currbestmove;
-	u64 pos = hashPosition(board, tomove);
-	hashentry* current = lookup(pos);
-	if (current != NULL){
-		if (depth == maxdepth) nextm = current->m;
-		return current->eval;
-	}*/
+	
 	move_array legalmoves;
 	u64 attackedsquares = 0;
 	bitGenerateLegalmoves(&legalmoves, board, tomove, &attackedsquares, false);
@@ -352,10 +333,7 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 		if (bitInCheck(board, tomove)) return blackwon - depth;
 		return draw;
 	}
-	//u64 bestpos = 0;
 	for (int i = 0; i < legalmoves.size; i++){
-		//if (i == skipindex) continue;
-		
 		int eval = -search(legalmoves.boards[i], !tomove, depth-1, -beta, -alpha);
 		if (eval >= beta){
 			return beta;
@@ -384,8 +362,8 @@ move engine(bitboard board, bool tomove){
 		maxdepth = i;
 		clearTransTable();
 		search(board, tomove, maxdepth, NegINF, PosINF);
-	}
-	printBestLine(hashPosition(board, tomove));*/
+	}*/
+	
 	maxdepth = 4;
 	search(board, tomove, maxdepth, NegINF, PosINF);
 	return nextm;
@@ -429,6 +407,9 @@ move CPU(int cpulvl, char board[12][12], bool tomove, int castling[4], squarenum
 	
 	bitboard bboard = boardConvert(board, castling, enpass, tomove);
 	
+	int castlingbackup[4];
+	for (int i = 0; i < 4; i++) castlingbackup[i] = castling[i];
+	char boardbackup[12][12]; boardConvertBack(board, bboard);
 	switch(cpulvl){
 		case 0: 
 			usleep(millisec * 50);
@@ -440,10 +421,10 @@ move CPU(int cpulvl, char board[12][12], bool tomove, int castling[4], squarenum
 			break;
 		default: 
 			//usleep(millisec * 50);
+			printBestLine(boardbackup, tomove, castlingbackup, enpass);
 			m = engine(bboard, tomove);
 		
 	}
-	//printmove(m);
 	return m;
 }
 
