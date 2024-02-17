@@ -46,7 +46,6 @@
 *.fen
 *.pgn
 meta/
-ex/
 
 # Kernel Module Compile Results
 *.mod*
