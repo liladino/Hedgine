@@ -25,7 +25,7 @@ hashentry* lookup(u64 position);
 
 int readHashEntry(const u64 pos, const int alpha, const int beta, const int depth);
 
-void storePos(u64 pos, int eval, evalflag flag, int depth, move m);
+void storePos(u64 pos, int eval, evalflag flag, int depth, move m, u64 next);
 
 void hashPieceIO(bitboard *board, int sq, int piece);
 
@@ -35,7 +35,7 @@ void hashEnPassantIO(bitboard *board, int file);
 
 void hashCastleO(bitboard *board, int dir);
 
-void printBestLine(char board[12][12], bool tomove, int castling[4], squarenums enpass);
+void printBestLine(u64 pos);
 
 
 /*

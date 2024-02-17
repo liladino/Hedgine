@@ -290,7 +290,6 @@ move randomBot(bitboard board, bool tomove){
 
 
 bitboard next;
-int bestindex = 0;
 move nextm;
 
 int maxdepth;
@@ -334,26 +333,27 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 		return draw;
 	}
 	move currbestmove = {{-1, -1}, {-1, -1}, 0};
+	int bestindex = 0;
 	for (int i = 0; i < legalmoves.size; i++){
 		int eval = -search(legalmoves.boards[i], !tomove, depth-1, -beta, -alpha);
 		if (eval >= beta){
-			storePos(board.hashValue, beta, flagBeta, depth, currbestmove);
+			storePos(board.hashValue, beta, flagBeta, depth, currbestmove, legalmoves.boards[bestindex].hashValue);
 			return beta;
 		}
 		if (alpha < eval){ 
 			flag = flagExact;
 			alpha = eval;
+			bestindex = i;
 			if (depth == maxdepth){
 				nextm = boardConvertTomove(board, legalmoves.boards[i], tomove);
 				currbestmove = nextm;
-				bestindex = i;
 			}
 			else{
 				currbestmove = boardConvertTomove(board, legalmoves.boards[i], tomove);
 			}
 		}
 	}
-	storePos(board.hashValue, alpha, flag, depth, currbestmove);
+	storePos(board.hashValue, alpha, flag, depth, currbestmove, legalmoves.boards[bestindex].hashValue);
 	return alpha;
 }
 
@@ -367,6 +367,8 @@ move engine(bitboard board, bool tomove){
 	
 	maxdepth = 4;
 	search(board, tomove, maxdepth, NegINF, PosINF);
+	printBestLine(board.hashValue);
+	
 	return nextm;
 }
 
@@ -402,12 +404,7 @@ move loBOTomy(bitboard board, bool tomove){
 move CPU(int cpulvl, char board[12][12], bool tomove, int castling[4], squarenums enpass){
 	squarenums start = {-1, -1};
 	move m = initializemove(start, start, 0);
-	
 	bitboard bboard = boardConvert(board, castling, enpass, tomove);
-	
-	int castlingbackup[4];
-	for (int i = 0; i < 4; i++) castlingbackup[i] = castling[i];
-	char boardbackup[12][12]; boardConvertBack(boardbackup, bboard);
 	
 	switch(cpulvl){
 		case 0: 
@@ -420,9 +417,7 @@ move CPU(int cpulvl, char board[12][12], bool tomove, int castling[4], squarenum
 			break;
 		default: 
 			//usleep(millisec * 50);
-			m = engine(bboard, tomove);
-			printBestLine(boardbackup, tomove, castlingbackup, enpass);
-			
+			m = engine(bboard, tomove);		
 		
 	}
 	return m;

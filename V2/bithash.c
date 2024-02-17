@@ -137,108 +137,22 @@ int readHashEntry(const u64 pos, const int alpha, const int beta, const int dept
 	return NO_HASH_ENTRY;
 }
 
-void storePos(u64 pos, int eval, evalflag flag, int depth, move m){
+void storePos(u64 pos, int eval, evalflag flag, int depth, move m, u64 next){
 	int current = pos % TableSize;
 	TranspositionTable[current].pos = pos; //key 
 	TranspositionTable[current].eval = eval;
 	TranspositionTable[current].flag = flag;
 	TranspositionTable[current].depth = depth;
 	TranspositionTable[current].m = m;
+	TranspositionTable[current].next = next;
 }
 
-
-
-void makeMoveOld(char board[12][12], move m){ //promotion: 0 = nincs, 'R', 'r', 'Q', 'q', ....
-	squarenums from, to;
-	char promotion = m.promotion;
-	from = m.from;
-	to = m.to;
-	
-	if (promotion == 0){
-		if ( (board[from.rank][from.file] == 'K' || board[from.rank][from.file] == 'k') && abs(to.file - from.file) == 2){ 
-			//sancolas
-			if (to.file == 'c' - 'a' + 2){
-				board[from.rank]['d' - 'a' + 2] = board[from.rank][2];
-				board[from.rank][2] = ' '; //bastya helye
-			}
-			else{
-				board[from.rank]['f' - 'a' + 2] = board[from.rank]['h' - 'a' + 2];
-				board[from.rank]['h' - 'a' + 2] = ' ';
-			}
-		}
-		if ((board[from.rank][from.file] == 'P' || board[from.rank][from.file] == 'p') && board[to.rank][to.file] == ' ' && abs(to.file-from.file) == 1){ 
-			//en passant -> elmozdul a vonalrol => ut, de a mezo ahova erkezik ures
-			board[from.rank][to.file] = ' '; //leutott gyalog
-		}
-		board[to.rank][to.file] = board[from.rank][from.file];
-	}
-	else{
-		if (board[from.rank][from.file] == 'P')
-			board[to.rank][to.file] = promotion;
-		else
-			board[to.rank][to.file] = promotion + 'a' -  'A';
-	}
-	board[from.rank][from.file] = ' ';
-}
-
-static void setMetaOld(char board[12][12], move m, int castling[], squarenums *enpass, bool *tomove){ 
-	(*tomove) = !(*tomove);
-	squarenums from, to;
-	from = m.from;
-	to = m.to;
-	//ha a gyalog kettot ment, az en passant lehetoseg beallitasa
-	int piece = board[from.rank][from.file];
-	if (piece == 'P' || piece == 'p'){
-		if  (abs(to.rank - from.rank) == 2){
-			enpass->file = to.file;
-			enpass->rank = (from.rank + to.rank)/2; 
-		}
-		else{
-			enpass->file = -1;
-			enpass->rank = -1;
-		}
-	}
-	else{
-		enpass->file = -1;
-		enpass->rank = -1;
-	}
-	
-	//ha kiralylepes, sanc elvetele
-	if (piece == 'K'){
-		castling[0] = 0;
-		castling[1] = 0;
-	}
-	if (piece == 'k'){
-		castling[2] = 0;
-		castling[3] = 0;
-	}
-	
-	
-	if ((from.rank == 2 && from.file == 9) || (to.rank == 2 && to.file == 9)){ //ha h1-rol leptek, vagy oda leptek, kiralyoldali sanc = 0
-		castling[0] = 0;
-	}	
-	if ((from.rank == 2 && from.file == 2) || (to.rank == 2 && to.file == 2)){ //ha a1-rol leptek, vagy oda leptek, vezeroldali sanc = 0
-		castling[1] = 0;
-	}
-	if ((from.rank == 9 && from.file == 9) || (to.rank == 9 && to.file == 9)){ //ha h8-rol leptek, vagy oda leptek, kiralyoldali sanc = 0
-		castling[2] = 0;
-	}
-	if ((from.rank == 9 && from.file == 2) || (to.rank == 9 && to.file == 2)){ //ha h8-rol leptek, vagy oda leptek, kiralyoldali sanc = 0
-		castling[3] = 0;
-	}
-}
-
-void printBestLine(char board[12][12], bool tomove, int castling[4], squarenums enpass){
-	//tomove = !tomove;
-	//printBitPiece(boardConvert(board, castling, enpass, tomove).hashValue);
-	hashentry* current = lookup(boardConvert(board, castling, enpass, tomove).hashValue);
+void printBestLine(u64 pos){
+	hashentry* current = lookup(pos);
 	while (current != NULL && current->m.from.file != -1) { //no node, or noMove
 		printmove(current->m);
 		printf("%lf \n", current->eval * 0.01);
-		setMetaOld(board, current->m, castling, &enpass, &tomove);
-		makeMoveOld(board, current->m);
-		printboard_letters(board);
-		current = lookup(boardConvert(board, castling, enpass, tomove).hashValue);
+		current = lookup(current->next);
 	}
 }
 /*

@@ -19,7 +19,7 @@
 
 
 #define MAXMOVECOUNT_INPOS 218
-#define NO_HASH_ENTRY 1327
+#define NO_HASH_ENTRY 21474837
 
 typedef unsigned long long u64;
 
@@ -140,6 +140,7 @@ typedef enum evalflag{
 
 typedef struct hashentry{
 	u64 pos; //key
+	u64 next; 
 	int eval;
 	evalflag flag;
 	int depth;
