@@ -7,27 +7,6 @@
 \n                  ./##                           ||                  *#
 \n                   #                            ====                     ##
 \n                   #                       ____  ||  ____                  #
-\n                  +.    &&                / __ \\ /\\ / __ \\                /# 
-\n                 &   &&     &&           | /  \\ |  | /  \\ |               #
-\n     &&*       &    *&& #      &         | \\   \\ \\/ /   / |                ,.
-\n   &    &#+&&     .#    &       &         \\ \\__/ || \\__/ /                (,
-\n   &     &         &  & &        &        |______________|                #*#
-\n    &&&&.           /&&          &         \\____________/                #
-\n        &                       /.                                 (###/  # 
-\n         &        # &           &                                   (
-\n           *&      &           &                        .##    #   ###
-\n               *&&          *&#  ,##   #    ((##( /   ##  #  #*#
-\n                                     (#    ###     "
-
-\n                                     /    #
-\n .  .     .                       #   *.  # #   ##  .#
-\n |__| _  _| _ . _  _       # (  #       #.   #,     /,##,     #(
-\n |  |(/,(_](_]|[ )(/,  (  #   ##                             # .,
-\n           ._|        # #.,                                      #
-\n                     #   #                                              /#
-\n                  ./##                           ||                  *#
-\n                   #                            ====                     ##
-\n                   #                       ____  ||  ____                  #
 \n                  +.    &&                / __ \ /\ / __ \                /# 
 \n                 &   &&     &&           | /  \ |  | /  \ |               #
 \n     &&*       &    *&& #      &         | \   \ \/ /   / |                ,.
@@ -39,3 +18,8 @@
 \n           *&      &           &                        .##    #   ###
 \n               *&&          *&#  ,##   #    ((##( /   ##  #  #*#
 \n                                     (#    ###     "
+
+For some reason i can't get the PV out of the hash table, and currently i have absoluetly no idea why.
+I'm thinking that i shall rather write out the complete TT, with setting much fever elements for it.
+Maybe the positions are stored, but the linking is screwed, or the best move is overwritten or something,
+but it really keeps me awake, cos it could mess with the eval as well.
