@@ -45,6 +45,7 @@
 # notes and test files
 *.fen
 *.pgn
+/meta
 
 # Kernel Module Compile Results
 *.mod*
