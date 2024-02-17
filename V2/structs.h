@@ -19,6 +19,7 @@
 
 
 #define MAXMOVECOUNT_INPOS 218
+#define NO_HASH_ENTRY 1327
 
 typedef unsigned long long u64;
 

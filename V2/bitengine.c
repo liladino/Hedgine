@@ -299,6 +299,7 @@ int capturesearch(bitboard board, bool tomove, int alpha, int beta){
 	int eval = fulleval(board, tomove);
 	if (eval >= beta) return beta;
 	alpha = max(alpha, eval);
+	
 	move_array legalmoves;
 	u64 attackedsquares = 0;
 	bitGenerateLegalmoves(&legalmoves, board, tomove, &attackedsquares, true);
@@ -307,11 +308,6 @@ int capturesearch(bitboard board, bool tomove, int alpha, int beta){
 	}
 	
 	for (int i = 0; i < legalmoves.size; i++){
-		u64 nextpos = hashPosition(legalmoves.boards[i], !tomove);
-		hashentry* current = lookup(nextpos);
-		if (current != NULL){
-			return current->eval;
-		}
 		int eval = -capturesearch(legalmoves.boards[i], !tomove, -beta, -alpha);
 		if (eval >= beta){
 			return beta;
@@ -322,6 +318,10 @@ int capturesearch(bitboard board, bool tomove, int alpha, int beta){
 }
 
 int search(bitboard board, bool tomove, int depth, int alpha, int beta){
+	evalflag flag = flagAlpha;
+	int evalFromHash = readHashEntry(board.hashValue, alpha, beta, depth);
+	if (evalFromHash != NO_HASH_ENTRY) return evalFromHash;
+	
 	if (depth == 0){
 		return capturesearch(board, tomove, alpha, beta);
 	}
@@ -333,26 +333,27 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 		if (bitInCheck(board, tomove)) return blackwon - depth;
 		return draw;
 	}
+	move currbestmove = {{-1, -1}, {-1, -1}, 0};
 	for (int i = 0; i < legalmoves.size; i++){
 		int eval = -search(legalmoves.boards[i], !tomove, depth-1, -beta, -alpha);
 		if (eval >= beta){
+			storePos(board.hashValue, beta, flagBeta, depth, currbestmove);
 			return beta;
 		}
 		if (alpha < eval){ 
+			flag = flagExact;
 			alpha = eval;
-			//bestpos = hashPosition(legalmoves.boards[i], !tomove);
 			if (depth == maxdepth){
 				nextm = boardConvertTomove(board, legalmoves.boards[i], tomove);
-				//currbestmove = nextm;
+				currbestmove = nextm;
 				bestindex = i;
 			}
-			/*else{
+			else{
 				currbestmove = boardConvertTomove(board, legalmoves.boards[i], tomove);
-			}*/
+			}
 		}
-		//alpha = max(alpha, eval);
 	}
-	//storePos(pos, bestpos, alpha, currbestmove);
+	storePos(board.hashValue, alpha, flag, depth, currbestmove);
 	return alpha;
 }
 
@@ -382,9 +383,6 @@ int badsearch(bitboard board, bool tomove){
 	
 	for (int i = 0; i < legalmoves.size; i++){
 		int eval = -fulleval(legalmoves.boards[i], !tomove);
-		#ifdef DEBUG
-		printBitBoard(legalmoves.boards[i]);
-		#endif
 		if (worsteval > eval){ 
 			worsteval = eval;
 			next = legalmoves.boards[i];
@@ -409,7 +407,8 @@ move CPU(int cpulvl, char board[12][12], bool tomove, int castling[4], squarenum
 	
 	int castlingbackup[4];
 	for (int i = 0; i < 4; i++) castlingbackup[i] = castling[i];
-	char boardbackup[12][12]; boardConvertBack(board, bboard);
+	char boardbackup[12][12]; boardConvertBack(boardbackup, bboard);
+	
 	switch(cpulvl){
 		case 0: 
 			usleep(millisec * 50);
@@ -421,8 +420,9 @@ move CPU(int cpulvl, char board[12][12], bool tomove, int castling[4], squarenum
 			break;
 		default: 
 			//usleep(millisec * 50);
-			printBestLine(boardbackup, tomove, castlingbackup, enpass);
 			m = engine(bboard, tomove);
+			printBestLine(boardbackup, tomove, castlingbackup, enpass);
+			
 		
 	}
 	return m;

@@ -18,6 +18,14 @@ OBJS = $(SRCS:.c=.o)
 
 all: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
+	
+debug: CFLAGS += -g -DDEBUG
+debug: $(OBJS)
+	$(CC) $(CFLAGS) -o all $^
+
+opt: CFLAGS += -g -DDEBUG
+opt: $(OBJS)
+	$(CC) $(CFLAGS) -o all $^
 
 clean:
 	rm -f *.o

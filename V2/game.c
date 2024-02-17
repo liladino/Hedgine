@@ -132,9 +132,9 @@ int game(int load, int players, char *lf_orig){ //load: 0 = uj jatszma, 1 = pgn,
 	}
 	
 	printboard(board, view, boardcol, tomove);
-	#ifdef DEBUG
+	/*#ifdef DEBUG
 	makeBenchTest(board, tomove, castling, enpass);
-	#endif
+	#endif*/
 	while(1){
 		printf(DEFAULT); 
 

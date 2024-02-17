@@ -107,16 +107,39 @@ u64 hashPosition(bitboard board, bool tomove){
 
 hashentry TranspositionTable[TableSize];
 
-hashentry* lookup(u64 position){
+//static 
+hashentry* lookup(const u64 position){
 	if (TranspositionTable[position % TableSize].pos == position){
 		return &TranspositionTable[position % TableSize];
 	}
 	return NULL;
 }
 
+int readHashEntry(const u64 pos, const int alpha, const int beta, const int depth){
+	hashentry *current = &TranspositionTable[pos % TableSize];
+	if (current->pos == pos) {
+		if (current->depth >= depth) {
+			switch (current->flag){
+				case flagExact:
+					return current->eval;
+				case flagAlpha:
+					if (current->eval <= alpha) return alpha;
+					break;
+				case flagBeta:
+					if (current->eval >= beta) return beta;
+					break;
+			}
+			//if (hash_entry->flag == hash_flag_exact) return hash_entry->score;
+			//if ((hash_entry->flag == hash_flag_alpha) && (hash_entry->score <= alpha))
+			//if ((hash_entry->flag == hash_flag_beta) && (hash_entry->score >= beta)) 
+		}
+	}
+	return NO_HASH_ENTRY;
+}
+
 void storePos(u64 pos, int eval, evalflag flag, int depth, move m){
 	int current = pos % TableSize;
-	TranspositionTable[current].pos = pos; //key and
+	TranspositionTable[current].pos = pos; //key 
 	TranspositionTable[current].eval = eval;
 	TranspositionTable[current].flag = flag;
 	TranspositionTable[current].depth = depth;
@@ -167,21 +190,8 @@ static void setMetaOld(char board[12][12], move m, int castling[], squarenums *e
 	int piece = board[from.rank][from.file];
 	if (piece == 'P' || piece == 'p'){
 		if  (abs(to.rank - from.rank) == 2){
-			int enpasspiece;
-			if (piece == 'P'){
-				enpasspiece = 'p';
-			}
-			else{
-				enpasspiece = 'P';
-			}
-			if ( board[to.rank][to.file - 1] == enpasspiece || board[to.rank][to.file + 1] == enpasspiece){ //csak akkor van en passant target square, ha van gyalog ami utne oda
-				enpass->file = to.file;
-				enpass->rank = (from.rank + to.rank)/2; 
-			}
-			else{
-				enpass->file = -1;
-				enpass->rank = -1;
-			}
+			enpass->file = to.file;
+			enpass->rank = (from.rank + to.rank)/2; 
 		}
 		else{
 			enpass->file = -1;
@@ -219,12 +229,15 @@ static void setMetaOld(char board[12][12], move m, int castling[], squarenums *e
 }
 
 void printBestLine(char board[12][12], bool tomove, int castling[4], squarenums enpass){
+	//tomove = !tomove;
+	//printBitPiece(boardConvert(board, castling, enpass, tomove).hashValue);
 	hashentry* current = lookup(boardConvert(board, castling, enpass, tomove).hashValue);
-	while (current != NULL) {
+	while (current != NULL && current->m.from.file != -1) { //no node, or noMove
 		printmove(current->m);
 		printf("%lf \n", current->eval * 0.01);
-		makeMoveOld(board, current->m);
 		setMetaOld(board, current->m, castling, &enpass, &tomove);
+		makeMoveOld(board, current->m);
+		printboard_letters(board);
 		current = lookup(boardConvert(board, castling, enpass, tomove).hashValue);
 	}
 }

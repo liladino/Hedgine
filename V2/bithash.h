@@ -23,6 +23,8 @@ u64 hashPosition(bitboard board, bool tomove);
 
 hashentry* lookup(u64 position);
 
+int readHashEntry(const u64 pos, const int alpha, const int beta, const int depth);
+
 void storePos(u64 pos, int eval, evalflag flag, int depth, move m);
 
 void hashPieceIO(bitboard *board, int sq, int piece);
