@@ -1,0 +1,13 @@
+Hedgine?
+1. fen beolvasaskor ellenorizni, nincs-e mindket fel sakkban
+2. bitengine
+	- az attackedsquares mask jó lesz arra(????), hogy az állásértékeléskor sakkban áll-e az ellenfél, ekkor bónuszt adunk
+	- gyalog hash befejezni		x
+	- fix deletePiece	x
+	- fix diagonal		
+	- fix orthogonal	x
+	- letesztelni a hash cuccot, hogy a lepeseknel ugyanazt a hasht allitja e elo, mintha ujrageneralnam a tabla alapjan
+	- eval function: ha egy futo maradt vagy egy lo vagy ket kiraly, akkor return draw
+	
+	
+	- iterativ melyites
