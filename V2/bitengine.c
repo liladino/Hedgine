@@ -416,7 +416,7 @@ int badsearch(bitboard board, bool tomove){
 }
 
 move loBOTomy(bitboard board, bool tomove){
-	maxdepth = 1;
+	//maxdepth = 1;
 	badsearch(board, tomove);
 	return boardConvertTomove(board, next, tomove);
 }

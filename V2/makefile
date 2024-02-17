@@ -26,9 +26,10 @@ clean:
 	$(CC) $(CFLAGS) -c $< -o $@ 
 
 bits:
-	$(CC) $(CFLAGS) -c bitlegalmoves.c bitmoves.c bitengine.c random.c bithash.c
+	$(CC) $(CFLAGS) -c bitlegalmoves.c bitmoves.c bitengine.c bithash.c random.c
 
 release: CFLAGS += -O2
 release: $(OBJS)
-	$(CC) -Wall -pedantic -Werror -O2 -o clchess $^
+	$(CC) -Wall -Werror -pedantic -o clchess $^
 	rm -f *.o
+	
