@@ -44,7 +44,7 @@ int game(int load, int players, char *lf_orig){ //load: 0 = uj jatszma, 1 = pgn,
 	int playercol = 0;
 	int cpulvl = -1;
 	if (players == 1){//1 a cpu
-		printf("CPU level (0-3)? ");
+		printf("CPU level (0-2)? ");
 		char c;
 		if (scanf("%c", &c) == EOF){
 			return 0;
@@ -52,7 +52,7 @@ int game(int load, int players, char *lf_orig){ //load: 0 = uj jatszma, 1 = pgn,
 		bool read = true;
 		while (read && scanf("%c", &c) != EOF){
 			cpulvl = c - '0';
-			if (cpulvl >= 0 && cpulvl <= 3){
+			if (cpulvl >= 0 && cpulvl <= 2){
 				read = false;
 			}
 		}
