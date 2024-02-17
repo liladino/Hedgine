@@ -106,7 +106,6 @@ u64 hashPosition(bitboard board, bool tomove){
 #define TableSize TableSizeMB * 1024 * 1024 / sizeof(hashentry)
 
 hashentry TranspositionTable[TableSize];
-int lastelement = 0;
 
 hashentry* lookup(u64 position){
 	for (int i = 0; i < lastelement; i++){
