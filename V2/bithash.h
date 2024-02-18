@@ -37,8 +37,4 @@ void hashCastleO(bitboard *board, int dir);
 
 void printBestLine(u64 pos);
 
-
-/*
-void clearTransTable();
-* */
 #endif

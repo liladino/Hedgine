@@ -186,13 +186,3 @@ void printBestLine(u64 pos){
 		current = lookup(current->next);
 	}
 }
-/*
-void clearTransTable(){
-	lastelement = 0;
-}
-
-int main(){
-	//printBitPiece(rand64());
-	setHashKey();
-	return 0;
-}*/
