@@ -102,21 +102,33 @@ u64 hashPosition(bitboard board, bool tomove){
 	return result;
 }
 
-#define TableSizeMB 64 
-#define TableSize TableSizeMB * 1024 * 1024 / sizeof(hashentry)
+#define TableSizeMB 1
+const int TableSize = (TableSizeMB * 1024 * 1024 / sizeof(hashentry));
 
-hashentry TranspositionTable[TableSize];
+hashentry TranspositionTable[(TableSizeMB * 1024 * 1024 / sizeof(hashentry))];
 
-//static 
 hashentry* lookup(const u64 position){
 	if (TranspositionTable[position % TableSize].pos == position){
 		return &TranspositionTable[position % TableSize];
 	}
 	return NULL;
 }
+/*
+hashentry* lookup(const u64 position){
+	for (int i = 0; i < TableSize; i++){
+		if (TranspositionTable[i].pos == position){
+			return &TranspositionTable[position % TableSize];
+		}
+	}
+	
+	return NULL;
+}
+*/
 
 int readHashEntry(const u64 pos, const int alpha, const int beta, const int depth){
 	hashentry *current = &TranspositionTable[pos % TableSize];
+	//hashentry *current = lookup(pos);
+	//if (current == NULL) return NO_HASH_ENTRY;
 	if (current->pos == pos) {
 		if (current->depth >= depth) {
 			switch (current->flag){
@@ -137,6 +149,19 @@ int readHashEntry(const u64 pos, const int alpha, const int beta, const int dept
 	return NO_HASH_ENTRY;
 }
 
+void printTransTable(){
+	for (int i = 0; i < TableSize; i++){
+		if (TranspositionTable[i].pos != 0){
+			printf("place: %lld\n", TranspositionTable[i].pos % (TableSize));
+			printf("hash: ");
+			printBitPiece(TranspositionTable[i].pos);
+			printf("eval: %d\n", TranspositionTable[i].eval);
+			printf("nextboard: \n");
+			printBitPiece(TranspositionTable[i].next);
+		}
+	}
+}
+
 void storePos(u64 pos, int eval, evalflag flag, int depth, move m, u64 next){
 	int current = pos % TableSize;
 	TranspositionTable[current].pos = pos; //key 
@@ -145,9 +170,15 @@ void storePos(u64 pos, int eval, evalflag flag, int depth, move m, u64 next){
 	TranspositionTable[current].depth = depth;
 	TranspositionTable[current].m = m;
 	TranspositionTable[current].next = next;
+	//printf("tablesize: %ld\n", TableSize);
+	//printf("currenthash: \n");
+	//printBitPieceAsBoard(pos);
+	//printTransTable();
 }
 
+
 void printBestLine(u64 pos){
+	//printTransTable();
 	hashentry* current = lookup(pos);
 	while (current != NULL && current->m.from.file != -1) { //no node, or noMove
 		printmove(current->m);
