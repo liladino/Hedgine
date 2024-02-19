@@ -317,10 +317,17 @@ int capturesearch(bitboard board, bool tomove, int alpha, int beta){
 }
 
 int search(bitboard board, bool tomove, int depth, int alpha, int beta){
-	evalflag flag = flagAlpha;
-	int evalFromHash = readHashEntry(board.hashValue, alpha, beta, depth);
-	if (evalFromHash != NO_HASH_ENTRY) return evalFromHash;
+	const int oddity = (maxdepth - depth) % 2;
+	evalflag flag = alphaFlag;
 	
+	int evalFromHash;
+	if (oddity) evalFromHash = -readHashEntry(board.hashValue, -beta, -alpha, depth);
+	else evalFromHash = readHashEntry(board.hashValue, alpha, beta, depth);
+	
+	if (evalFromHash != NO_HASH_ENTRY && evalFromHash != -1 * NO_HASH_ENTRY){
+		if (depth == maxdepth) nextm = readHashEntryMove(board.hashValue);
+		return evalFromHash;
+	}
 	if (depth == 0){
 		return capturesearch(board, tomove, alpha, beta);
 	}
@@ -337,11 +344,12 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	for (int i = 0; i < legalmoves.size; i++){
 		int eval = -search(legalmoves.boards[i], !tomove, depth-1, -beta, -alpha);
 		if (eval >= beta){
-			storePos(board.hashValue, beta, flagBeta, depth, currbestmove, legalmoves.boards[bestindex].hashValue);
+			if (oddity) storePos(board.hashValue, -beta, betaFlag, depth, currbestmove, legalmoves.boards[bestindex].hashValue);
+			else storePos(board.hashValue, beta, betaFlag, depth, currbestmove, legalmoves.boards[bestindex].hashValue);
 			return beta;
 		}
 		if (alpha < eval){ 
-			flag = flagExact;
+			flag = exactFlag;
 			alpha = eval;
 			bestindex = i;
 			if (depth == maxdepth){
@@ -353,12 +361,13 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 			}
 		}
 	}
-	storePos(board.hashValue, alpha, flag, depth, currbestmove, legalmoves.boards[bestindex].hashValue);
+	if (oddity) storePos(board.hashValue, -alpha, flag, depth, currbestmove, legalmoves.boards[bestindex].hashValue);
+	else storePos(board.hashValue, alpha, flag, depth, currbestmove, legalmoves.boards[bestindex].hashValue);
 	return alpha;
 }
 
 move engine(bitboard board, bool tomove){
-	/*bestindex = 0;
+	/*
 	for (int i = 4; i < 5; i++){
 		maxdepth = i;
 		clearTransTable();
@@ -405,7 +414,7 @@ move CPU(int cpulvl, char board[12][12], bool tomove, int castling[4], squarenum
 	squarenums start = {-1, -1};
 	move m = initializemove(start, start, 0);
 	bitboard bboard = boardConvert(board, castling, enpass, tomove);
-	
+	//printBitPiece(bboard.hashValue);
 	switch(cpulvl){
 		case 0: 
 			usleep(millisec * 50);
@@ -422,4 +431,3 @@ move CPU(int cpulvl, char board[12][12], bool tomove, int castling[4], squarenum
 	}
 	return m;
 }
-

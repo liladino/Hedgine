@@ -25,6 +25,8 @@ hashentry* lookup(u64 position);
 
 int readHashEntry(const u64 pos, const int alpha, const int beta, const int depth);
 
+move readHashEntryMove(const u64 pos);
+
 void storePos(u64 pos, int eval, evalflag flag, int depth, move m, u64 next);
 
 void hashPieceIO(bitboard *board, int sq, int piece);

@@ -132,12 +132,12 @@ int readHashEntry(const u64 pos, const int alpha, const int beta, const int dept
 	if (current->pos == pos) {
 		if (current->depth >= depth) {
 			switch (current->flag){
-				case flagExact:
+				case exactFlag:
 					return current->eval;
-				case flagAlpha:
+				case alphaFlag:
 					if (current->eval <= alpha) return alpha;
 					break;
-				case flagBeta:
+				case betaFlag:
 					if (current->eval >= beta) return beta;
 					break;
 			}
@@ -147,6 +147,12 @@ int readHashEntry(const u64 pos, const int alpha, const int beta, const int dept
 		}
 	}
 	return NO_HASH_ENTRY;
+}
+
+move readHashEntryMove(const u64 pos){
+	//assuming readHashEntry was already called, and we tested it is indeed the pos we want to see
+	hashentry *current = &TranspositionTable[pos % TableSize];
+	return current->m;
 }
 
 void printTransTable(){
@@ -180,9 +186,27 @@ void storePos(u64 pos, int eval, evalflag flag, int depth, move m, u64 next){
 void printBestLine(u64 pos){
 	//printTransTable();
 	hashentry* current = lookup(pos);
+	int parity = 1;
 	while (current != NULL && current->m.from.file != -1) { //no node, or noMove
 		printmove(current->m);
 		printf("%lf \n", current->eval * 0.01);
+		parity *= -1;
 		current = lookup(current->next);
 	}
 }
+/*
+//						  +   0  -
+int cmpfunc (const bitboard* a, const bitboard* b) {
+	hashentry* aH = lookup(a->hashValue), bH = lookup(b->hashValue);
+	if (aH == NULL){
+		return -1;
+	}
+	if (bH == NULL){
+		return 1;
+	}
+	return (lookup(a->hashValue)->eval - lookup(b->hashValue)->eval);
+}
+
+void orderMoves(move_array* legalmoves, int signum){
+	qsort(values, legalmoves.size, sizeof(bitboard), cmpfunc * (tomove == white ? 1 : -1));
+}*/

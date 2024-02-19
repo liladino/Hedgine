@@ -135,7 +135,7 @@ typedef struct move_array{
 } move_array;
 
 typedef enum evalflag{
-	flagExact = 1, flagAlpha = 2, flagBeta = 3
+	exactFlag = 1, alphaFlag = 2, betaFlag = 3
 }evalflag;
 
 typedef struct hashentry{
