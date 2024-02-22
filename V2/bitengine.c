@@ -366,6 +366,14 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	return alpha;
 }
 
+static void printLegalmoves(move_array legalmoves, bitboard board, bool tomove){
+	printf("\n");
+	for (int i = 0; i < legalmoves.size; i++){
+		printmove(boardConvertTomove(board, legalmoves.boards[i], tomove));
+		printHashEntry(legalmoves.boards[i].hashValue, tomove);
+	}
+}
+
 move engine(bitboard board, bool tomove){
 	/*
 	for (int i = 4; i < 5; i++){
@@ -376,7 +384,15 @@ move engine(bitboard board, bool tomove){
 	
 	maxdepth = 4;
 	search(board, tomove, maxdepth, NegINF, PosINF);
-	printBestLine(board.hashValue);
+	printBestLine(board.hashValue, tomove);
+	
+	u64 temp;
+	move_array legalmoves;
+	bitGenerateLegalmoves(&legalmoves, board, tomove, &temp, false);
+	
+	printLegalmoves(legalmoves, board, tomove);
+	orderMoves(&legalmoves, tomove, maxdepth);
+	printLegalmoves(legalmoves, board, tomove);
 	
 	return nextm;
 }

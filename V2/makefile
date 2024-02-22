@@ -18,12 +18,12 @@ OBJS = $(SRCS:.c=.o)
 
 all: $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
-	
+
 debug: CFLAGS += -g -DDEBUG
 debug: $(OBJS)
 	$(CC) $(CFLAGS) -o all $^
 
-opt: CFLAGS += -g -DDEBUG
+opt: CFLAGS += -O2
 opt: $(OBJS)
 	$(CC) $(CFLAGS) -o all $^
 
@@ -40,4 +40,3 @@ release: CFLAGS += -O2
 release: $(OBJS)
 	$(CC) -Wall -Werror -pedantic -o clchess $^
 	rm -f *.o
-	

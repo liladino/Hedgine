@@ -69,7 +69,7 @@ uint32_t Mersenne(){
 
 u64 rand64(){
 	static char callcount = 0;
-	if (callcount == 0) Seed(1585U);
+	if (callcount == 0) Seed(251677U);
 	callcount = 1;
 	
 	u64 randomnum = Mersenne();

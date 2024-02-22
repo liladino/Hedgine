@@ -113,17 +113,7 @@ hashentry* lookup(const u64 position){
 	}
 	return NULL;
 }
-/*
-hashentry* lookup(const u64 position){
-	for (int i = 0; i < TableSize; i++){
-		if (TranspositionTable[i].pos == position){
-			return &TranspositionTable[position % TableSize];
-		}
-	}
-	
-	return NULL;
-}
-*/
+
 
 int readHashEntry(const u64 pos, const int alpha, const int beta, const int depth){
 	hashentry *current = &TranspositionTable[pos % TableSize];
@@ -155,6 +145,7 @@ move readHashEntryMove(const u64 pos){
 	return current->m;
 }
 
+#ifdef DEBUG
 void printTransTable(){
 	for (int i = 0; i < TableSize; i++){
 		if (TranspositionTable[i].pos != 0){
@@ -167,6 +158,7 @@ void printTransTable(){
 		}
 	}
 }
+#endif
 
 void storePos(u64 pos, int eval, evalflag flag, int depth, move m, u64 next){
 	int current = pos % TableSize;
@@ -183,30 +175,55 @@ void storePos(u64 pos, int eval, evalflag flag, int depth, move m, u64 next){
 }
 
 
-void printBestLine(u64 pos){
+void printBestLine(u64 pos, bool tomove){
 	//printTransTable();
 	hashentry* current = lookup(pos);
-	int parity = 1;
-	while (current != NULL && current->m.from.file != -1) { //no node, or noMove
+	int parity = (tomove == white ? 1 : -1);
+	int counter = 0; //if theres a collision, prevent loops
+	while (current != NULL && current->m.from.file != -1 && counter < 20) { //no node, or noMove
 		printmove(current->m);
-		printf("%lf \n", current->eval * 0.01);
-		parity *= -1;
+		printf("%lf \n", current->eval * 0.01 * parity);
 		current = lookup(current->next);
+		counter++;
 	}
-}
-/*
-//						  +   0  -
-int cmpfunc (const bitboard* a, const bitboard* b) {
-	hashentry* aH = lookup(a->hashValue), bH = lookup(b->hashValue);
-	if (aH == NULL){
-		return -1;
-	}
-	if (bH == NULL){
-		return 1;
-	}
-	return (lookup(a->hashValue)->eval - lookup(b->hashValue)->eval);
 }
 
-void orderMoves(move_array* legalmoves, int signum){
-	qsort(values, legalmoves.size, sizeof(bitboard), cmpfunc * (tomove == white ? 1 : -1));
-}*/
+void printHashEntry(u64 pos, bool tomove){
+	hashentry* current = lookup(pos);
+	if (current == NULL) {
+		printf("No record/overweitten\n");
+		return;
+	}
+	printf("%lf %d depth: %d ", current->eval * 0.01/* * (tomove == white ? 1: -1)*/, current->flag, current->depth);
+	printBitPiece(pos);
+}
+
+
+
+static inline void swap(bitboard* a, bitboard* b) { 
+	bitboard temp = *a;
+	*a = *b; 
+	*b = temp;
+	//int x;
+} 
+
+
+static inline int getEval(u64 pos, bool tomove){
+	hashentry *current = &TranspositionTable[pos % TableSize];
+	if (current->pos == pos && current->flag == exactFlag){
+		return current->eval /* (tomove == black ? 1 : -1)*/;
+	}
+	return -1000000;
+}
+
+/*order moves in a non-descending order based on the evals stored in the hash table*/
+/*simple insertion sort, too few elements to make something fancy*/
+void orderMoves(move_array* legalmoves, bool tomove, int depth){
+	for (int i = 1; i < legalmoves->size; i++){
+		for (int j = 0; j < legalmoves->size - i; j++){
+			if (getEval(legalmoves->boards[j].hashValue, tomove) < getEval(legalmoves->boards[j+1].hashValue, tomove)) swap(&legalmoves->boards[j], &legalmoves->boards[j+1]);
+		}
+	}
+}
+
+

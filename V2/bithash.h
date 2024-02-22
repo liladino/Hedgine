@@ -37,6 +37,9 @@ void hashEnPassantIO(bitboard *board, int file);
 
 void hashCastleO(bitboard *board, int dir);
 
-void printBestLine(u64 pos);
+void printBestLine(u64 pos, bool tomove);
 
+void orderMoves(move_array* legalmoves, bool tomove, int depth);
+
+void printHashEntry(u64 pos, bool tomove);
 #endif
