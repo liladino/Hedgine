@@ -107,7 +107,7 @@ int game(int load, int players, char *lf_orig){ //load: 0 = uj jatszma, 1 = pgn,
 			return 0;
 		}
 		if (incheck(board, 1-tomove) == 1){
-			printf(TXT_RED "Unable to load FEN!\n"  TXT_WHITE);
+			printf(TXT_RED "Unable to load FEN!\n" DEFAULT);
 			freemoves(game);
 			return 0;
 		}
@@ -393,7 +393,7 @@ int playermove(char board[12][12], char *loadfile, movelist *game, movelist *leg
 		}
 		else if (strcmp("-fen", SAN_move) == 0){
 			if (savefen(board, *tomove, castling, *enpass, *fmv, *movenum)){
-				printf(TXT_RED "Couldn't save FEN!\n" TXT_WHITE);
+				printf(TXT_RED "Couldn't save FEN!\n" DEFAULT);
 				return 2;
 			}
 			printf("saved!\n");

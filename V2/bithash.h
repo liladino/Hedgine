@@ -39,7 +39,7 @@ void hashCastleO(bitboard *board, int dir);
 
 void printBestLine(u64 pos, bool tomove);
 
-void orderMoves(move_array* legalmoves, bool tomove, int depth);
+void orderMoves(move_array* legalmoves);
 
-void printHashEntry(u64 pos, bool tomove);
+void printHashEntry(u64 pos);
 #endif

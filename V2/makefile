@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -pedantic
+CFLAGS = -Wall -Wextra -pedantic
 
 ifdef DEBUG
 CFLAGS += -g -DDEBUG

@@ -1,5 +1,8 @@
 #include "bithash.h"
 
+#define TableSizeMB 16
+const int TableSize = (TableSizeMB * 1024 * 1024 / sizeof(hashentry));
+
 typedef struct key{
 	u64 squares[64][12]; //12 pieces
 	u64 castlerights[4][2]; /*4 corners indicating the 4 castling directions, and 2 numbers for the right or lack of it.
@@ -102,9 +105,6 @@ u64 hashPosition(bitboard board, bool tomove){
 	return result;
 }
 
-#define TableSizeMB 1
-const int TableSize = (TableSizeMB * 1024 * 1024 / sizeof(hashentry));
-
 hashentry TranspositionTable[(TableSizeMB * 1024 * 1024 / sizeof(hashentry))];
 
 hashentry* lookup(const u64 position){
@@ -188,7 +188,7 @@ void printBestLine(u64 pos, bool tomove){
 	}
 }
 
-void printHashEntry(u64 pos, bool tomove){
+void printHashEntry(u64 pos){
 	hashentry* current = lookup(pos);
 	if (current == NULL) {
 		printf("No record/overweitten\n");
@@ -208,7 +208,7 @@ static inline void swap(bitboard* a, bitboard* b) {
 } 
 
 
-static inline int getEval(u64 pos, bool tomove){
+static inline int getEval(u64 pos){
 	hashentry *current = &TranspositionTable[pos % TableSize];
 	if (current->pos == pos && current->flag == exactFlag){
 		return current->eval /* (tomove == black ? 1 : -1)*/;
@@ -218,10 +218,10 @@ static inline int getEval(u64 pos, bool tomove){
 
 /*order moves in a non-descending order based on the evals stored in the hash table*/
 /*simple insertion sort, too few elements to make something fancy*/
-void orderMoves(move_array* legalmoves, bool tomove, int depth){
+void orderMoves(move_array* legalmoves){
 	for (int i = 1; i < legalmoves->size; i++){
 		for (int j = 0; j < legalmoves->size - i; j++){
-			if (getEval(legalmoves->boards[j].hashValue, tomove) < getEval(legalmoves->boards[j+1].hashValue, tomove)) swap(&legalmoves->boards[j], &legalmoves->boards[j+1]);
+			if (getEval(legalmoves->boards[j].hashValue) < getEval(legalmoves->boards[j+1].hashValue)) swap(&legalmoves->boards[j], &legalmoves->boards[j+1]);
 		}
 	}
 }

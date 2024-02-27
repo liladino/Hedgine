@@ -98,7 +98,7 @@ void printmoves(movelist *head) {
 	movelist *current = head;
 	current = current->next; //a startnode nem lepes
 	while (current != NULL) {
-		printf("%c%d %c%d %c\n", current->m.from.file+'a'-2, current->m.from.rank-1, current->m.to.file+'a'-2, current->m.to.rank-1, current->m.promotion);
+		printf("%c%d%c%d%c\n", current->m.from.file+'a'-2, current->m.from.rank-1, current->m.to.file+'a'-2, current->m.to.rank-1, current->m.promotion-'A'+'a');
 		current = current->next;
 	}
 	printf("*\n");

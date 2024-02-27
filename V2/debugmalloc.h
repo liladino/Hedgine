@@ -336,7 +336,7 @@ static void *debugmalloc_malloc_full(size_t size, char const *func, char const *
     
     /* check max size */
     DebugmallocData *instance = debugmalloc_singleton();
-    if (size > instance->max_block_size) {
+    if (size > (size_t)instance->max_block_size) {
         debugmalloc_log("debugmalloc: %s @ %s:%u: a blokk merete tul nagy, %u bajt; debugmalloc_max_block_size() fuggvennyel novelheto.\n", func, file, line, (unsigned) size);
         abort();
     }

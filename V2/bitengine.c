@@ -316,6 +316,16 @@ int capturesearch(bitboard board, bool tomove, int alpha, int beta){
 	return alpha;
 }
 
+#ifdef DEBUG
+static void printLegalmoves(move_array legalmoves, bitboard board, bool tomove){
+	printf("\n");
+	for (int i = 0; i < legalmoves.size; i++){
+		printmove(boardConvertTomove(board, legalmoves.boards[i], tomove));
+		printHashEntry(legalmoves.boards[i].hashValue);
+	}
+}
+#endif
+
 int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	const int oddity = (maxdepth - depth) % 2;
 	evalflag flag = alphaFlag;
@@ -339,6 +349,14 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 		if (bitInCheck(board, tomove)) return blackwon - depth;
 		return draw;
 	}
+	//if (depth == maxdepth && maxdepth > 2){
+		orderMoves(&legalmoves);
+		/*#ifdef DEBUG
+		printf("\nDepth: %d\n", depth);
+		printLegalmoves(legalmoves, board, tomove);
+		#endif*/
+	//}
+	
 	move currbestmove = {{-1, -1}, {-1, -1}, 0};
 	int bestindex = 0;
 	for (int i = 0; i < legalmoves.size; i++){
@@ -366,24 +384,14 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	return alpha;
 }
 
-static void printLegalmoves(move_array legalmoves, bitboard board, bool tomove){
-	printf("\n");
-	for (int i = 0; i < legalmoves.size; i++){
-		printmove(boardConvertTomove(board, legalmoves.boards[i], tomove));
-		printHashEntry(legalmoves.boards[i].hashValue, tomove);
-	}
-}
-
 move engine(bitboard board, bool tomove){
-	/*
-	for (int i = 4; i < 5; i++){
+	for (int i = 2; i < 5; i++){
 		maxdepth = i;
-		clearTransTable();
+		//clearTransTable();
 		search(board, tomove, maxdepth, NegINF, PosINF);
-	}*/
-	
-	maxdepth = 4;
-	search(board, tomove, maxdepth, NegINF, PosINF);
+	}
+	//maxdepth = 4;
+	/*search(board, tomove, maxdepth, NegINF, PosINF);
 	printBestLine(board.hashValue, tomove);
 	
 	u64 temp;
@@ -392,7 +400,7 @@ move engine(bitboard board, bool tomove){
 	
 	printLegalmoves(legalmoves, board, tomove);
 	orderMoves(&legalmoves, tomove, maxdepth);
-	printLegalmoves(legalmoves, board, tomove);
+	printLegalmoves(legalmoves, board, tomove);*/
 	
 	return nextm;
 }
