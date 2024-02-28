@@ -21,6 +21,7 @@ int setboardFEN(char FEN[], char board[12][12], bool *tomove, int castling[], sq
 		else if (FEN[i] >= '1' && FEN[i] <= '8'){
 			for (int j = 0; j < FEN[i] - '0'; j++){
 				if (file > 9) {
+					printf("too wide rank!\n");
 					return 1;
 				}
 				board[rank][file] = ' ';
@@ -31,6 +32,7 @@ int setboardFEN(char FEN[], char board[12][12], bool *tomove, int castling[], sq
 		}
 		else if (FEN[i] == 'r' || FEN[i] == 'R' || FEN[i] == 'n' || FEN[i] == 'N' || FEN[i] == 'b' || FEN[i] == 'B' || FEN[i] == 'q' || FEN[i] == 'Q' || FEN[i] == 'k' || FEN[i] == 'K' || FEN[i] == 'p' || FEN[i] == 'P' ){
 			if (file > 9){
+				printf("too wide rank!\n");
 				return 1;
 			}
 			board[rank][file] = FEN[i];
@@ -40,6 +42,7 @@ int setboardFEN(char FEN[], char board[12][12], bool *tomove, int castling[], sq
 			boardread = false;
 		}
 		else{
+			printf("unknown symbol!\n");
 			return 1;
 		}
 		i++;
@@ -55,6 +58,7 @@ int setboardFEN(char FEN[], char board[12][12], bool *tomove, int castling[], sq
 		}
 	}
 	if (wking != 1 || bking != 1){
+		printf("unusual number of kings on board!\n");
 		return 1;
 	}
 	
@@ -71,7 +75,7 @@ int setboardFEN(char FEN[], char board[12][12], bool *tomove, int castling[], sq
 		metadata[j] = FEN[i];
 		if (metadata[j] != ' '){
 			if (spacecount == 5){ // a leghosszabb str benne KQkq, ami 4 char, ha ennel hosszabb, az sscanf hibas
-				free(metadata);				
+				free(metadata);
 				return 1;
 			}
 			spacecount++;
@@ -88,6 +92,7 @@ int setboardFEN(char FEN[], char board[12][12], bool *tomove, int castling[], sq
 	char enpass_str[5] = {0};
 	if (sscanf(metadata, "%c %4s %2s", &tomove_char, castle_str, enpass_str) != 3){
 		free(metadata);	
+		printf("couldnt read metadata!\n");
 		return 1;
 	}
 	
@@ -149,8 +154,8 @@ int setboardFEN(char FEN[], char board[12][12], bool *tomove, int castling[], sq
 			return 1;
 		}
 	}
-	
-	if (sscanf(metadata, " %d %d", fmv, movenum) != 2){
+	if (sscanf(metadata, "%*s %*s %*s %d %d", fmv, movenum) != 2){
+		printf("couldnt read move numbers\n");
 		*fmv = 0;
 		*movenum = 0; 
 	}
@@ -162,6 +167,7 @@ int setboardFEN(char FEN[], char board[12][12], bool *tomove, int castling[], sq
 char *readFEN(char *filename){
 	FILE *fptr;
 	if ((fptr = fopen(filename,"r")) == NULL){
+		printf("No such file \n");
 		printf(TXT_RED "Unable to load FEN\n" DEFAULT);
 		return NULL;
 	}

@@ -98,7 +98,7 @@ void printmoves(movelist *head) {
 	movelist *current = head;
 	current = current->next; //a startnode nem lepes
 	while (current != NULL) {
-		printf("%c%d%c%d%c\n", current->m.from.file+'a'-2, current->m.from.rank-1, current->m.to.file+'a'-2, current->m.to.rank-1, current->m.promotion-'A'+'a');
+		printmove(current->m);
 		current = current->next;
 	}
 	printf("*\n");
@@ -106,7 +106,7 @@ void printmoves(movelist *head) {
 
 /*kiir egy teljes lepest*/
 void printmove(move m) {
-	printf("%c%d %c%d %c", m.from.file+'a'-2, m.from.rank-1, m.to.file+'a'-2, m.to.rank-1, m.promotion);
+	printf("%c%d%c%d%c", m.from.file+'a'-2, m.from.rank-1, m.to.file+'a'-2, m.to.rank-1, m.promotion-'A'+'a');
 }
 
 /* felszabaditj a lepeslistat

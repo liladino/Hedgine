@@ -294,7 +294,7 @@ move nextm;
 
 int maxdepth;
 
-int capturesearch(bitboard board, bool tomove, int alpha, int beta){
+static int capturesearch(bitboard board, bool tomove, int alpha, int beta){
 	int eval = fulleval(board, tomove);
 	if (eval >= beta) return beta;
 	alpha = max(alpha, eval);
@@ -317,7 +317,7 @@ int capturesearch(bitboard board, bool tomove, int alpha, int beta){
 }
 
 #ifdef DEBUG
-static void printLegalmoves(move_array legalmoves, bitboard board, bool tomove){
+void printLegalmoves(move_array legalmoves, bitboard board, bool tomove){
 	printf("\n");
 	for (int i = 0; i < legalmoves.size; i++){
 		printmove(boardConvertTomove(board, legalmoves.boards[i], tomove));
@@ -346,7 +346,7 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	u64 attackedsquares = 0;
 	bitGenerateLegalmoves(&legalmoves, board, tomove, &attackedsquares, false);
 	if (legalmoves.size == 0){
-		if (bitInCheck(board, tomove)) return blackwon - depth;
+		if (bitInCheck(board, tomove)) return blackwon + depth;
 		return draw;
 	}
 	//if (depth == maxdepth && maxdepth > 2){
@@ -390,9 +390,12 @@ move engine(bitboard board, bool tomove){
 		//clearTransTable();
 		search(board, tomove, maxdepth, NegINF, PosINF);
 	}
+	#ifdef DEBUG
+	printBestLine(board.hashValue, tomove);
+	#endif
 	//maxdepth = 4;
 	/*search(board, tomove, maxdepth, NegINF, PosINF);
-	printBestLine(board.hashValue, tomove);
+	
 	
 	u64 temp;
 	move_array legalmoves;
