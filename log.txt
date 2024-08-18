@@ -1,0 +1,71 @@
+
+
+Date:   Sun Aug 18 15:33:15 2024 +0200
+	Added time limits: 
+		The search is 4 plyes minimum, and extends indefinetly, while it is within the limits of thinking time.
+		SIGALRM is used to achieve this.
+		
+		Might change this later to actually cut the tree search if the time is up, not necceseraly after one finished search.
+		
+	TransTable elements shortened:
+		Now doesn't contain the next position's hash or the best move, just the current hash, the evaluation and the flag.
+		A new flag added, that signals that it was the best move in the last search. This ensures, that the next search begins with this move
+		
+		There's still a bug there with the mates
+		
+	Eval:
+		changed the king slightly to make it's position less relevant for the attacking side
+		
+
+
+
+Date:   Wed Feb 28 19:13:10 2024 +0100
+
+    Fixed fen input bug
+    
+    It never read the halfmove and the move counter, because i forgot how sscanf works :((
+    
+    Toggled one - to + in the engine, because it may have misinterpreted some positions, where there are multiple mates with different lengths, and it wouldn't found the shortest.
+    
+    Changed the formatting of printmove to represent the more often used format with no spaces, and only lowercase letters.
+    e.g. e7 e8 Q => e7e8q
+
+
+
+Date:   Thu Feb 22 23:08:59 2024 +0100
+    Written the move ordering function
+    
+    not implemented yet, as it may needs some xtra care.
+    There are a lot of collisions in the hash table, which is,
+    at the moment 1 Mb. I tried varying the seed, and it does
+    seem like the case is slightly nicer, but we need to be
+    careful anyways. The logic was a bit messy at first because
+    of this not using a pure minimax search, but maybe now it is right.
+
+
+
+Date:   Mon Feb 19 19:38:59 2024 +0100
+
+    Fixed undo bug
+    
+    When a move was undone, and it was played again, the eval immediately
+    returned the eval froom hash without setting the next move. Now this
+    was no problem if only one move was undone, because it remained in
+    the global variable, but when multiple, it made a move that was
+    basically memory junk in that pos.
+
+
+
+Date:   Sun Feb 18 21:36:30 2024 +0100
+
+    Started working on iterative deepening now
+
+
+
+Date:   Sun Feb 18 20:46:13 2024 +0100
+
+    Hashing bug fixed
+    
+    I messed up the brackets with TableSize, so it didn't write
+    hashkey % Tablesize, but rather
+    hashkey % 1 * 1024 * 1024 / sizeof(hashelement)
