@@ -34,7 +34,7 @@ clean:
 	$(CC) $(CFLAGS) -c $< -o $@ 
 
 bits:
-	$(CC) $(CFLAGS) -c bitlegalmoves.c bitmoves.c bitengine.c bithash.c random.c
+	$(CC) $(CFLAGS) -c bitlegalmoves.c bitmoves.c bitengine.c bithash.c mtwister.c
 
 release: CFLAGS += -O2
 release: $(OBJS)

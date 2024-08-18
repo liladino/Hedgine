@@ -19,7 +19,7 @@
 
 
 #define MAXMOVECOUNT_INPOS 218
-#define NO_HASH_ENTRY 21474837
+#define NO_HASH_ENTRY 21454837
 
 typedef unsigned long long u64;
 
@@ -102,7 +102,6 @@ typedef enum raydir{
 	 soEa = 7
 }raydir;
 
-//#define 👍 true
 
 typedef struct bitboard{
 	/* a1 = LSB
@@ -127,6 +126,7 @@ typedef struct bitboard{
 	
 	u64 enpassanttarget;
 	u64 hashValue;
+	//int eval;
 }bitboard;
 
 typedef struct move_array{
@@ -135,16 +135,16 @@ typedef struct move_array{
 } move_array;
 
 typedef enum evalflag{
-	exactFlag = 1, alphaFlag = 2, betaFlag = 3
+	exactFlag = 1, alphaFlag = 2, betaFlag = 3, lastBest = 4
 }evalflag;
 
 typedef struct hashentry{
 	u64 pos; //key
-	u64 next; 
+	//u64 next; 
 	int eval;
 	evalflag flag;
 	int depth;
-	move m;
+	//move m;
 }hashentry;
 
 #endif

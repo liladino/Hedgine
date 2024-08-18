@@ -1,7 +1,9 @@
 #include "bithash.h"
 
-#define TableSizeMB 16
-const int TableSize = (TableSizeMB * 1024 * 1024 / sizeof(hashentry));
+#define TableSizeMB 1
+const int TableSize = 			(TableSizeMB * 1024 * 1024 / sizeof(hashentry));
+hashentry TranspositionTable[	(TableSizeMB * 1024 * 1024 / sizeof(hashentry))	];
+
 
 typedef struct key{
 	u64 squares[64][12]; //12 pieces
@@ -68,9 +70,34 @@ void setHashKey(){
 		Zobrist.enpassantfile[i] = rand64();
 	}
 	Zobrist.tomove = rand64();
+#ifdef DEBUG 
+	#define endl printf("\n")
+	printf("%d MB, %d", TableSizeMB, TableSize);
+	endl;
+	/*for (int i = 0; i < 64; i++){
+		for (int j = 0; j < 12; j++){
+			printBitPiece(Zobrist.squares[i][j]);
+		}
+		endl;
+	}
+	endl;
+	for (int i = 0; i < 4; i++){
+		for (int j = 0; j < 2; j++){
+			printBitPiece(Zobrist.castlerights[i][j]);
+		}
+		endl;
+	}
+	endl;
+	for (int i = 0; i < 8; i++){
+		printBitPiece(Zobrist.enpassantfile[i]);
+	}
+	endl;
+	printBitPiece(Zobrist.tomove);
+	endl;*/
+#endif
 }
 
-u64 hashPosition(bitboard board, bool tomove){
+u64 hashPosition(const bitboard board, bool tomove){
 	u64 result = 0;
 	u64 mask = 1;
 	for (int i = 0; i < 64; i++){
@@ -105,24 +132,77 @@ u64 hashPosition(bitboard board, bool tomove){
 	return result;
 }
 
-hashentry TranspositionTable[(TableSizeMB * 1024 * 1024 / sizeof(hashentry))];
-
 hashentry* lookup(const u64 position){
-	if (TranspositionTable[position % TableSize].pos == position){
-		return &TranspositionTable[position % TableSize];
+	const u64 tmp = position % TableSize;
+	if (TranspositionTable[tmp].pos == position){
+		return &TranspositionTable[tmp];
 	}
 	return NULL;
 }
 
+void printTransTable(){
+	for (int i = 0; i < TableSize; i++){
+		if (TranspositionTable[i].pos != 0){
+			printf("place: %lld\n", TranspositionTable[i].pos % (TableSize));
+		/*	printf("hash: ");
+			printBitPiece(TranspositionTable[i].pos);
+			printf("eval: %d\n", TranspositionTable[i].eval);
+			printf("nextboard: \n");
+			printBitPiece(TranspositionTable[i].next);*/
+		}
+	}
+}
+
+void clearTransTable(){
+	for (int i = 0; i < TableSize; i++){
+		TranspositionTable[i].pos = 0;
+	}
+}
+
+
+u64 Rcollision = 0;
+u64 Rmatch = 0;
+u64 Wcollision = 0;
+u64 Wmatch = 0;
+void printCollisionStats(){
+	//printTransTable();
+	//~ printf("Reading:\n");
+	//~ printf("Collisions: %llu\n", Rcollision);
+	//~ printf("Matches: %llu\n", Rmatch);
+	//~ printf("Ratio to all: %lf\n\n", (double)Rmatch / (Rmatch + Rcollision > 0 ? Rmatch + Rcollision : 1));
+	//~ printf("Writing:\n");
+	//~ printf("Collisions: %llu\n", Wcollision);
+	//~ printf("Matches: %llu\n", Wmatch);
+	//~ printf("Ratio to all: %lf\n\n", (double)Wmatch / (Wmatch + Wcollision > 0 ? Wmatch + Wcollision : 1));
+	
+	u64 count = 0;
+	for (int i = 0; i < TableSize; i++){
+		if (TranspositionTable[i].pos != 0){
+			count++;
+		}
+	}
+	printf("\nTTable: \n");
+	printf("Filled: %llu\n", count);
+	printf("All: %d\n", TableSize);
+	printf("Ratio to all: %lf\n", (double)count / TableSize);
+	
+	Rcollision = Rmatch = 0;
+	Wcollision = Wmatch = 0;
+}
 
 int readHashEntry(const u64 pos, const int alpha, const int beta, const int depth){
 	hashentry *current = &TranspositionTable[pos % TableSize];
 	//hashentry *current = lookup(pos);
 	//if (current == NULL) return NO_HASH_ENTRY;
 	if (current->pos == pos) {
+		#ifdef DEBUG
+		Rmatch++;
+		#endif
 		if (current->depth >= depth) {
 			switch (current->flag){
 				case exactFlag:
+					return current->eval;
+				case lastBest:
 					return current->eval;
 				case alphaFlag:
 					if (current->eval <= alpha) return alpha;
@@ -136,57 +216,57 @@ int readHashEntry(const u64 pos, const int alpha, const int beta, const int dept
 			//if ((hash_entry->flag == hash_flag_beta) && (hash_entry->score >= beta)) 
 		}
 	}
+	#ifdef DEBUG
+	else{
+		if (current->pos != 0) Rcollision++;
+	}
+	#endif
 	return NO_HASH_ENTRY;
 }
 
-move readHashEntryMove(const u64 pos){
-	//assuming readHashEntry was already called, and we tested it is indeed the pos we want to see
-	hashentry *current = &TranspositionTable[pos % TableSize];
-	return current->m;
-}
 
-#ifdef DEBUG
-void printTransTable(){
-	for (int i = 0; i < TableSize; i++){
-		if (TranspositionTable[i].pos != 0){
-			printf("place: %lld\n", TranspositionTable[i].pos % (TableSize));
-			printf("hash: ");
-			printBitPiece(TranspositionTable[i].pos);
-			printf("eval: %d\n", TranspositionTable[i].eval);
-			printf("nextboard: \n");
-			printBitPiece(TranspositionTable[i].next);
-		}
-	}
-}
-#endif
+//~ move readHashEntryMove(const u64 pos){
+	//~ //assuming readHashEntry was already called, and we tested it is indeed the pos we want to see
+	//~ hashentry *current = &TranspositionTable[pos % TableSize];
+	//~ return current->m;
+//~ }
 
-void storePos(u64 pos, int eval, evalflag flag, int depth, move m, u64 next){
-	int current = pos % TableSize;
+
+void storePos(const u64 pos, const int eval, const evalflag flag, const int depth /*, const move m, const u64 next*/){
+	u64 current = pos % TableSize;
+	#ifdef DEBUG
+	if (TranspositionTable[current].pos == 0) Wmatch++;
+	else Wcollision++;
+	#endif
+	
 	TranspositionTable[current].pos = pos; //key 
 	TranspositionTable[current].eval = eval;
 	TranspositionTable[current].flag = flag;
 	TranspositionTable[current].depth = depth;
-	TranspositionTable[current].m = m;
-	TranspositionTable[current].next = next;
-	//printf("tablesize: %ld\n", TableSize);
-	//printf("currenthash: \n");
-	//printBitPieceAsBoard(pos);
-	//printTransTable();
+	//~ TranspositionTable[current].m = m;
+	//~ TranspositionTable[current].next = next;
+	
+	
+	//~ printf("tablesize: %ld\n", TableSize);
+	//~ printf("currenthash: \n");
+	//~ printBitPieceAsBoard(pos);
+	//~ printTransTable();
 }
 
 
-void printBestLine(u64 pos, bool tomove){
-	//printTransTable();
-	hashentry* current = lookup(pos);
-	int parity = (tomove == white ? 1 : -1);
-	int counter = 0; //if theres a collision, prevent loops
-	while (current != NULL && current->m.from.file != -1 && counter < 20) { //no node, or noMove
-		printmove(current->m);
-		printf("%lf \n", current->eval * 0.01 * parity);
-		current = lookup(current->next);
-		counter++;
-	}
-}
+//~ void printBestLine(u64 pos, bool tomove){
+	//~ //printTransTable();
+	//~ hashentry* current = lookup(pos);
+	//~ int parity = (tomove == white ? 1 : -1);
+	//~ int counter = 0; //if theres a collision, prevent loops
+	//~ printf("Best line:\n");
+	//~ while (current != NULL && current->m.from.file != -1 && counter < 20) { //no node, or noMove
+		//~ printmove(current->m);
+		//~ printf("%lf \n", current->eval * 0.01 * parity);
+		//~ current = lookup(current->next);
+		//~ counter++;
+	//~ }
+//~ }
 
 void printHashEntry(u64 pos){
 	hashentry* current = lookup(pos);
@@ -194,11 +274,17 @@ void printHashEntry(u64 pos){
 		printf("No record/overweitten\n");
 		return;
 	}
-	printf("%lf %d depth: %d ", current->eval * 0.01/* * (tomove == white ? 1: -1)*/, current->flag, current->depth);
+	printf("%lf %s depth: %d ", current->eval * 0.01/* * (tomove == white ? 1: -1)*/, current->flag == exactFlag ? " exactFlag" : current->flag == lastBest ? " lastBest" : " otherFlag", current->depth);
 	printBitPiece(pos);
 }
 
-
+void rmBestMoveFlag(u64 pos){
+	hashentry* current = lookup(pos);
+	if (current == NULL) {
+		return;
+	}
+	current->flag = exactFlag;
+}
 
 static inline void swap(bitboard* a, bitboard* b) { 
 	bitboard temp = *a;
@@ -210,8 +296,9 @@ static inline void swap(bitboard* a, bitboard* b) {
 
 static inline int getEval(u64 pos){
 	hashentry *current = &TranspositionTable[pos % TableSize];
-	if (current->pos == pos && current->flag == exactFlag){
-		return current->eval /* (tomove == black ? 1 : -1)*/;
+	if (current->pos == pos){
+		if (current->flag == lastBest) return 1000000 + current->depth;
+		if (current->flag == exactFlag || current->flag == alphaFlag) return current->eval;
 	}
 	return -1000000;
 }

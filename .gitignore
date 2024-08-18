@@ -1,6 +1,10 @@
 # Prerequisites
 *.d
 
+# chess files
+*.pgn
+*.fen 
+
 # Object files
 *.o
 *.ko

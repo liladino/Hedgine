@@ -1288,6 +1288,7 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 void bitGenerateLegalmoves(move_array* moves, bitboard board, bool tomove, u64 *attackedsquares, bool onlytakes){
 	u64 enemy = enemypieces(board, !tomove); 
 	u64 friendly = enemypieces(board, tomove);
+	//~ printBitBoard2d(board);
 	
 	bitboard* legalmoves = moves->boards;
 	moves->size = 0;
