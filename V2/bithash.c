@@ -194,26 +194,34 @@ int readHashEntry(const u64 pos, const int alpha, const int beta, const int dept
 	hashentry *current = &TranspositionTable[pos % TableSize];
 	//hashentry *current = lookup(pos);
 	//if (current == NULL) return NO_HASH_ENTRY;
+	//~ return NO_HASH_ENTRY;
+	
 	if (current->pos == pos) {
 		#ifdef DEBUG
 		Rmatch++;
 		#endif
 		if (current->depth >= depth) {
+			int temp = current->eval; 
+			if (temp >= whitewon){
+				temp = temp - depth /* - 1*/;
+			}
+			else if (temp <= blackwon){
+				temp += depth /* + 1*/;
+			}
+			
 			switch (current->flag){
 				case exactFlag:
-					return current->eval;
+					return temp;
 				case lastBest:
-					return current->eval;
+					return temp;
 				case alphaFlag:
-					if (current->eval <= alpha) return alpha;
+					if (temp <= alpha) return alpha;
 					break;
 				case betaFlag:
-					if (current->eval >= beta) return beta;
+					if (temp >= beta) return beta;
 					break;
 			}
-			//if (hash_entry->flag == hash_flag_exact) return hash_entry->score;
-			//if ((hash_entry->flag == hash_flag_alpha) && (hash_entry->score <= alpha))
-			//if ((hash_entry->flag == hash_flag_beta) && (hash_entry->score >= beta)) 
+			
 		}
 	}
 	#ifdef DEBUG

@@ -351,21 +351,19 @@ void printLegalmoves(move_array legalmoves, bitboard board, bool tomove){
 #endif
 
 int search(bitboard board, bool tomove, int depth, int alpha, int beta){
-	if (depth == 0){
+	if (depth == maxdepth){
 		return capturesearch(board, tomove, alpha, beta);
 	}
 	
-	const int oddity = (maxdepth - depth) % 2;
+	const int oddity = depth % 2;
 	evalflag flag = alphaFlag;
 	
-	if (depth != maxdepth) {
+	if (depth != 0) {
 		int evalFromHash;
-		if (oddity) evalFromHash = -readHashEntry(board.hashValue, -beta, -alpha, depth);
-		else evalFromHash = readHashEntry(board.hashValue, alpha, beta, depth);
+		if (oddity) evalFromHash = -readHashEntry(board.hashValue, -beta, -alpha, maxdepth - depth);
+		else evalFromHash = readHashEntry(board.hashValue, alpha, beta, maxdepth - depth);
 		
 		if (evalFromHash != NO_HASH_ENTRY && evalFromHash != -1 * NO_HASH_ENTRY){
-			//~ if (depth == maxdepth) nextm = readHashEntryMove(board.hashValue);
-			//~ return evalFromHash;
 			return evalFromHash;
 		}
 	}
@@ -374,25 +372,25 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	u64 attackedsquares = 0;
 	bitGenerateLegalmoves(&legalmoves, board, tomove, &attackedsquares, false);
 	if (legalmoves.size == 0){
-		if (bitInCheck(board, tomove)) return blackwon - depth;
+		if (bitInCheck(board, tomove)) return blackwon - 100 + depth;
 		return draw;
 	}
 	
 	orderMoves(&legalmoves);
 	
 	for (int i = 0; i < legalmoves.size; i++){
-		int eval = -search(legalmoves.boards[i], !tomove, depth-1, -beta, -alpha);
+		int eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
 		
 		if (eval >= beta){
-			if (oddity) storePos(board.hashValue, -beta, betaFlag, depth);
-			else storePos(board.hashValue, beta, betaFlag, depth);
+			if (oddity) storePos(board.hashValue, -beta, betaFlag, maxdepth - depth);
+			else storePos(board.hashValue, beta, betaFlag, maxdepth - depth);
 			return beta;
 		}
 		if (alpha < eval){ 
 			flag = exactFlag;
 			alpha = eval;
 			//~ bestindex = i;
-			if (depth == maxdepth){
+			if (depth == 0){
 				nextm = boardConvertTomove(board, legalmoves.boards[i], tomove);
 				nextp = legalmoves.boards[i].hashValue;
 			}
@@ -401,8 +399,8 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 			//~ }
 		}
 	}
-	if (oddity) storePos(board.hashValue, -alpha, flag, depth);
-	else storePos(board.hashValue, alpha, flag, depth);
+	if (oddity) storePos(board.hashValue, -alpha, flag, maxdepth - depth);
+	else storePos(board.hashValue, alpha, flag, maxdepth - depth);
 	return alpha;
 }
 
@@ -410,7 +408,7 @@ move engine(bitboard board, bool tomove){
 	move nullmove = {{-1, -1}, {-1, -1}, 0};
 	nextm = nullmove;
 	
-	clearTransTable();
+	//~ clearTransTable();
 	
 	static bool installed = false; 
 	if (!installed) {
@@ -427,10 +425,10 @@ move engine(bitboard board, bool tomove){
 		maxdepth = i;
 		//clearTransTable();
 		
-		int temp = search(board, tomove, maxdepth, NegINF, PosINF);
+		int temp = search(board, tomove, 0, NegINF, PosINF);
 		//~ printf("%d\n", temp);
 		
-		storePos(nextp, temp, lastBest, i-1);
+		storePos(nextp, temp, lastBest, maxdepth);
 		
 		#ifdef DEBUG
 		printf("depth %d\n", i);
@@ -459,10 +457,6 @@ move engine(bitboard board, bool tomove){
 	
 	rmBestMoveFlag(nextp);
 	
-	//~ #ifdef DEBUG
-	//~ printBestLine(board.hashValue, tomove);
-	//~ #endif
-	
 	//maxdepth = 4;
 	/*search(board, tomove, maxdepth, NegINF, PosINF);
 	
@@ -471,7 +465,6 @@ move engine(bitboard board, bool tomove){
 	bitGenerateLegalmoves(&legalmoves, board, tomove, &temp, false);
 	
 	printLegalmoves(legalmoves, board, tomove);
-	orderMoves(&legalmoves, tomove, maxdepth);
 	printLegalmoves(legalmoves, board, tomove);*/
 	
 	#ifdef DEBUG
@@ -503,7 +496,6 @@ int badsearch(bitboard board, bool tomove){
 }
 
 move loBOTomy(bitboard board, bool tomove){
-	//maxdepth = 1;
 	badsearch(board, tomove);
 	return boardConvertTomove(board, next, tomove);
 }
