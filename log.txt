@@ -11,8 +11,6 @@ Date:   Sun Aug 18 15:33:15 2024 +0200
 		Now doesn't contain the next position's hash or the best move, just the current hash, the evaluation and the flag.
 		A new flag added, that signals that it was the best move in the last search. This ensures, that the next search begins with this move
 		
-		There's still a bug there with the mates
-		
 	Eval:
 		changed the king slightly to make it's position less relevant for the attacking side
 		
