@@ -309,7 +309,7 @@ move randomBot(bitboard board, bool tomove){
 
 move PV[MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
 
-move nextm; //next move
+//~ move nextm; //next move
 u64 nextp; //next position
 int maxdepth;
 int absoluteMaxDepth = MAXSEARCHDEPTH;
@@ -405,17 +405,14 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 			alpha = eval;
 			//~ bestindex = i;
 			if (depth == 0){
-				nextm = boardConvertTomove(board, legalmoves.boards[i], tomove);
-				PV[1][1] = nextm;
+				//~ nextm = boardConvertTomove(board, legalmoves.boards[i], tomove);
+				//~ PV[1][1] = nextm;
 				nextp = legalmoves.boards[i].hashValue;
 			}
-			else {
-				PV[depth+1][depth+1] = boardConvertTomove(board, legalmoves.boards[i], tomove);
-			}
-			
+			PV[depth+1][depth] = boardConvertTomove(board, legalmoves.boards[i], tomove);
 		}
 	}
-	for (int i = depth + 1; i < maxdepth+1; i++){
+	for (int i = depth; i < maxdepth; i++){
 		PV[depth][i] = PV[depth + 1][i];
 	}
 	
@@ -426,15 +423,8 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 
 move engine(bitboard board, bool tomove){
 	move nullmove = {{-1, -1}, {-1, -1}, 0};
-	nextm = nullmove;
-	for (int i = 0; i <= MAXSEARCHDEPTH; i++){
-		for (int j = i; j <= MAXSEARCHDEPTH; j++){
-			PV[i][j] = nullmove;
-		}
-	}
-	
-	//~ clearTransTable();
-	
+	//~ nextm = nullmove;
+
 	static bool installed = false; 
 	if (!installed) {
 		signal(SIGALRM, handle);
@@ -444,9 +434,11 @@ move engine(bitboard board, bool tomove){
 	stopSearchingRecieved = false;
 	alarm(2);
 	
-	
 	int i;
 	for (i = 1; i < absoluteMaxDepth + 1; i++){
+		for (int i = 0; i < MAXSEARCHDEPTH; i++){
+			PV[0][i] = nullmove;
+		}
 		maxdepth = i;
 		//~ clearTransTable();
 		
@@ -490,7 +482,7 @@ move engine(bitboard board, bool tomove){
 	printf("\n\n");
 	#endif 
 	
-	for (int j = 1; j < i && PV[0][j].from.rank != -1; j++){
+	for (int j = 0; j < i && PV[0][j].from.rank != -1; j++){
 		//~ if (PV[0][j].from.rank != -1) printf("Kecskesajt %d\n", PV[0][j].from.rank);
 		printmove(PV[0][j]);
 	}
@@ -507,7 +499,7 @@ move engine(bitboard board, bool tomove){
 	
 	
 	
-	return nextm;
+	return PV[0][0];
 }
 
 
