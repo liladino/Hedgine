@@ -436,7 +436,7 @@ move engine(bitboard board, bool tomove){
 	
 	int i;
 	for (i = 1; i < absoluteMaxDepth + 1; i++){
-		for (int i = 0; i < MAXSEARCHDEPTH; i++){
+		for (int i = 1; i < MAXSEARCHDEPTH; i++){
 			PV[0][i] = nullmove;
 		}
 		maxdepth = i;
