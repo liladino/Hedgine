@@ -1,4 +1,8 @@
-
+Date:   Sun Aug 20 2024 +0200
+	Best line:
+		renamed to be principal variation, as it is it's standard name. Also fixed bugs with it, now it should print the moves correctly.
+	TT:
+		still buggy, so currently not working. 
 
 Date:   Sun Aug 18 15:33:15 2024 +0200
 	Added time limits: 
@@ -11,10 +15,16 @@ Date:   Sun Aug 18 15:33:15 2024 +0200
 		Now doesn't contain the next position's hash or the best move, just the current hash, the evaluation and the flag.
 		A new flag added, that signals that it was the best move in the last search. This ensures, that the next search begins with this move
 		
+		BUGS, BUGS, EVERYEHRE
+		Somehow i messed up mates, and now the easy endgames arent as easy, because the TT gives faulty results regarding mates.
+		
 	Eval:
 		changed the king slightly to make it's position less relevant for the attacking side
+		There is something going on with it tho, as sometimes it says a king - king+rook position is sometimes better for the empty king
+	
+	Best line:
+		I'm too tired to debug this, or to even be sure this works, it's just there, hoping to be used.
 		
-
 
 
 Date:   Wed Feb 28 19:13:10 2024 +0100

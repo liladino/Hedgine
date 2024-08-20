@@ -27,6 +27,7 @@
 #define epsilon 0.00005
 #define PosINF 2147483640
 #define NegINF -2147483640
+#define MAXSEARCHDEPTH 40
 
 move lvl0(bitboard board, bool tomove);
 

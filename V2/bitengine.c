@@ -77,7 +77,7 @@ int middlebishop[8][8] = {
 int openingpawn[8][8] = {
 	{   0,   0,   0,   0,   0,   0,   0,   0}, //1
 	{   0,   0, -10, -20, -20,  10,   0,   0}, //2
-	{  10,  40,  10,  40,  40, -10,   0,  10}, //3
+	{  10,  40,  10,  40,  40,   0,   0,  10}, //3
 	{   0, -30,  50,  50,  40,  10, -30,   0}, //4
 	{   0,   0,   0,  45,  45,   0,   0,   0}, //5
 	{ 100, 100, 100, 100, 100, 100, 100, 100}, //6
@@ -89,7 +89,7 @@ int middlepawn[8][8] = {
 	{   0,   0,   0,   0,   0,   0,   0,   0}, //1
 	{   0,   0,   0, -20, -20,  10,   0,   0}, //2
 	{  10,  10,  10,  20,  20, -20,   0,  10}, //3
-	{   0, -10,  40,  50,  50, -20, -10,   0}, //4
+	{  10, -10,  40,  50,  50, -20, -10,   0}, //4
 	{  10,  10,  20,  50,  50,  10,  10,  10}, //5
 	{ 100, 100, 100, 100, 100, 100, 100, 100}, //6
 	{ 200, 200, 200, 200, 200, 200, 200, 200}, //7
@@ -109,14 +109,14 @@ int middlerook[8][8] = {
 };
 
 int endgamecenter[8][8] = {
-	{  -5,  -5,  -3,  -1,  -1,  -3,  -5,  -5}, //1
-	{  -5,   3,   4,   5,   5,   4,   3,  -5}, //2
-	{  -3,   4,   9,  10,  10,   9,   4,  -3}, //3
-	{  -1,   5,  10,  13,  13,  10,   5,  -1}, //4
-	{  -1,   5,  10,  13,  13,  10,   5,  -1}, //5
-	{  -3,   4,   9,  10,  10,   9,   4,  -3}, //6
-	{  -5,   3,   4,   5,   5,   4,   3,  -5}, //7
-	{  -5,  -5,  -3,  -1,  -1,  -3,  -5,  -5}, //8
+	{   0,   1,   2,   3,   3,   2,   1,   0}, //1
+	{   1,   4,   9,  10,  10,   9,   4,   1}, //2
+	{   2,   9,  14,  15,  15,  14,   9,   2}, //3
+	{   3,  10,  15,  18,  18,  15,  10,   3}, //4
+	{   3,  10,  15,  18,  18,  15,  10,   3}, //5
+	{   2,   9,  14,  15,  15,  14,   9,   2}, //6
+	{   1,   4,   9,  10,  10,   9,   4,   1}, //7
+	{   0,   1,   2,   3,   3,   2,   1,   0}, //8
 };
 
 
@@ -257,7 +257,7 @@ static int sideEval(bitboard board, bool tomove){
 					eval += middleking[i][j];
 				}
 				else {
-					eval += ((max(pieces - 1, 0) * middleking[i][j] * 0.2 + (6 - pieces) * endgamecenter[i][j]) * 16 / (double)(friendlypieces + 1));
+					eval += ((max(pieces - 1, 0) * middleking[i][j] * 0.2 + (6 - pieces) * endgamecenter[i][j]) * 7 / (double)(friendlypieces + 1));
 				}
 			}
 			else if (board.piece[wqueen + offset] & piecemask){
@@ -303,19 +303,22 @@ move randomBot(bitboard board, bool tomove){
 	return m;
 }
 
+//~ u64 BESTLINEposHashes[absoluteMaxDepth + 1];
+//~ move BESTLINEmoves[absoluteMaxDepth];
+//~ u64 CurrentlineposHashes[absoluteMaxDepth + 1];
 
-bitboard next;
-move nextm;
-u64 nextp;
+move PV[MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
+
+move nextm; //next move
+u64 nextp; //next position
 int maxdepth;
+int absoluteMaxDepth = MAXSEARCHDEPTH;
 
-volatile sig_atomic_t stopFlag = false;
+volatile sig_atomic_t stopSearchingRecieved = false;
 
 void handle(/*int sig*/){
-	stopFlag = true;
+	stopSearchingRecieved = true;
 }
-
-
 
 static int capturesearch(bitboard board, bool tomove, int alpha, int beta){
 	int eval = fulleval(board, tomove);
@@ -351,6 +354,10 @@ void printLegalmoves(move_array legalmoves, bitboard board, bool tomove){
 #endif
 
 int search(bitboard board, bool tomove, int depth, int alpha, int beta){
+	if (stopSearchingRecieved) {
+		return 0;
+	}
+	
 	if (depth == maxdepth){
 		return capturesearch(board, tomove, alpha, beta);
 	}
@@ -381,7 +388,14 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	for (int i = 0; i < legalmoves.size; i++){
 		int eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
 		
+		if (stopSearchingRecieved) {
+			return 0;
+		}
+		
 		if (eval >= beta){
+			/*for (int i = depth + 1; i < maxdepth; i++){
+				bestLine[depth][i] = bestLine[depth + 1][i];
+			}*/
 			if (oddity) storePos(board.hashValue, -beta, betaFlag, maxdepth - depth);
 			else storePos(board.hashValue, beta, betaFlag, maxdepth - depth);
 			return beta;
@@ -392,13 +406,19 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 			//~ bestindex = i;
 			if (depth == 0){
 				nextm = boardConvertTomove(board, legalmoves.boards[i], tomove);
+				PV[1][1] = nextm;
 				nextp = legalmoves.boards[i].hashValue;
 			}
-			//~ else{
-				//~ currbestmove = boardConvertTomove(board, legalmoves.boards[i], tomove);
-			//~ }
+			else {
+				PV[depth+1][depth+1] = boardConvertTomove(board, legalmoves.boards[i], tomove);
+			}
+			
 		}
 	}
+	for (int i = depth + 1; i < maxdepth+1; i++){
+		PV[depth][i] = PV[depth + 1][i];
+	}
+	
 	if (oddity) storePos(board.hashValue, -alpha, flag, maxdepth - depth);
 	else storePos(board.hashValue, alpha, flag, maxdepth - depth);
 	return alpha;
@@ -407,6 +427,11 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 move engine(bitboard board, bool tomove){
 	move nullmove = {{-1, -1}, {-1, -1}, 0};
 	nextm = nullmove;
+	for (int i = 0; i <= MAXSEARCHDEPTH; i++){
+		for (int j = i; j <= MAXSEARCHDEPTH; j++){
+			PV[i][j] = nullmove;
+		}
+	}
 	
 	//~ clearTransTable();
 	
@@ -416,14 +441,14 @@ move engine(bitboard board, bool tomove){
 		installed = true;
 	}
 	
-	stopFlag = false;
-	alarm(1);
+	stopSearchingRecieved = false;
+	alarm(2);
 	
-	int m = 4;
-
-	for (int i = 1; i < m+1 || !stopFlag; i++){
+	
+	int i;
+	for (i = 1; i < absoluteMaxDepth + 1; i++){
 		maxdepth = i;
-		//clearTransTable();
+		//~ clearTransTable();
 		
 		int temp = search(board, tomove, 0, NegINF, PosINF);
 		//~ printf("%d\n", temp);
@@ -447,15 +472,28 @@ move engine(bitboard board, bool tomove){
 			printHashEntry(legalmoves.boards[0].hashValue);		
 		//~ }
 		
-		
-		if (stopFlag) printf("stopped\n");
 		#endif
-	
+		if (stopSearchingRecieved){
+			#ifdef DEBUG
+			printf("stopped\n\n");
+			#endif
+			break;
+		} 
 		
-		if (temp >= whitewon || temp <= blackwon) break; //dont think when not neccesary
+		if (temp > whitewon || temp < blackwon) break; //dont think if not neccesary
 	}
 	
 	rmBestMoveFlag(nextp);
+	
+	#ifdef DEBUG
+	printCollisionStats();
+	printf("\n\n");
+	#endif 
+	
+	for (int j = 1; j < i && PV[0][j].from.rank != -1; j++){
+		//~ if (PV[0][j].from.rank != -1) printf("Kecskesajt %d\n", PV[0][j].from.rank);
+		printmove(PV[0][j]);
+	}
 	
 	//maxdepth = 4;
 	/*search(board, tomove, maxdepth, NegINF, PosINF);
@@ -467,38 +505,11 @@ move engine(bitboard board, bool tomove){
 	printLegalmoves(legalmoves, board, tomove);
 	printLegalmoves(legalmoves, board, tomove);*/
 	
-	#ifdef DEBUG
-	printCollisionStats();
-	#endif 
+	
 	
 	return nextm;
 }
 
-int badsearch(bitboard board, bool tomove){
-	int worsteval = PosINF;
-	
-	move_array legalmoves;
-	u64 attackedsquares = 0;
-	bitGenerateLegalmoves(&legalmoves, board, tomove, &attackedsquares, false);
-	
-	if (legalmoves.size == 0){//technically cannot reach this
-		return draw;
-	}
-	
-	for (int i = 0; i < legalmoves.size; i++){
-		int eval = -fulleval(legalmoves.boards[i], !tomove);
-		if (worsteval > eval){ 
-			worsteval = eval;
-			next = legalmoves.boards[i];
-		}
-	}
-	return worsteval;
-}
-
-move loBOTomy(bitboard board, bool tomove){
-	badsearch(board, tomove);
-	return boardConvertTomove(board, next, tomove);
-}
 
 /* felhasznalo kivalasztja, hogy milyen erossegu sakkmotorral gondolkozzon a 
  * program, es ez visszaad a megfelelo erosseggel egy lepest*/
@@ -506,18 +517,21 @@ move CPU(int cpulvl, char board[12][12], bool tomove, int castling[4], squarenum
 	squarenums start = {-1, -1};
 	move m = initializemove(start, start, 0);
 	bitboard bboard = boardConvert(board, castling, enpass, tomove);
-	//printBitPiece(bboard.hashValue);
+
+	//Engine depth should be determined by the maximum depth it can reach or the thinking time
+	//i'm thinking max depth is slightly more reasonable
+	
 	switch(cpulvl){
 		case 0: 
-			usleep(millisec * 50);
-			m = loBOTomy(bboard, tomove);
-			break;
-		case 1: 
-			usleep(millisec * 50);
+			usleep(millisec * 50);//hogy ne azonnal lepjen, nem letszukseglet
 			m = randomBot(bboard, tomove);
 			break;
+		case 1: 
+			absoluteMaxDepth = 2;
+			m = engine(bboard, tomove);	
+			break;
 		default: 
-			//usleep(millisec * 50);
+			absoluteMaxDepth = 40;
 			m = engine(bboard, tomove);		
 		
 	}
