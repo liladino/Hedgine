@@ -1,6 +1,7 @@
 Date:   Sun Aug 20 2024 +0200
 	Best line:
 		renamed to be principal variation, as it is it's standard name. Also fixed bugs with it, now it should print the moves correctly.
+		Fixed a bug, where if the line ends shorter than the max depth, a faulty move can occur (e.g. one side is already checkmated)
 	TT:
 		still buggy, so currently not working. 
 
