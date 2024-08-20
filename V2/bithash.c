@@ -1,8 +1,8 @@
 #include "bithash.h"
 
-#define TableSizeMB 1
-const int TableSize = 			(TableSizeMB * 1024 * 1024 / sizeof(hashentry));
-hashentry TranspositionTable[	(TableSizeMB * 1024 * 1024 / sizeof(hashentry))	];
+#define TableSizeMB 16
+const int TableSize =           (TableSizeMB * 1024 * 1024 / sizeof(hashentry))    ;
+hashentry TranspositionTable[   (TableSizeMB * 1024 * 1024 / sizeof(hashentry))   ];
 
 
 typedef struct key{
@@ -159,21 +159,21 @@ void clearTransTable(){
 	}
 }
 
-
+#ifdef DEBUG
 u64 Rcollision = 0;
 u64 Rmatch = 0;
 u64 Wcollision = 0;
 u64 Wmatch = 0;
 void printCollisionStats(){
 	//printTransTable();
-	//~ printf("Reading:\n");
-	//~ printf("Collisions: %llu\n", Rcollision);
-	//~ printf("Matches: %llu\n", Rmatch);
-	//~ printf("Ratio to all: %lf\n\n", (double)Rmatch / (Rmatch + Rcollision > 0 ? Rmatch + Rcollision : 1));
+	printf("Reading:\n");
+	printf("Collisions: %llu\n", Rcollision);
+	printf("Matches: %llu\n", Rmatch);
+	printf("Ratio to all: %lf\n\n", (double)Rmatch / (Rmatch + Rcollision + 1));
 	//~ printf("Writing:\n");
 	//~ printf("Collisions: %llu\n", Wcollision);
 	//~ printf("Matches: %llu\n", Wmatch);
-	//~ printf("Ratio to all: %lf\n\n", (double)Wmatch / (Wmatch + Wcollision > 0 ? Wmatch + Wcollision : 1));
+	//~ printf("Ratio to all: %lf\n\n", (double)Wmatch / (Wmatch + Wcollision + 1));
 	
 	u64 count = 0;
 	for (int i = 0; i < TableSize; i++){
@@ -189,44 +189,85 @@ void printCollisionStats(){
 	Rcollision = Rmatch = 0;
 	Wcollision = Wmatch = 0;
 }
+#endif
 
-int readHashEntry(const u64 pos, const int alpha, const int beta, const int depth){
+int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const int maxdepth, const int oddity){
 	hashentry *current = &TranspositionTable[pos % TableSize];
-	return NO_HASH_ENTRY;
+	//~ return NO_HASH_ENTRY;
 	
-	if (current->pos == pos) {
+	if (current->pos != pos) {
 		#ifdef DEBUG
-		Rmatch++;
+		if (current->pos != 0) Rcollision++;
 		#endif
-		if (current->depth >= depth) {
-			int temp = current->eval; 
-			if (temp >= whitewon){
-				temp = temp - depth /* - 1*/;
-			}
-			else if (temp <= blackwon){
-				temp += depth /* + 1*/;
-			}
-			
-			switch (current->flag){
-				case exactFlag:
-					return temp;
-				case lastBest:
-					return temp;
-				case alphaFlag:
-					if (temp <= alpha) return alpha;
-					break;
-				case betaFlag:
-					if (temp >= beta) return beta;
-					break;
-			}
-			
-		}
+		return NO_HASH_ENTRY;	
+	}
+	
+	if (current->depth >= maxdepth - depth){
+		return NO_HASH_ENTRY;	
 	}
 	#ifdef DEBUG
-	else{
-		if (current->pos != 0) Rcollision++;
-	}
+	Rmatch++;
 	#endif
+	
+	/* Pseudocode:
+	 *  if ttEntry is valid and ttEntry.depth ≥ depth then
+        if ttEntry.flag = EXACT then
+            return ttEntry.value
+        else if ttEntry.flag = LOWERBOUND then
+            α := max(α, ttEntry.value)
+        else if ttEntry.flag = UPPERBOUND then
+            β := min(β, ttEntry.value)
+
+        if α ≥ β then
+            return ttEntry.value
+	 * */
+	
+	int tempeval = current->eval; 
+	if (tempeval >= whitewon){
+		tempeval = tempeval - depth /* - 1*/;
+	}
+	else if (tempeval <= blackwon){
+		tempeval += depth /* + 1*/;
+	}
+	
+	if (oddity){	
+		tempeval *= -1;
+		switch (current->flag){
+			case exactFlag:
+				return tempeval;
+			case lastBest:
+				return tempeval;
+			case alphaFlag:
+				if (tempeval < -(*beta)) (*beta) = -tempeval;
+				break;
+			case betaFlag:
+				if (tempeval > -(*alpha)) (*alpha) = -tempeval;
+				break;
+		}
+		
+		if (-(*alpha) < -(*beta)){
+			return tempeval;
+		}
+	}
+	else {
+		switch (current->flag){
+			case exactFlag:
+				return tempeval;
+			case lastBest:
+				return tempeval;
+			case alphaFlag:
+				if (tempeval < *alpha) (*alpha) = tempeval;
+				break;
+			case betaFlag:
+				if (tempeval > *beta) (*beta) = tempeval;
+				break;
+		}
+		
+		if (*alpha > *beta){
+			return tempeval;
+		}
+	}
+
 	return NO_HASH_ENTRY;
 }
 

@@ -81,7 +81,7 @@ u64 rand64(){
 	static MTRand r;
 	static int called = 0;
 	if (called == 0){
-		r = seedRand(1337);
+		r = seedRand(1338);
 		called++;
 	}
 

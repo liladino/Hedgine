@@ -257,7 +257,7 @@ static int sideEval(bitboard board, bool tomove){
 					eval += middleking[i][j];
 				}
 				else {
-					eval += ((max(pieces - 1, 0) * middleking[i][j] * 0.2 + (6 - pieces) * endgamecenter[i][j]) * 7 / (double)(friendlypieces + 1));
+					eval += ((max(pieces - 1, 0) * middleking[i][j] * 0.2 + (6 - pieces) * endgamecenter[i][j]) / (double)(friendlypieces + 1));
 				}
 			}
 			else if (board.piece[wqueen + offset] & piecemask){
@@ -307,7 +307,8 @@ move randomBot(bitboard board, bool tomove){
 //~ move BESTLINEmoves[absoluteMaxDepth];
 //~ u64 CurrentlineposHashes[absoluteMaxDepth + 1];
 
-move PV[MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
+move PV     [MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
+u64  PVhash [MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
 
 //~ move nextm; //next move
 u64 nextp; //next position
@@ -358,21 +359,17 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 		return 0;
 	}
 	
-	if (depth == maxdepth){
-		return capturesearch(board, tomove, alpha, beta);
-	}
-	
 	const int oddity = depth % 2;
 	evalflag flag = alphaFlag;
 	
-	if (depth != 0) {
-		int evalFromHash;
-		if (oddity) evalFromHash = -readHashEntry(board.hashValue, -beta, -alpha, maxdepth - depth);
-		else evalFromHash = readHashEntry(board.hashValue, alpha, beta, maxdepth - depth);
-		
-		if (evalFromHash != NO_HASH_ENTRY && evalFromHash != -1 * NO_HASH_ENTRY){
-			return evalFromHash;
-		}
+	int eval = readHashEntry(board.hashValue, &alpha, &beta, depth, maxdepth, oddity);
+	
+	if (depth != 0 && PVhash[0][depth] != board.hashValue && eval != NO_HASH_ENTRY){
+		return eval;
+	}
+	
+	if (depth == maxdepth){
+		return capturesearch(board, tomove, alpha, beta);
 	}
 	
 	move_array legalmoves;
@@ -386,16 +383,13 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	orderMoves(&legalmoves);
 	
 	for (int i = 0; i < legalmoves.size; i++){
-		int eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
+		eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
 		
 		if (stopSearchingRecieved) {
 			return 0;
 		}
 		
 		if (eval >= beta){
-			/*for (int i = depth + 1; i < maxdepth; i++){
-				bestLine[depth][i] = bestLine[depth + 1][i];
-			}*/
 			if (oddity) storePos(board.hashValue, -beta, betaFlag, maxdepth - depth);
 			else storePos(board.hashValue, beta, betaFlag, maxdepth - depth);
 			return beta;
@@ -410,10 +404,12 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 				nextp = legalmoves.boards[i].hashValue;
 			}
 			PV[depth+1][depth] = boardConvertTomove(board, legalmoves.boards[i], tomove);
+			PVhash[depth+1][depth+1] = legalmoves.boards[i].hashValue;
 		}
 	}
 	for (int i = depth; i < maxdepth; i++){
 		PV[depth][i] = PV[depth + 1][i];
+		PVhash[depth][i+1] = PVhash[depth + 1][i+1];
 	}
 	
 	if (oddity) storePos(board.hashValue, -alpha, flag, maxdepth - depth);
@@ -424,6 +420,12 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 move engine(bitboard board, bool tomove){
 	move nullmove = {{-1, -1}, {-1, -1}, 0};
 	//~ nextm = nullmove;
+	
+	PVhash[0][0] = board.hashValue;
+	for (int i = 1; i < MAXSEARCHDEPTH; i++){
+		PV[0][i] = nullmove;
+		PVhash[0][i] = 0;
+	}
 
 	static bool installed = false; 
 	if (!installed) {
@@ -436,18 +438,14 @@ move engine(bitboard board, bool tomove){
 	
 	int i;
 	for (i = 1; i < absoluteMaxDepth + 1; i++){
-		for (int i = 1; i < MAXSEARCHDEPTH; i++){
-			PV[0][i] = nullmove;
-		}
 		maxdepth = i;
-		//~ clearTransTable();
 		
 		int temp = search(board, tomove, 0, NegINF, PosINF);
 		//~ printf("%d\n", temp);
 		
 		storePos(nextp, temp, lastBest, maxdepth);
 		
-		#ifdef DEBUG
+		//~ #ifdef DEBUG
 		printf("depth %d\n", i);
 	
 		move_array legalmoves;
@@ -464,7 +462,7 @@ move engine(bitboard board, bool tomove){
 			printHashEntry(legalmoves.boards[0].hashValue);		
 		//~ }
 		
-		#endif
+		//~ #endif
 		if (stopSearchingRecieved){
 			#ifdef DEBUG
 			printf("stopped\n\n");
@@ -472,7 +470,7 @@ move engine(bitboard board, bool tomove){
 			break;
 		} 
 		
-		if (temp > whitewon || temp < blackwon) break; //dont think if not neccesary
+		if (temp >= whitewon || temp <= blackwon) break; //dont think if not neccesary
 	}
 	
 	rmBestMoveFlag(nextp);

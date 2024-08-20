@@ -155,7 +155,7 @@ int setboardFEN(char FEN[], char board[12][12], bool *tomove, int castling[], sq
 		}
 	}
 	if (sscanf(metadata, "%*s %*s %*s %d %d", fmv, movenum) != 2){
-		printf("couldnt read move numbers\n");
+		printf("couldn't read move numbers\n");
 		*fmv = 0;
 		*movenum = 0; 
 	}

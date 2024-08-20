@@ -23,9 +23,9 @@ u64 hashPosition(const bitboard board, bool tomove);
 
 hashentry* lookup(u64 position);
 
-int readHashEntry(const u64 pos, const int alpha, const int beta, const int depth);
+int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const int maxdepth, const int oddity);
 
-move readHashEntryMove(const u64 pos);
+//~ move readHashEntryMove(const u64 pos);
 
 void storePos(const u64 pos, const int eval, const evalflag flag, const int depth/*, const move m, const u64 next*/);
 
@@ -43,7 +43,9 @@ void orderMoves(move_array* legalmoves);
 
 void printHashEntry(u64 pos);
 
+#ifdef DEBUG
 void printCollisionStats();
+#endif
 
 void clearTransTable();
 

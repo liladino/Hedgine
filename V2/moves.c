@@ -106,7 +106,7 @@ void printmoves(movelist *head) {
 
 /*kiir egy teljes lepest*/
 void printmove(move m) {
-	printf("%c%d%c%d%c", m.from.file+'a'-2, m.from.rank-1, m.to.file+'a'-2, m.to.rank-1, m.promotion-'A'+'a');
+	printf("%c%d%c%d%c ", m.from.file+'a'-2, m.from.rank-1, m.to.file+'a'-2, m.to.rank-1, m.promotion-'A'+'a');
 }
 
 /* felszabaditj a lepeslistat
@@ -132,7 +132,7 @@ int countmoves(movelist *head) {
 }
 
 
-/*teszt
+/*test
 int main() {
 	move m;
 	m.from.file = 'e' - 'a' + 2;
