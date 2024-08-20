@@ -364,6 +364,7 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	
 	int eval = readHashEntry(board.hashValue, &alpha, &beta, depth, maxdepth, oddity);
 	
+	//somethig is still going wrong with the TT...
 	if (depth != 0 && PVhash[0][depth] != board.hashValue && eval != NO_HASH_ENTRY){
 		return eval;
 	}
@@ -386,6 +387,10 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 		eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
 		
 		if (stopSearchingRecieved) {
+			for (int i = depth; i < maxdepth; i++){
+				PV[depth][i] = PV[depth + 1][i];
+				PVhash[depth][i+1] = PVhash[depth + 1][i+1];
+			}
 			return 0;
 		}
 		
@@ -438,6 +443,12 @@ move engine(bitboard board, bool tomove){
 	
 	int i;
 	for (i = 1; i < absoluteMaxDepth + 1; i++){
+		for (unsigned j = 0; j < MAXSEARCHDEPTH; j++){
+			for (unsigned k = j; k < MAXSEARCHDEPTH; k++){
+				if ((k | j) == 0) continue;
+				PV[j][k] = nullmove;
+			}
+		}
 		maxdepth = i;
 		
 		int temp = search(board, tomove, 0, NegINF, PosINF);

@@ -1,6 +1,9 @@
 Date:   Mon Aug 21 2024
 	TT:
 		Less buggy, but I'm not impressed with it, as it doesn't really help much with the speed and depth reached.
+		Turns out i messed up something agian, tomorrow ill look at it again.
+	PV:
+		still faulty at times, not sure why
 
 Date:   Sun Aug 20 2024
 	Best line:
