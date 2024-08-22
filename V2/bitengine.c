@@ -424,11 +424,11 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 
 move engine(bitboard board, bool tomove){
 	move nullmove = {{-1, -1}, {-1, -1}, 0};
-	//~ nextm = nullmove;
+	move nextm = nullmove;
 	
 	PVhash[0][0] = board.hashValue;
 	for (int i = 1; i < MAXSEARCHDEPTH; i++){
-		PV[0][i] = nullmove;
+		//~ PV[0][i] = nullmove;
 		PVhash[0][i] = 0;
 	}
 
@@ -444,11 +444,12 @@ move engine(bitboard board, bool tomove){
 	int i;
 	for (i = 1; i < absoluteMaxDepth + 1; i++){
 		for (unsigned j = 0; j < MAXSEARCHDEPTH; j++){
-			for (unsigned k = j; k < MAXSEARCHDEPTH; k++){
-				if ((k | j) == 0) continue;
+			for (unsigned k = 0; k < MAXSEARCHDEPTH; k++){
+				//~ if ((k | j) == 0) continue;
 				PV[j][k] = nullmove;
 			}
 		}
+		
 		maxdepth = i;
 		
 		int temp = search(board, tomove, 0, NegINF, PosINF);
@@ -458,22 +459,20 @@ move engine(bitboard board, bool tomove){
 		
 		//~ #ifdef DEBUG
 		printf("depth %d\n", i);
-	
 		move_array legalmoves;
 		u64 attackedsquares = 0;
 		bitGenerateLegalmoves(&legalmoves, board, tomove, &attackedsquares, false);		
-		
 		orderMoves(&legalmoves);
-		
-		//~ if (i == m){
-			//~ printLegalmoves(legalmoves, board, tomove);	
-		//~ }
-		//~ else{
-			printmove(boardConvertTomove(board, legalmoves.boards[0], tomove));
-			printHashEntry(legalmoves.boards[0].hashValue);		
-		//~ }
-		
+		printmove(boardConvertTomove(board, legalmoves.boards[0], tomove));
+		printHashEntry(legalmoves.boards[0].hashValue);	
+		for (int j = 0; j < i && PV[0][j].from.rank != -1 && !stopSearchingRecieved; j++){
+			printmove(PV[0][j]);
+		}
+		printf("\n");
 		//~ #endif
+		
+		if (PV[0][0].from.rank != -1) nextm = PV[0][0];
+		
 		if (stopSearchingRecieved){
 			#ifdef DEBUG
 			printf("stopped\n\n");
@@ -491,10 +490,6 @@ move engine(bitboard board, bool tomove){
 	printf("\n\n");
 	#endif 
 	
-	for (int j = 0; j < i && PV[0][j].from.rank != -1; j++){
-		//~ if (PV[0][j].from.rank != -1) printf("Kecskesajt %d\n", PV[0][j].from.rank);
-		printmove(PV[0][j]);
-	}
 	
 	//maxdepth = 4;
 	/*search(board, tomove, maxdepth, NegINF, PosINF);
@@ -508,7 +503,7 @@ move engine(bitboard board, bool tomove){
 	
 	
 	
-	return PV[0][0];
+	return nextm;
 }
 
 
