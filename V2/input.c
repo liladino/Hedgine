@@ -302,19 +302,7 @@ int setFromAndTo(char *SAN_move, square *to, square *from){
 		return 0;
 	}
 	else{
-		if ('1' <= SAN_move[1] && SAN_move[1] <= '8'){ //pl N1xe7
-			from->rank = SAN_move[1] - '0';
-			if ('x' != SAN_move[2]){
-				return 1;
-			}
-			if (ifTakesSetTo(SAN_move, 2, to)){
-				return 1;
-			}
-			if ( SAN_move[3] != 0 && SAN_move[3] != '+' && SAN_move[3] != '#' ){
-				return 1;
-			}
-		}
-		else if ('a' <= SAN_move[1] && SAN_move[1] <= 'h'){
+		if ('a' <= SAN_move[1] && SAN_move[1] <= 'h'){
 			from->file = SAN_move[1];
 			if ('1' <= SAN_move[2] && SAN_move[2] <= '8'){ //Qa1xa4
 				from->rank = SAN_move[2] - '0';
@@ -342,6 +330,15 @@ int setFromAndTo(char *SAN_move, square *to, square *from){
 		}
 		else if ('x' == SAN_move[1]){
 			if (ifTakesSetTo(SAN_move, 1, to)){
+				return 1;
+			}
+		}
+		else if ('1' <= SAN_move[1] && SAN_move[1] <= '8' && 'x' == SAN_move[2]){ //N6xe5
+			from->rank = SAN_move[1] - '0';
+			if (ifTakesSetTo(SAN_move, 2, to)){
+				return 1;
+			}
+			if ( SAN_move[5] != 0 && SAN_move[5] != '+' && SAN_move[5] != '#' ){
 				return 1;
 			}
 		}
