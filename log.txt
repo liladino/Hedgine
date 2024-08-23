@@ -3,6 +3,8 @@ Date:   Aug 23 2024
 		if the move counters aren't present, it printed out a message twice. The message was unnecesary, so now it doesn't print anything
 	SAN input:
 		fixed the bug where the move is considered invalid, if it is in the form of for example N6xe5 (taking and the rank is specified)
+	eval:
+		pawn is slightly changed, now it heavily favors going forward in the endgame
 
 Date:   Aug 22 2024
 	PV:

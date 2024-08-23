@@ -87,15 +87,25 @@ int openingpawn[8][8] = {
 
 int middlepawn[8][8] = {
 	{   0,   0,   0,   0,   0,   0,   0,   0}, //1
-	{   0,   0,   0, -20, -20,  10,   0,   0}, //2
-	{  10,  10,  10,  20,  20, -20,   0,  10}, //3
-	{  10, -10,  40,  50,  50, -20, -10,   0}, //4
+	{   0,   0,   0,   0,   0,  10,   0,   0}, //2
+	{  10,  10,  10,  20,  20,   0,   0,  10}, //3
+	{  10,   0,  40,  50,  50,   0,   0,  10}, //4
 	{  10,  10,  20,  50,  50,  10,  10,  10}, //5
 	{ 100, 100, 100, 100, 100, 100, 100, 100}, //6
 	{ 200, 200, 200, 200, 200, 200, 200, 200}, //7
 	{ 200, 200, 200, 200, 200, 200, 200, 200}, //8
 };
 
+int endpawn[8][8] = {
+	{   0,   0,   0,   0,   0,   0,   0,   0}, //1
+	{   0,   0,   0,   0,   0,   0,   0,   0}, //2
+	{  20,  20,  20,  20,  20,  20,  20,  20}, //3
+	{  50,  50,  50,  50,  50,  50,  50,  50}, //4
+	{  80,  80,  80,  80,  80,  80,  80,  80}, //5
+	{ 100, 100, 100, 100, 100, 100, 100, 100}, //6
+	{ 300, 300, 300, 300, 300, 300, 300, 300}, //7
+	{1000,1000,1000,1000,1000,1000,1000,1000}, //8
+};
 
 int middlerook[8][8] = {
 	{   0,   0,  40,  50,  50,  30,   0,   0}, //1
@@ -209,8 +219,11 @@ static int sideEval(bitboard board, bool tomove){
 				if (pieces > 8) {
 					eval += ((pieces - 9) * openingpawn[i][j] * 0.2 + (14 - pieces) * middlepawn[i][j] * 0.2);
 				}
-				else {
+				else if (pieces > 5){
 					eval += middlepawn[i][j] + 10;
+				}
+				else {
+					eval += (max(pieces - 1, 0) * middlepawn[i][j] * 0.2 + (5 - pieces) * endpawn[i][j] * 0.5);
 				}
 			}
 			else if (board.piece[wknight + offset] & piecemask){
@@ -222,7 +235,7 @@ static int sideEval(bitboard board, bool tomove){
 					eval += middleknight[i][j];
 				}
 				else {
-					eval += ((pieces - 1) * middleknight[i][j] * 0.2 + (5 - pieces) * endgamecenter[i][j] * 0.5);
+					eval += (max(pieces - 1, 0) * middleknight[i][j] * 0.2 + (5 - pieces) * endgamecenter[i][j] * 0.5);
 				}
 			}
 			else if (board.piece[wbishop + offset] & piecemask){
@@ -234,7 +247,7 @@ static int sideEval(bitboard board, bool tomove){
 					eval += middlebishop[i][j] + 15;
 				}
 				else {
-					eval += ((pieces - 1) * middlebishop[i][j] * 0.2 + (5 - pieces) * endgamecenter[i][j] * 0.5) + 20;
+					eval += (max(pieces - 1, 0) * middlebishop[i][j] * 0.2 + (5 - pieces) * endgamecenter[i][j] * 0.5) + 20;
 				}
 			}
 			else if (board.piece[wrook + offset] & piecemask){
@@ -246,7 +259,7 @@ static int sideEval(bitboard board, bool tomove){
 					eval += middlerook[i][j];
 				}
 				else {
-					eval += ((pieces - 1) * middlerook[i][j] * 0.2 + (6 - pieces) * endgamecenter[i][j] * 0.5);
+					eval += (max(pieces - 1, 0) * middlerook[i][j] * 0.2 + (6 - pieces) * endgamecenter[i][j] * 0.5);
 				}
 			}
 			else if (board.piece[wking + offset] & piecemask){
@@ -364,8 +377,13 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	
 	int eval = readHashEntry(board.hashValue, &alpha, &beta, depth, maxdepth, oddity);
 	
-	//somethig is still going wrong with the TT...
+	//THE TT IS NOT SHITTY ANYMORE POOOG
 	if (depth != 0 && PVhash[0][depth] != board.hashValue && eval != NO_HASH_ENTRY){
+		move nullmove = {{-1, -1}, {-1, -1}, 0};
+		for (int i = depth+1; i < maxdepth; i++){
+			PV[depth][i] = nullmove;
+			PVhash[depth][i+1] = 0;
+		}
 		return eval;
 	}
 	
