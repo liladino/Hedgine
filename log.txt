@@ -1,6 +1,10 @@
 Date:   Aug 26 2024
 	Hashing:
 		During hashing the position is now accessed via a pointer 
+	PV:
+		have to rework the PV system, the TT isn't much help this way. Probably doing something among the lines of a PV search, even if
+		maybe not interpreted completely. That way i dont need the PV hash array, just the alpha and beta scores, which tell me is the
+		current node is a PV node or not.
 
 Date:   Aug 23 2024
 	FEN input:

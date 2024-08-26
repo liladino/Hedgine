@@ -375,16 +375,20 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	const int oddity = depth % 2;
 	evalflag flag = alphaFlag;
 	
-	int eval = readHashEntry(board.hashValue, &alpha, &beta, depth, maxdepth, oddity);
+	int eval = NO_HASH_ENTRY;
 	
-	//THE TT IS NOT SHITTY ANYMORE POOOG
-	if (depth != 0 && PVhash[0][depth] != board.hashValue && eval != NO_HASH_ENTRY){
-		move nullmove = {{-1, -1}, {-1, -1}, 0};
-		for (int i = depth+1; i < maxdepth; i++){
-			PV[depth][i] = nullmove;
-			PVhash[depth][i+1] = 0;
+	//have to rework the PV system, the TT isn't much help this way
+	
+	if (PVhash[0][depth] != board.hashValue){
+		//~ eval = readHashEntry(board.hashValue, &alpha, &beta, depth, maxdepth, oddity);
+		if (eval != NO_HASH_ENTRY){
+			move nullmove = {{-1, -1}, {-1, -1}, 0};
+			for (int i = depth; i <= maxdepth; i++){
+				PV[depth][i] = nullmove;
+				PVhash[depth][i+1] = 0;
+			}
+			return eval;
 		}
-		return eval;
 	}
 	
 	if (depth == maxdepth){
