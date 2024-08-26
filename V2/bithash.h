@@ -19,7 +19,7 @@
 
 void setHashKey();
 
-u64 hashPosition(const bitboard board, bool tomove);
+u64 hashPosition(const bitboard* board, bool tomove);
 
 hashentry* lookup(u64 position);
 

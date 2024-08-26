@@ -1,3 +1,7 @@
+Date:   Aug 26 2024
+	Hashing:
+		During hashing the position is now accessed via a pointer 
+
 Date:   Aug 23 2024
 	FEN input:
 		if the move counters aren't present, it printed out a message twice. The message was unnecesary, so now it doesn't print anything

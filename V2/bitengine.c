@@ -151,14 +151,14 @@ int benchTest(bitboard board, bool tomove, int depth, int maxd){
 		#ifdef DEBUG
 		if (maxd == 1){
 			printBitBoard2d(legalmoves.boards[i]);
-			if (legalmoves.boards[i].hashValue != hashPosition(legalmoves.boards[i], !tomove)){
+			if (legalmoves.boards[i].hashValue != hashPosition(&legalmoves.boards[i], !tomove)){
 				printf(BG_WHITE TXT_RED "Conversion error" DEFAULT "\n\a");
 			}
 			else{
 				printf(BG_WHITE TXT_GREEN "Conversion correct" DEFAULT "\n");
 			}
 			printBitPiece(legalmoves.boards[i].hashValue);
-			printBitPiece(hashPosition(legalmoves.boards[i], !tomove));
+			printBitPiece(hashPosition(&legalmoves.boards[i], !tomove));
 		}
 		#endif
 		if (maxd == benchdepth && maxd == depth){

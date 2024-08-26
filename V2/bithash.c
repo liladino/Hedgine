@@ -97,22 +97,22 @@ void setHashKey(){
 #endif
 }
 
-u64 hashPosition(const bitboard board, bool tomove){
+u64 hashPosition(const bitboard* board, bool tomove){
 	u64 result = 0;
 	u64 mask = 1;
 	for (int i = 0; i < 64; i++){
 		for (int j = 0; j < 12; j++){
-			if (board.piece[j] & mask){
+			if (board->piece[j] & mask){
 				result ^= Zobrist.squares[i][j];
 				break;
 			}
 		}
 		mask = mask << 1;
 	}
-	if (board.enpassanttarget){
+	if (board->enpassanttarget){
 		mask = 0x0101010101010101LL; //a file
 		for (int i = 0; i < 8; i++){
-			if (mask & board.enpassanttarget){
+			if (mask & board->enpassanttarget){
 				result ^= Zobrist.enpassantfile[i];
 				break;
 			}
@@ -122,7 +122,7 @@ u64 hashPosition(const bitboard board, bool tomove){
 	//else result ^= Zobrist.enpassantfile[8];
 	mask = 1; //K
 	for (int i = 0; i < 4; i++){
-		if (board.castlerights & mask) result ^= Zobrist.castlerights[i][1];
+		if (board->castlerights & mask) result ^= Zobrist.castlerights[i][1];
 		else result ^= Zobrist.castlerights[i][0];
 		
 		mask = mask << 1;

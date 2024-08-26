@@ -140,7 +140,7 @@ bitboard boardConvert(char board2d[12][12], int castling[4], squarenums enpass, 
 		int rank = enpass.rank - 2;
 		board.enpassanttarget = 1LL << (rank * 8 + file);
 	}
-	board.hashValue = hashPosition(board, tomove);
+	board.hashValue = hashPosition(&board, tomove);
 	return board;
 }
 
