@@ -26,9 +26,3 @@ a command line chess program in C
  **************************************************************************
  ```
  
- Build and run:
-```
-$ cd V2
-$ make realease
-$ ./clc
-```
