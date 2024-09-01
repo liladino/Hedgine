@@ -376,9 +376,7 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	evalflag flag = alphaFlag;
 	
 	int eval = NO_HASH_ENTRY;
-	
-	//have to rework the PV system, the TT isn't much help this way
-	
+		
 	if (PVhash[0][depth] != board.hashValue){
 		//~ eval = readHashEntry(board.hashValue, &alpha, &beta, depth, maxdepth, oddity);
 		if (eval != NO_HASH_ENTRY){
@@ -479,7 +477,7 @@ move engine(bitboard board, bool tomove){
 		
 		storePos(nextp, temp, lastBest, maxdepth);
 		
-		//~ #ifdef DEBUG
+		#ifdef DEBUG
 		printf("depth %d\n", i);
 		move_array legalmoves;
 		u64 attackedsquares = 0;
@@ -487,11 +485,13 @@ move engine(bitboard board, bool tomove){
 		orderMoves(&legalmoves);
 		printmove(boardConvertTomove(board, legalmoves.boards[0], tomove));
 		printHashEntry(legalmoves.boards[0].hashValue);	
+		#endif
+		
 		for (int j = 0; j < i && PV[0][j].from.rank != -1 && !stopSearchingRecieved; j++){
 			printmove(PV[0][j]);
 		}
 		printf("\n");
-		//~ #endif
+		
 		
 		if (PV[0][0].from.rank != -1) nextm = PV[0][0];
 		

@@ -1,9 +1,21 @@
+Date:   Aug 31 2024
+	Hedgine:
+		separated into a new program. Goal is to be UCI compatible, and to be used with e.g. PyChess, or any other programs.
+		The main goal is it to be tested by making it play against itself some games, so that i actually know if i made it better or not
+		Plans:
+			Have a separate repetition table, which should prevent loops in endgames.
+			Have a small opening book:
+				don't know what's the best option, but i'm thinking about generating a file from drawn GM/high level games, and storing
+				the frist 5 or so positions of them, 
+	CLC:
+		currently abandoned, if hedgine is working properly with uci, i will make an interface here too.
+	
 Date:   Aug 26 2024
 	Hashing:
 		During hashing the position is now accessed via a pointer 
 	PV:
 		have to rework the PV system, the TT isn't much help this way. Probably doing something among the lines of a PV search, even if
-		maybe not interpreted completely. That way i dont need the PV hash array, just the alpha and beta scores, which tell me is the
+		maybe not interpreted completely. That way i dont need the PV hash array, just the alpha and beta scores, which tells me is the
 		current node is a PV node or not.
 
 Date:   Aug 23 2024

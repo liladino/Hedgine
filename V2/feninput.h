@@ -7,7 +7,7 @@
 //#include "fenoutput.h"
 //#include "game.h"
 //#include "input.h"
-#include "legalmoves.h"
+//#include "legalmoves.h"
 #include "moves.h"
 //#include "output.h"
 //#include "pgninput.h"

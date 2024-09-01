@@ -41,6 +41,8 @@
 *.hex
 all
 clchess
+clc
+hedgine
 test
 
 # Debug files
@@ -53,6 +55,14 @@ test
 *.fen
 *.pgn
 meta/
+
+#older versions
+V1/
+#V2/
+
+#unfinished and unusable parts
+CommandLineChess/
+hedgine/
 
 # Kernel Module Compile Results
 *.mod*
