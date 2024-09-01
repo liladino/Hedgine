@@ -62,7 +62,7 @@ V2/
 
 #unfinished and unusable parts
 CommandLineChess/
-#hedgine/
+#hedgineUCI/
 
 # Kernel Module Compile Results
 *.mod*
