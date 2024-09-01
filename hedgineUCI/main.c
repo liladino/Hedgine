@@ -3,7 +3,10 @@
 
 int main(){
 	printf("Long algebraic notation test\n----\nGive a move (e.g. e2e4):\n");
-	move m = readLongAlgebraicNotation();
+	char movestr[5] = {0};
+	scanf("%5s", movestr);
+
+	move m = readLongAlgebraicNotation(movestr);
 	printmove(m);
 
 	size_t limit = 10;
