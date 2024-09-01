@@ -9,7 +9,7 @@
 #ifdef DEBUG
 	#include "debugmalloc.h"
 	#include "output.h"
-	#include "feninput.h"
+	//~ #include "input.h"
 #endif
 
 #include <stdio.h>

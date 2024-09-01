@@ -1,5 +1,55 @@
 #include "input.h"
 
+/* gets a string, and dynamicly assignes enough memory to read the current line 
+ * (or until the maximum size is reached)
+ * 
+ * expects the pointer to either be a dynamicly stored string
+ * or  null pointer
+ * 
+ * returns the number of succesfully read in characters
+ * */
+size_t getLine(char** str, const size_t maxSize){
+	size_t size;
+	if (*str == NULL) size = 0;
+	else size = strlen(*str);
+		
+	char c;
+	size_t succesfullyRead = 0;
+	do {
+		if (scanf("%c", &c) == EOF){
+			c = 0;
+		}
+		else{
+			if (succesfullyRead == 0 && isspace(c)) {
+				continue; //start reading the line after whitespaces are gone
+			}
+			
+			if (c == '\n' || maxSize == size + succesfullyRead){
+				c = 0;
+			}
+		}
+		
+		char *newstr = (char*) malloc((size + succesfullyRead + 1) * sizeof(char));
+		if (newstr == NULL){
+			printf(TXT_RED "Memory allocation failed\n" DEFAULT);
+			exit(1);
+		}
+		
+		for (size_t i = 0; i < size + succesfullyRead; i++){
+			newstr[i] = (*str)[i];
+		}
+		if (*str != NULL) free(*str);
+		*str = newstr;
+		
+		(*str)[size + succesfullyRead] = c;
+		
+		if (c != 0)	succesfullyRead++;
+		
+	} while (c != 0);
+	
+	return succesfullyRead;
+}
+
 /* moves in the form of e.g. e1g1 or e7e8q
  * */
 move readLongAlgebraicNotation(){

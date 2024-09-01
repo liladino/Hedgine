@@ -9,10 +9,10 @@
 #ifdef DEBUG
 	#include "debugmalloc.h"
 	#include "output.h"
-	#include "feninput.h"
+	//~ #include "input.h"
 #endif
 #ifdef BENCH
-	#include "feninput.h"
+	//~ #include "input.h"
 	#include "output.h"
 #endif
 
