@@ -129,10 +129,10 @@ typedef struct bitboard{
 	//int eval;
 }bitboard;
 
-typedef struct move_array{
+typedef struct movearray{
     bitboard boards[MAXMOVECOUNT_INPOS];
     int size;
-} move_array;
+} movearray;
 
 typedef enum evalflag{
 	exactFlag = 1, alphaFlag = 2, betaFlag = 3, lastBest = 4

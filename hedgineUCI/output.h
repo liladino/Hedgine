@@ -2,18 +2,24 @@
 #define OUTPUT_H
 
 #include "structs.h"
-
-#ifdef DEBUG
-	#include "debugmalloc.h"
-#endif
+#include "moves.h"
 
 #include <stdio.h>
 #include <stdbool.h>
 
 void printboard_letters(char board[12][12]);
 
-void printblackandwhite(char board[12][12], int view, bool tomove);
+void printBitBoard2d(bitboard board);
 
-void printboard(char board[12][12], int view, int col, bool tomove);
+void printBitBoard(bitboard board);
+
+void printBitPiece(u64 piece);
+
+void printBitPieceAsBoard(u64 piece);
+
+void printmove(move m);
+
+
+
 
 #endif

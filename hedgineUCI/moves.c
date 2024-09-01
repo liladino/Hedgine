@@ -104,12 +104,6 @@ void printmoves(movelist *head) {
 	printf("*\n");
 }
 
-
-
-void printmove(move m) {
-	printf("%c%d%c%d%c ", m.from.file+'a'-2, m.from.rank-1, m.to.file+'a'-2, m.to.rank-1, (m.promotion >= 'a' && m.promotion <= 'z' ? m.promotion : ' ') );
-}
-
 void freemoves(movelist *head) {
 	while (head != NULL) {
 		movelist *temp = head;
@@ -135,95 +129,16 @@ int countmoves(movelist *head) {
  * This way, printing out the moves doesn't make much sense - we don't save any moves, but boards;
  * however out of convinience ill call them moves, because they are technically moves 
  * */
-
-
-void printBitPiece(u64 piece){
-	u64 a = 1;
-	a = a << 63;
-	for (int i = 63; i >= 0; i--){
-		printf("%lld", (piece & a) >> i);
-		a = a >> 1;
-		if (i % 8 == 0) printf(" ");
-	}
-	printf("\n");
-}
-
-void printBitPieceAsBoard(u64 piece){
-	u64 a = 1;
-	printf("  ");
-	for (int i = 7; i >= 0; i--){
-		a = 1LL << (i * 8);
-		for (int j = 0; j < 8; j++){
-			printf("%s%lld ", ((piece & a) >> (i * 8 + j) == 1 ? BG_WHITE TXT_BLACK : BG_BLACK TXT_WHITE), (piece & a) >> (i * 8 + j));
-			//printf("%lld ", (piece & a) >> (i * 8 + j));
-			a = a << 1;
+ 
+int isMoveLegal(const bitboard* board, const movearray* legalmoves, const bool tomove, const move m){
+	for (int i = 0; i < legalmoves->size; i++){
+		move curr = boardConvertTomove(*board, legalmoves->boards[i], tomove);
+		if (curr.from.file == m.from.file && curr.from.rank == m.from.rank && curr.to.file == m.to.file && curr.to.rank == m.to.rank && m.promotion == curr.promotion){
+			return i;
 		}
-		printf(TXT_WHITE DEFAULT"\n  ");
 	}
-	printf("\n");
-}
-
-void printBitBoard(bitboard board){
-	printf("ranks    8.       7.       6.       5.       4.       3.       2.       1.\nwhite:   \n pawn   ");
-	printBitPiece(board.piece[wpawn]);
-
-	printf(" knight ");
-	printBitPiece(board.piece[wknight]);
-	
-	printf(" bishop ");
-	printBitPiece(board.piece[wbishop]);
-	
-	printf(" rook   ");
-	printBitPiece(board.piece[wrook]);
-	
-	printf(" queen  ");
-	printBitPiece(board.piece[wqueen]);
-	
-	printf(" king   ");
-	printBitPiece(board.piece[wking]);
-	
-	printf("\nblack:\n pawn   ");
-	printBitPiece(board.piece[bpawn]);
-
-	printf(" knight ");
-	printBitPiece(board.piece[bknight]);
-	
-	printf(" bishop ");
-	printBitPiece(board.piece[bbishop]);
-	
-	printf(" rook   ");
-	printBitPiece(board.piece[brook]);
-	
-	printf(" queen  ");
-	printBitPiece(board.piece[bqueen]);
-	
-	printf(" king   ");
-	printBitPiece(board.piece[bking]);
-	printf("\n");
-}
-
-void printBitBoard2d(bitboard bboard){
-	char board[12][12];
-	boardConvertBack(board, bboard);
-	printf("|");
-	for (int j = 2; j < 9; j++){
-		printf("---+");
-	}
-		printf("---|\n");
-	for (int i = 9; i > 1; i--){
-		printf("|");
-		for (int j = 2; j < 10; j++){
-			printf(" %c |", board[i][j]);
-		}
-		printf("\n|");
-		for (int j = 2; j < 9; j++){
-			printf("---+");
-		}
-		printf("---|\n");
-	}
-	printf("\n");
-}
-
+	return -1;
+} 
 
 bitboard boardConvert(char board2d[12][12], int castling[4], squarenums enpass, bool tomove){
 	/*castling: [3:0] = qkQk
@@ -338,14 +253,14 @@ move boardConvertTomove(bitboard board1, bitboard board2, bool tomove){
 				if (i != wpawn + offset){
 					//prom
 					switch(i){
-						case wqueen: m.promotion = 'Q'; break;
-						case bqueen: m.promotion = 'Q'; break;
-						case wrook: m.promotion = 'R'; break;
-						case brook: m.promotion = 'R'; break;
-						case wbishop: m.promotion = 'B'; break;
-						case bbishop: m.promotion = 'B'; break;
-						case wknight: m.promotion = 'N'; break;
-						case bknight: m.promotion = 'N'; break;
+						case wqueen: m.promotion = 'q'; break;
+						case bqueen: m.promotion = 'q'; break;
+						case wrook: m.promotion = 'r'; break;
+						case brook: m.promotion = 'r'; break;
+						case wbishop: m.promotion = 'b'; break;
+						case bbishop: m.promotion = 'b'; break;
+						case wknight: m.promotion = 'n'; break;
+						case bknight: m.promotion = 'n'; break;
 					}
 				}
 				else {

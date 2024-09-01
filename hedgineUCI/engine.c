@@ -134,10 +134,9 @@ int endgamecenter[8][8] = {
 int endcount;
 
 int benchTest(bitboard board, bool tomove, int depth, int maxd){	
-	u64 attackedsquares = 0;
-	move_array legalmoves;
+	movearray legalmoves;
 	
-	bitGenerateLegalmoves(&legalmoves, board, tomove, &attackedsquares, false);
+	bitGenerateLegalmoves(&legalmoves, board, tomove, false);
 	if (legalmoves.size == 0){
 		endcount++;
 	}
@@ -298,13 +297,15 @@ move randomBot(bitboard board, bool tomove){
 	printf("w_eval: %d\n", sideEval(board, white));
 	printf("b_eval: %d\n", sideEval(board, black));
 	#endif
+	
 	time_t t;
 	srand((unsigned) time (&t));
-	move_array legalmoves;
-	u64 temp = 0;
-	bitGenerateLegalmoves(&legalmoves, board, tomove, &temp, false);
+	movearray legalmoves;
+	bitGenerateLegalmoves(&legalmoves, board, tomove, false);
+	
 	int i = (rand() % legalmoves.size);
 	move m = boardConvertTomove(board, legalmoves.boards[i], tomove);
+	
 	#ifdef DEBUG
 	printf("%dth move: \n", i);
 	printmove(m);
@@ -339,9 +340,8 @@ static int capturesearch(bitboard board, bool tomove, int alpha, int beta){
 	if (eval >= beta) return beta;
 	alpha = max(alpha, eval);
 	
-	move_array legalmoves;
-	u64 attackedsquares = 0;
-	bitGenerateLegalmoves(&legalmoves, board, tomove, &attackedsquares, true);
+	movearray legalmoves;
+	bitGenerateLegalmoves(&legalmoves, board, tomove, true);
 	if (legalmoves.size == 0){
 		return eval;
 	}
@@ -357,7 +357,7 @@ static int capturesearch(bitboard board, bool tomove, int alpha, int beta){
 }
 
 #ifdef DEBUG
-void printLegalmoves(move_array legalmoves, bitboard board, bool tomove){
+void printLegalmoves(movearray legalmoves, bitboard board, bool tomove){
 	printf("\nLegal moves:\n");
 	for (int i = 0; i < legalmoves.size; i++){
 		printmove(boardConvertTomove(board, legalmoves.boards[i], tomove));
@@ -395,9 +395,8 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 		return capturesearch(board, tomove, alpha, beta);
 	}
 	
-	move_array legalmoves;
-	u64 attackedsquares = 0;
-	bitGenerateLegalmoves(&legalmoves, board, tomove, &attackedsquares, false);
+	movearray legalmoves;
+	bitGenerateLegalmoves(&legalmoves, board, tomove, false);
 	if (legalmoves.size == 0){
 		if (bitInCheck(board, tomove)) return blackwon - 100 + depth;
 		return draw;
@@ -481,9 +480,8 @@ move engine(bitboard board, bool tomove){
 		
 		//~ #ifdef DEBUG
 		printf("depth %d\n", i);
-		move_array legalmoves;
-		u64 attackedsquares = 0;
-		bitGenerateLegalmoves(&legalmoves, board, tomove, &attackedsquares, false);		
+		movearray legalmoves;
+		bitGenerateLegalmoves(&legalmoves, board, tomove, false);		
 		orderMoves(&legalmoves);
 		printmove(boardConvertTomove(board, legalmoves.boards[0], tomove));
 		printHashEntry(legalmoves.boards[0].hashValue);	
@@ -517,7 +515,7 @@ move engine(bitboard board, bool tomove){
 	/*search(board, tomove, maxdepth, NegINF, PosINF);
 	
 	u64 temp;
-	move_array legalmoves;
+	movearray legalmoves;
 	bitGenerateLegalmoves(&legalmoves, board, tomove, &temp, false);
 	
 	printLegalmoves(legalmoves, board, tomove);

@@ -353,7 +353,7 @@ static inline int getEval(u64 pos){
 
 /*order moves in a non-descending order based on the evals stored in the hash table*/
 /*simple insertion sort, too few elements to make something fancy*/
-void orderMoves(move_array* legalmoves){
+void orderMoves(movearray* legalmoves){
 	for (int i = 1; i < legalmoves->size; i++){
 		for (int j = 0; j < legalmoves->size - i; j++){
 			if (getEval(legalmoves->boards[j].hashValue) < getEval(legalmoves->boards[j+1].hashValue)) swap(&legalmoves->boards[j], &legalmoves->boards[j+1]);

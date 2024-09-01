@@ -19,8 +19,4 @@ move readLongAlgebraicNotation(char str[]);
 
 int setboardFEN(char FEN[], char board[12][12], bool *tomove, int castling[], squarenums *enpass, int *fmv, int *movenum);
 
-char *readFEN(char *filename);
-
-int loadFEN(char *filename, char board[12][12], bool *tomove, int castling[], squarenums *enpass, int *fmv, int *movenum);
-
 #endif

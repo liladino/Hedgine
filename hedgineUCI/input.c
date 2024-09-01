@@ -71,7 +71,7 @@ move readLongAlgebraicNotation(char str[]){
 	if (str[3] > '8' || str[3] < '1') return nullmove;
 	to.rank = str[3] - '0';
 	
-	if (str[4] >= 'A' && str[4] <= 'Z') str[4] -= 'A' + 'a'; 
+	if (str[4] >= 'A' && str[4] <= 'Z') str[4] += 'a' - 'A'; 
 	
 	char prom = 0;
 	if (str[4] >= 'a' && str[4] <= 'z'){
@@ -248,57 +248,3 @@ int setboardFEN(char FEN[], char board[12][12], bool *tomove, int castling[], sq
 	return 0;
 }
 
-/* beolvas egy file-bol egy FEN-t, es beteszi a tartalmat egy stringbe*/
-char *readFEN(char *filename){
-	FILE *fptr;
-	if ((fptr = fopen(filename,"r")) == NULL){
-		printf("No such file \n");
-		printf(TXT_RED "Unable to load FEN\n" DEFAULT);
-		return NULL;
-	}
-	int size = 1;	
-	char c;
-	char *array = NULL;
-	do {
-		if (fscanf(fptr, "%c", &c) == EOF){
-			c = 0;
-		}
-		else if (c == '\n'){
-			c = 0;
-		}
-		char *newarray = (char*) malloc(size * sizeof(char));
-		if (newarray == NULL){
-			printf(TXT_RED "Memory allocation failed\n" DEFAULT);
-			exit(1);
-		}
-		
-		for (int i = 0; i < size-1; i++){
-			newarray[i] = array[i];
-		}
-		free(array);
-		array = newarray;
-		
-		array[size-1] = c;
-		size++;
-	} while (c != 0);
-	
-	fclose(fptr);
-	return array;
-}
-
-/* betolt egy FEN file-t adott fajlnevvel, beallitja a rablat es a metaadatokat*/
-int loadFEN(char *filename, char board[12][12], bool *tomove, int castling[], squarenums *enpass, int *fmv, int *movenum){ 
-	char *FEN;
-	FEN = readFEN(filename);
-	if (FEN == NULL){
-		return 1;
-	}
-	//printf("%s:\n%s\n", filename, FEN);
-	if (setboardFEN(FEN, board, tomove, castling, enpass, fmv, movenum)){
-		printf(TXT_RED "Unable to load FEN!\n" DEFAULT);
-		free(FEN);
-		return 1;
-	}
-	free(FEN);
-	return 0;
-}

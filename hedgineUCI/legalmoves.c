@@ -186,7 +186,7 @@ static inline void setcastlingrights(bitboard *board, bool tomove, const int ran
 	}
 }
 
-static void orthogonalDir(piecenums RorQ, bitboard *legalmoves, int *array_index, bitboard board, bool tomove, bool onlytakes, u64 *attackedsquares, u64 enemy, u64 friendly, u64 piecemask, int sq){
+static void orthogonalDir(piecenums RorQ, bitboard *legalmoves, int *array_index, bitboard board, bool tomove, bool onlytakes, u64 enemy, u64 friendly, u64 piecemask, int sq){
 	bitboard copy = board;
 	int coloffset = tomove == black ? bking : 0; 
 	u64 withoutpiece = board.piece[RorQ + coloffset];
@@ -210,7 +210,7 @@ static void orthogonalDir(piecenums RorQ, bitboard *legalmoves, int *array_index
 			if (RorQ == wrook && board.castlerights) setcastlingrights(&board, tomove, rank, file);
 			//move the piece to the square
 			board.piece[RorQ + coloffset] = withoutpiece | movemask; 
-			(*attackedsquares) |= movemask;
+			//~ (*attackedsquares) |= movemask;
 			
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, rank*8+j-1, RorQ + coloffset);
@@ -224,7 +224,7 @@ static void orthogonalDir(piecenums RorQ, bitboard *legalmoves, int *array_index
 			if (RorQ == wrook && board.castlerights) setcastlingrights(&board, tomove, rank, j);
 			
 			board.piece[RorQ + coloffset] = withoutpiece | movemask; 
-			(*attackedsquares) |= movemask;
+			//~ (*attackedsquares) |= movemask;
 			//add move to movearray
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, rank*8+j-1, RorQ + coloffset);
@@ -246,7 +246,7 @@ static void orthogonalDir(piecenums RorQ, bitboard *legalmoves, int *array_index
 			if (RorQ == wrook && board.castlerights) setcastlingrights(&board, tomove, rank, j);
 			deletePiece(&board, movemask, start, start + bking, rank, j+1);
 			board.piece[RorQ + coloffset] = withoutpiece | movemask; 
-			(*attackedsquares) |= movemask;
+			//~ (*attackedsquares) |= movemask;
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, rank*8+j+1, RorQ + coloffset);
 				legalmoves[*array_index] = board;
@@ -259,7 +259,7 @@ static void orthogonalDir(piecenums RorQ, bitboard *legalmoves, int *array_index
 		if (!onlytakes){
 			if (RorQ == wrook && board.castlerights) setcastlingrights(&board, tomove, rank, j);
 			board.piece[RorQ + coloffset] = withoutpiece | movemask; 
-			(*attackedsquares) |= movemask;
+			//~ (*attackedsquares) |= movemask;
 			
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, rank*8+j+1, RorQ + coloffset);
@@ -281,7 +281,7 @@ static void orthogonalDir(piecenums RorQ, bitboard *legalmoves, int *array_index
 			if (RorQ == wrook && board.castlerights) setcastlingrights(&board, tomove, j, file);
 			deletePiece(&board, movemask, start, start + bking, j-1, file);
 			board.piece[RorQ + coloffset] = withoutpiece | movemask; 
-			(*attackedsquares) |= movemask;
+			//~ (*attackedsquares) |= movemask;
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, (j-1)*8+file, RorQ + coloffset);
 				legalmoves[*array_index] = board;
@@ -293,7 +293,7 @@ static void orthogonalDir(piecenums RorQ, bitboard *legalmoves, int *array_index
 		if (!onlytakes){
 			if (RorQ == wrook && board.castlerights) setcastlingrights(&board, tomove, j, file);
 			board.piece[RorQ + coloffset] = withoutpiece | movemask; 
-			(*attackedsquares) |= movemask;
+			//~ (*attackedsquares) |= movemask;
 				
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, (j-1)*8+ file, RorQ + coloffset);
@@ -315,7 +315,7 @@ static void orthogonalDir(piecenums RorQ, bitboard *legalmoves, int *array_index
 			if (!onlytakes) break;
 			deletePiece(&board, movemask, start, start + bking, j+1, file);
 			board.piece[RorQ + coloffset] = withoutpiece | movemask; 
-			(*attackedsquares) |= movemask;
+			//~ (*attackedsquares) |= movemask;
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, (j+1)*8+ file, RorQ + coloffset);
 				legalmoves[*array_index] = board;
@@ -327,7 +327,7 @@ static void orthogonalDir(piecenums RorQ, bitboard *legalmoves, int *array_index
 		if (!onlytakes){
 			if (RorQ == wrook && board.castlerights) setcastlingrights(&board, tomove, j, file);
 			board.piece[RorQ + coloffset] = withoutpiece | movemask; 
-			(*attackedsquares) |= movemask;
+			//~ (*attackedsquares) |= movemask;
 					
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, (j+1)*8+ file, RorQ + coloffset);
@@ -339,7 +339,7 @@ static void orthogonalDir(piecenums RorQ, bitboard *legalmoves, int *array_index
 	}
 }
 
-static void diagonalDir(piecenums BorQ, bitboard *legalmoves, int *array_index, bitboard board, bool tomove, bool onlytakes, u64 *attackedsquares, u64 enemy, u64 friendly, u64 piecemask, int sq){
+static void diagonalDir(piecenums BorQ, bitboard *legalmoves, int *array_index, bitboard board, bool tomove, bool onlytakes, u64 enemy, u64 friendly, u64 piecemask, int sq){
 	bitboard copy = board;
 	int coloffset = tomove == black ? bking : 0; 
 	u64 withoutpiece = board.piece[BorQ + coloffset];
@@ -361,7 +361,7 @@ static void diagonalDir(piecenums BorQ, bitboard *legalmoves, int *array_index, 
 			deletePiece(&board, movemask, start, start + bking, i, j);
 			//move the piece to the square
 			board.piece[BorQ + coloffset] = withoutpiece | movemask; 
-			(*attackedsquares) |= movemask;
+			//~ (*attackedsquares) |= movemask;
 				
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i * 8 + j, BorQ + coloffset);
@@ -374,7 +374,7 @@ static void diagonalDir(piecenums BorQ, bitboard *legalmoves, int *array_index, 
 		if (!onlytakes){
 			//add move to movearray
 			board.piece[BorQ + coloffset] = withoutpiece | movemask; 
-			(*attackedsquares) |= movemask;
+			//~ (*attackedsquares) |= movemask;
 			
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i * 8 + j, BorQ + coloffset);
@@ -394,7 +394,7 @@ static void diagonalDir(piecenums BorQ, bitboard *legalmoves, int *array_index, 
 			if (!onlytakes) break;
 			deletePiece(&board, movemask, start, start + bking, i, j);
 			board.piece[BorQ + coloffset] = withoutpiece | movemask; 
-			(*attackedsquares) |= movemask;
+			//~ (*attackedsquares) |= movemask;
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i * 8 + j, BorQ + coloffset);
 				legalmoves[*array_index] = board;
@@ -405,7 +405,7 @@ static void diagonalDir(piecenums BorQ, bitboard *legalmoves, int *array_index, 
 		}
 		if (!onlytakes){
 			board.piece[BorQ + coloffset] = withoutpiece | movemask; 
-			(*attackedsquares) |= movemask;
+			//~ (*attackedsquares) |= movemask;
 			
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i * 8 + j, BorQ + coloffset);
@@ -425,7 +425,7 @@ static void diagonalDir(piecenums BorQ, bitboard *legalmoves, int *array_index, 
 			if (!onlytakes) break;
 			deletePiece(&board, movemask, start, start + bking, i, j);
 			board.piece[BorQ + coloffset] = withoutpiece | movemask; 
-			(*attackedsquares) |= movemask;
+			//~ (*attackedsquares) |= movemask;
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i * 8 + j, BorQ + coloffset);
 				legalmoves[*array_index] = board;
@@ -436,7 +436,7 @@ static void diagonalDir(piecenums BorQ, bitboard *legalmoves, int *array_index, 
 		}
 		if (!onlytakes){
 			board.piece[BorQ + coloffset] = withoutpiece | movemask; 
-			(*attackedsquares) |= movemask;
+			//~ (*attackedsquares) |= movemask;
 			
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i * 8 + j, BorQ + coloffset);
@@ -456,7 +456,7 @@ static void diagonalDir(piecenums BorQ, bitboard *legalmoves, int *array_index, 
 			if (!onlytakes) break;
 			deletePiece(&board, movemask, start, start + bking, i, j);
 			board.piece[BorQ + coloffset] = withoutpiece | movemask; 
-			(*attackedsquares) |= movemask;
+			//~ (*attackedsquares) |= movemask;
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i * 8 + j, BorQ + coloffset);
 				legalmoves[*array_index] = board;
@@ -467,7 +467,7 @@ static void diagonalDir(piecenums BorQ, bitboard *legalmoves, int *array_index, 
 		}
 		if (!onlytakes){
 			board.piece[BorQ + coloffset] = withoutpiece | movemask; 
-			(*attackedsquares) |= movemask;
+			//~ (*attackedsquares) |= movemask;
 			
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i * 8 + j, BorQ + coloffset);
@@ -479,7 +479,7 @@ static void diagonalDir(piecenums BorQ, bitboard *legalmoves, int *array_index, 
 	}
 }
 
-static void addBitSlidingMoves(bitboard *legalmoves, int *array_index, bitboard board, bool tomove, bool onlytakes, u64 *attackedsquares, u64 enemy, u64 friendly){
+static void addBitSlidingMoves(bitboard *legalmoves, int *array_index, bitboard board, bool tomove, bool onlytakes, u64 enemy, u64 friendly){
 	hashTomoveIO(&board);
 	hashEnPassantIO(&board, 8);
 	board.enpassanttarget = 0;
@@ -489,18 +489,18 @@ static void addBitSlidingMoves(bitboard *legalmoves, int *array_index, bitboard 
 	for (int i = 0; i < 64; i++){
 		if (board.piece[wrook + coloffset] & piecemask){
 			hashPieceIO(&board, i, wrook + coloffset); //hash the current piece out
-			orthogonalDir(wrook, legalmoves, array_index,board, tomove, onlytakes, attackedsquares, enemy, friendly, piecemask, i);
+			orthogonalDir(wrook, legalmoves, array_index,board, tomove, onlytakes, enemy, friendly, piecemask, i);
 			hashPieceIO(&board, i, wrook + coloffset); //hash back in
 		}
 		else if (board.piece[wqueen + coloffset] & piecemask){
 			hashPieceIO(&board, i, wqueen + coloffset);
-			orthogonalDir(wqueen, legalmoves, array_index,board, tomove, onlytakes, attackedsquares, enemy, friendly, piecemask, i);
-			diagonalDir(wqueen, legalmoves, array_index,board, tomove, onlytakes, attackedsquares, enemy, friendly, piecemask, i);
+			orthogonalDir(wqueen, legalmoves, array_index,board, tomove, onlytakes, enemy, friendly, piecemask, i);
+			diagonalDir(wqueen, legalmoves, array_index,board, tomove, onlytakes, enemy, friendly, piecemask, i);
 			hashPieceIO(&board, i, wqueen + coloffset);
 		}
 		else if (board.piece[wbishop + coloffset] & piecemask){
 			hashPieceIO(&board, i, wbishop + coloffset);
-			diagonalDir(wbishop, legalmoves, array_index,board, tomove, onlytakes, attackedsquares, enemy, friendly, piecemask, i);
+			diagonalDir(wbishop, legalmoves, array_index,board, tomove, onlytakes, enemy, friendly, piecemask, i);
 			hashPieceIO(&board, i, wbishop + coloffset);
 		}
 		
@@ -509,7 +509,7 @@ static void addBitSlidingMoves(bitboard *legalmoves, int *array_index, bitboard 
 }
 
 
-static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard board, bool tomove, bool onlytakes, u64 *attackedsquares, u64 enemy, u64 friendly){	
+static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard board, bool tomove, bool onlytakes, u64 enemy, u64 friendly){	
 	hashTomoveIO(&board);
 	hashEnPassantIO(&board, 8);
 	board.enpassanttarget = 0;
@@ -534,7 +534,7 @@ static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard b
 				if ((movemask & enemy) && onlytakes){
 					deletePiece(&board, movemask, start, start + bking, rank + 1, file + 2);
 					board.piece[wknight + coloffset] = withoutpiece | movemask; 
-					(*attackedsquares) |= movemask;
+					//~ (*attackedsquares) |= movemask;
 					if (!bitInCheck(board, tomove)) {
 						hashPieceIO(&board, i + 2*east + nort, wknight + coloffset);
 						legalmoves[*array_index] = board;
@@ -543,7 +543,7 @@ static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard b
 				}
 				if (!onlytakes && (movemask & (friendly | enemy)) == 0){
 					board.piece[wknight + coloffset] = withoutpiece | movemask; 
-					(*attackedsquares) |= movemask;
+					//~ (*attackedsquares) |= movemask;
 					if (!bitInCheck(board, tomove)) {
 						hashPieceIO(&board, i + 2*east + nort, wknight + coloffset);
 						legalmoves[*array_index] = board;
@@ -557,7 +557,7 @@ static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard b
 				if ((movemask & enemy) && onlytakes){
 					deletePiece(&board, movemask, start, start + bking, rank + 1, file - 2);
 					board.piece[wknight + coloffset] = withoutpiece | movemask; 
-					(*attackedsquares) |= movemask;
+					//~ (*attackedsquares) |= movemask;
 					if (!bitInCheck(board, tomove)) {
 						hashPieceIO(&board, i + nort - 2*west, wknight + coloffset);
 						legalmoves[*array_index] = board;
@@ -566,7 +566,7 @@ static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard b
 				}
 				if (!onlytakes && (movemask & (friendly | enemy)) == 0){
 					board.piece[wknight + coloffset] = withoutpiece | movemask; 
-					(*attackedsquares) |= movemask;
+					//~ (*attackedsquares) |= movemask;
 					if (!bitInCheck(board, tomove)) {
 						hashPieceIO(&board, i + nort - 2*west, wknight + coloffset);
 						legalmoves[*array_index] = board;
@@ -580,7 +580,7 @@ static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard b
 				if ((movemask & enemy) && onlytakes){
 					deletePiece(&board, movemask, start, start + bking, rank + 2, file + 1);
 					board.piece[wknight + coloffset] = withoutpiece | movemask; 
-					(*attackedsquares) |= movemask;
+					//~ (*attackedsquares) |= movemask;
 					if (!bitInCheck(board, tomove)) {
 						hashPieceIO(&board, i + 2*nort + east, wknight + coloffset);
 						legalmoves[*array_index] = board;
@@ -589,7 +589,7 @@ static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard b
 				}
 				if (!onlytakes && (movemask & (friendly | enemy)) == 0){
 					board.piece[wknight + coloffset] = withoutpiece | movemask; 
-					(*attackedsquares) |= movemask;
+					//~ (*attackedsquares) |= movemask;
 					if (!bitInCheck(board, tomove)) {
 						hashPieceIO(&board, i + 2*nort + east, wknight + coloffset);
 						legalmoves[*array_index] = board;
@@ -603,7 +603,7 @@ static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard b
 				if ((movemask & enemy) && onlytakes){
 					deletePiece(&board, movemask, start, start + bking, rank + 2, file - 1);
 					board.piece[wknight + coloffset] = withoutpiece | movemask; 
-					(*attackedsquares) |= movemask;
+					//~ (*attackedsquares) |= movemask;
 					if (!bitInCheck(board, tomove)) {
 						hashPieceIO(&board, i + 2*nort - west, wknight + coloffset);
 						legalmoves[*array_index] = board;
@@ -612,7 +612,7 @@ static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard b
 				}
 				if (!onlytakes && (movemask & (friendly | enemy)) == 0){
 					board.piece[wknight + coloffset] = withoutpiece | movemask; 
-					(*attackedsquares) |= movemask;
+					//~ (*attackedsquares) |= movemask;
 					if (!bitInCheck(board, tomove)) {
 						hashPieceIO(&board, i + 2*nort - west, wknight + coloffset);
 						legalmoves[*array_index] = board;
@@ -626,7 +626,7 @@ static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard b
 				if ((movemask & enemy) && onlytakes){
 					deletePiece(&board, movemask, start, start + bking, rank - 1, file + 2);
 					board.piece[wknight + coloffset] = withoutpiece | movemask; 
-					(*attackedsquares) |= movemask;
+					//~ (*attackedsquares) |= movemask;
 					if (!bitInCheck(board, tomove)) {
 						hashPieceIO(&board, i - sout + 2*east, wknight + coloffset);
 						legalmoves[*array_index] = board;
@@ -635,7 +635,7 @@ static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard b
 				}
 				if (!onlytakes && (movemask & (friendly | enemy)) == 0){
 					board.piece[wknight + coloffset] = withoutpiece | movemask; 
-					(*attackedsquares) |= movemask;
+					//~ (*attackedsquares) |= movemask;
 					if (!bitInCheck(board, tomove)) {
 						hashPieceIO(&board, i - sout + 2*east, wknight + coloffset);
 						legalmoves[*array_index] = board;
@@ -649,7 +649,7 @@ static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard b
 				if ((movemask & enemy) && onlytakes){
 					deletePiece(&board, movemask, start, start + bking, rank - 1, file - 2);
 					board.piece[wknight + coloffset] = withoutpiece | movemask; 
-					(*attackedsquares) |= movemask;
+					//~ (*attackedsquares) |= movemask;
 					if (!bitInCheck(board, tomove)) {
 						hashPieceIO(&board, i - sout - 2*west, wknight + coloffset);
 						legalmoves[*array_index] = board;
@@ -658,7 +658,7 @@ static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard b
 				}
 				if (!onlytakes && (movemask & (friendly | enemy)) == 0){
 					board.piece[wknight + coloffset] = withoutpiece | movemask; 
-					(*attackedsquares) |= movemask;
+					//~ (*attackedsquares) |= movemask;
 					if (!bitInCheck(board, tomove)) {
 						hashPieceIO(&board, i - sout - 2*west, wknight + coloffset);
 						legalmoves[*array_index] = board;
@@ -672,7 +672,7 @@ static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard b
 				if ((movemask & enemy) && onlytakes){
 					deletePiece(&board, movemask, start, start + bking, rank - 2, file + 1);
 					board.piece[wknight + coloffset] = withoutpiece | movemask; 
-					(*attackedsquares) |= movemask;
+					//~ (*attackedsquares) |= movemask;
 					if (!bitInCheck(board, tomove)) {
 						hashPieceIO(&board, i - 2*sout + east, wknight + coloffset);
 						legalmoves[*array_index] = board;
@@ -681,7 +681,7 @@ static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard b
 				}
 				if (!onlytakes && (movemask & (friendly | enemy)) == 0){
 					board.piece[wknight + coloffset] = withoutpiece | movemask; 
-					(*attackedsquares) |= movemask;
+					//~ (*attackedsquares) |= movemask;
 					if (!bitInCheck(board, tomove)) {
 						hashPieceIO(&board, i - 2*sout + east, wknight + coloffset);
 						legalmoves[*array_index] = board;
@@ -695,7 +695,7 @@ static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard b
 				if ((movemask & enemy) && onlytakes){
 					deletePiece(&board, movemask, start, start + bking, rank - 2, file - 1);
 					board.piece[wknight + coloffset] = withoutpiece | movemask; 
-					(*attackedsquares) |= movemask;
+					//~ (*attackedsquares) |= movemask;
 					if (!bitInCheck(board, tomove)) {
 						hashPieceIO(&board, i - (sout * 2 + west), wknight + coloffset);
 						legalmoves[*array_index] = board;
@@ -704,7 +704,7 @@ static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard b
 				}
 				if (!onlytakes && (movemask & (friendly | enemy)) == 0){
 					board.piece[wknight + coloffset] = withoutpiece | movemask; 
-					(*attackedsquares) |= movemask;
+					//~ (*attackedsquares) |= movemask;
 					if (!bitInCheck(board, tomove)) {
 						hashPieceIO(&board, i - (sout * 2 + west), wknight + coloffset);
 						legalmoves[*array_index] = board;
@@ -719,7 +719,7 @@ static void addBitKnightMoves(bitboard *legalmoves, int *array_index, bitboard b
 	}
 }
 
-static void addBitPawnMoves(bitboard *legalmoves, int *array_index, bitboard board, bool tomove, bool onlytakes, u64 *attackedsquares, u64 enemy, u64 friendly){	
+static void addBitPawnMoves(bitboard *legalmoves, int *array_index, bitboard board, bool tomove, bool onlytakes, u64 enemy, u64 friendly){	
 	hashTomoveIO(&board);
 	bitboard copy = board;
 	u64 piecemask = 1;
@@ -777,7 +777,7 @@ static void addBitPawnMoves(bitboard *legalmoves, int *array_index, bitboard boa
 				}
 				board = copy;
 				if (rank < 6 && file > 0 && onlytakes){ //takes west
-					(*attackedsquares) |= (movemask << noWe); 
+					//~ (*attackedsquares) |= (movemask << noWe); 
 					if ((movemask << noWe) & enemy){
 						board.piece[wpawn] = withoutpiece | (movemask << noWe); 
 						hashEnPassantIO(&board, 8);
@@ -792,7 +792,7 @@ static void addBitPawnMoves(bitboard *legalmoves, int *array_index, bitboard boa
 				}
 				board = copy;
 				if (rank < 6 && file < 7 && onlytakes){ //takes east
-					(*attackedsquares) |= (movemask << noEa); 
+					//~ (*attackedsquares) |= (movemask << noEa); 
 					if ((movemask << noEa) & enemy){
 						board.piece[wpawn] = withoutpiece | (movemask << noEa); 
 						hashEnPassantIO(&board, 8);
@@ -807,7 +807,7 @@ static void addBitPawnMoves(bitboard *legalmoves, int *array_index, bitboard boa
 				}
 				board = copy;
 				if (rank == 6 && file > 0 && onlytakes){ //takes west and promotes
-					(*attackedsquares) |= (movemask << noWe); 
+					//~ (*attackedsquares) |= (movemask << noWe); 
 					if ((movemask << noWe) & enemy){
 						board.piece[wpawn] = withoutpiece; 
 						hashEnPassantIO(&board, 8);
@@ -827,7 +827,7 @@ static void addBitPawnMoves(bitboard *legalmoves, int *array_index, bitboard boa
 				}
 				board = copy;
 				if (rank == 6 && file < 7 && onlytakes){ //takes east and promotes
-					(*attackedsquares) |= (movemask << noEa); 
+					//~ (*attackedsquares) |= (movemask << noEa); 
 					if ((movemask << noEa) & enemy){
 						board.piece[wpawn] = withoutpiece; 
 						hashEnPassantIO(&board, 8);
@@ -910,7 +910,7 @@ static void addBitPawnMoves(bitboard *legalmoves, int *array_index, bitboard boa
 				}
 				board = copy;
 				if (rank > 1 && file > 0 && onlytakes){ //takes west
-					(*attackedsquares) |= (movemask >> soWe); 
+					//~ (*attackedsquares) |= (movemask >> soWe); 
 					if ((movemask >> soWe) & enemy){
 						board.piece[bpawn] = withoutpiece | (movemask >> soWe); 
 						hashEnPassantIO(&board, 8);
@@ -925,7 +925,7 @@ static void addBitPawnMoves(bitboard *legalmoves, int *array_index, bitboard boa
 				}
 				board = copy;
 				if (rank > 1 && file < 7 && onlytakes){ //takes east
-					(*attackedsquares) |= (movemask >> soEa); 
+					//~ (*attackedsquares) |= (movemask >> soEa); 
 					if ((movemask >> soEa) & enemy){
 						board.piece[bpawn] = withoutpiece | (movemask >> soEa); 
 						hashEnPassantIO(&board, 8);
@@ -940,7 +940,7 @@ static void addBitPawnMoves(bitboard *legalmoves, int *array_index, bitboard boa
 				}
 				board = copy;
 				if (rank == 1 && file > 0 && onlytakes){ //takes west and promotes
-					(*attackedsquares) |= (movemask >> soWe); 
+					//~ (*attackedsquares) |= (movemask >> soWe); 
 					if ((movemask >> soWe) & enemy){
 						board.piece[bpawn] = withoutpiece; 
 						hashEnPassantIO(&board, 8);
@@ -960,7 +960,7 @@ static void addBitPawnMoves(bitboard *legalmoves, int *array_index, bitboard boa
 				}
 				board = copy;
 				if (rank == 1 && file < 7 && onlytakes){ //takes east and promotes
-					(*attackedsquares) |= (movemask >> soEa); 
+					//~ (*attackedsquares) |= (movemask >> soEa); 
 					if ((movemask >> soEa) & enemy){
 						board.piece[bpawn] = withoutpiece; 
 						hashEnPassantIO(&board, 8);
@@ -1011,7 +1011,7 @@ static void addBitPawnMoves(bitboard *legalmoves, int *array_index, bitboard boa
 }
 
 
-static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard board, bool tomove, bool onlytakes, u64 *attackedsquares, u64 enemy, u64 friendly){
+static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard board, bool tomove, bool onlytakes, u64 enemy, u64 friendly){
 	#define wkingside 1
 	#define wqueenside 2
 	#define bkingside 4
@@ -1041,7 +1041,7 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 		if (onlytakes && ((piecemask << noWe) & enemy)){
 			deletePiece(&board, (piecemask << noWe), start, start + bking, rank + 1, file - 1);
 			board.piece[wking + coloffset] = withoutpiece | (piecemask << noWe); 
-			(*attackedsquares) |= (piecemask << noWe);
+			//~ (*attackedsquares) |= (piecemask << noWe);
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i + noWe, wking + coloffset); hashCastleO(&board, tomove == white ? 0 : 2); hashCastleO(&board, tomove == white ? 1 : 3);
 				board.castlerights &= (~ (3 << (tomove == white ? 0 : 2)));
@@ -1052,7 +1052,7 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 		}
 		if (!onlytakes && ((piecemask << noWe) & enemy) == 0){
 			board.piece[wking + coloffset] = withoutpiece | (piecemask << noWe); 
-			(*attackedsquares) |= (piecemask << noWe);
+			//~ (*attackedsquares) |= (piecemask << noWe);
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i + noWe, wking + coloffset); hashCastleO(&board, tomove == white ? 0 : 2); hashCastleO(&board, tomove == white ? 1 : 3);
 				board.castlerights &= (~ (3 << (tomove == white ? 0 : 2)));
@@ -1066,7 +1066,7 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 		if (onlytakes && ((piecemask << nort) & enemy)){
 			deletePiece(&board, (piecemask << nort), start, start + bking, rank + 1, file);
 			board.piece[wking + coloffset] = withoutpiece | (piecemask << nort); 
-			(*attackedsquares) |= (piecemask << nort);
+			//~ (*attackedsquares) |= (piecemask << nort);
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i + nort, wking + coloffset); hashCastleO(&board, tomove == white ? 0 : 2); hashCastleO(&board, tomove == white ? 1 : 3);
 				board.castlerights &= (~ (3 << (tomove == white ? 0 : 2)));
@@ -1077,7 +1077,7 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 		}
 		if (!onlytakes && ((piecemask << nort) & enemy) == 0){
 			board.piece[wking + coloffset] = withoutpiece | (piecemask << nort); 
-			(*attackedsquares) |= (piecemask << nort);
+			//~ (*attackedsquares) |= (piecemask << nort);
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i + nort, wking + coloffset);hashCastleO(&board, tomove == white ? 0 : 2); hashCastleO(&board, tomove == white ? 1 : 3);
 				board.castlerights &= (~ (3 << (tomove == white ? 0 : 2)));
@@ -1091,7 +1091,7 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 		if (onlytakes && ((piecemask << noEa) & enemy)){
 			deletePiece(&board, (piecemask << noEa), start, start + bking, rank + 1, file + 1);
 			board.piece[wking + coloffset] = withoutpiece | (piecemask << noEa); 
-			(*attackedsquares) |= (piecemask << noEa);
+			//~ (*attackedsquares) |= (piecemask << noEa);
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i + noEa, wking + coloffset); hashCastleO(&board, tomove == white ? 0 : 2); hashCastleO(&board, tomove == white ? 1 : 3);
 				board.castlerights &= (~ (3 << (tomove == white ? 0 : 2)));
@@ -1102,7 +1102,7 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 		}
 		if (!onlytakes && ((piecemask << noEa) & enemy) == 0){
 			board.piece[wking + coloffset] = withoutpiece | (piecemask << noEa); 
-			(*attackedsquares) |= (piecemask << noEa);
+			//~ (*attackedsquares) |= (piecemask << noEa);
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i + noEa, wking + coloffset); hashCastleO(&board, tomove == white ? 0 : 2); hashCastleO(&board, tomove == white ? 1 : 3);
 				board.castlerights &= (~ (3 << (tomove == white ? 0 : 2)));
@@ -1117,7 +1117,7 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 		if (onlytakes && ((piecemask >> soWe) & enemy)){
 			deletePiece(&board, (piecemask >> soWe), start, start + bking, rank - 1, file -1);
 			board.piece[wking + coloffset] = withoutpiece | (piecemask >> soWe); 
-			(*attackedsquares) |= (piecemask >> soWe);
+			//~ (*attackedsquares) |= (piecemask >> soWe);
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i - soWe, wking + coloffset); hashCastleO(&board, tomove == white ? 0 : 2); hashCastleO(&board, tomove == white ? 1 : 3);
 				board.castlerights &= (~ (3 << (tomove == white ? 0 : 2)));
@@ -1128,7 +1128,7 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 		}
 		if (!onlytakes && ((piecemask >> soWe) & enemy) == 0){
 			board.piece[wking + coloffset] = withoutpiece | (piecemask >> soWe); 
-			(*attackedsquares) |= (piecemask >> soWe);
+			//~ (*attackedsquares) |= (piecemask >> soWe);
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i - soWe, wking + coloffset); hashCastleO(&board, tomove == white ? 0 : 2); hashCastleO(&board, tomove == white ? 1 : 3);
 				board.castlerights &= (~ (3 << (tomove == white ? 0 : 2)));
@@ -1143,7 +1143,7 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 		if (onlytakes && ((piecemask >> sout) & enemy)){
 			deletePiece(&board, (piecemask >> sout), start, start + bking, rank - 1, file);
 			board.piece[wking + coloffset] = withoutpiece | (piecemask >> sout); 
-			(*attackedsquares) |= (piecemask >> sout);
+			//~ (*attackedsquares) |= (piecemask >> sout);
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i - sout, wking + coloffset); hashCastleO(&board, tomove == white ? 0 : 2); hashCastleO(&board, tomove == white ? 1 : 3);
 				board.castlerights &= (~ (3 << (tomove == white ? 0 : 2)));
@@ -1154,7 +1154,7 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 		}
 		if (!onlytakes && ((piecemask >> sout) & enemy) == 0){
 			board.piece[wking + coloffset] = withoutpiece | (piecemask >> sout); 
-			(*attackedsquares) |= (piecemask >> sout);
+			//~ (*attackedsquares) |= (piecemask >> sout);
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i - sout, wking + coloffset); hashCastleO(&board, tomove == white ? 0 : 2); hashCastleO(&board, tomove == white ? 1 : 3);
 				board.castlerights &= (~ (3 << (tomove == white ? 0 : 2)));
@@ -1168,7 +1168,7 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 		if (onlytakes && ((piecemask >> soEa) & enemy)){
 			deletePiece(&board, (piecemask >> soEa), start, start + bking, rank - 1, file + 1);
 			board.piece[wking + coloffset] = withoutpiece | (piecemask >> soEa); 
-			(*attackedsquares) |= (piecemask >> soEa);
+			//~ (*attackedsquares) |= (piecemask >> soEa);
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i - soEa, wking + coloffset); hashCastleO(&board, tomove == white ? 0 : 2); hashCastleO(&board, tomove == white ? 1 : 3);
 				board.castlerights &= (~ (3 << (tomove == white ? 0 : 2)));
@@ -1179,7 +1179,7 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 		}
 		if (!onlytakes && ((piecemask >> soEa) & enemy) == 0){
 			board.piece[wking + coloffset] = withoutpiece | (piecemask >> soEa); 
-			(*attackedsquares) |= (piecemask >> soEa);
+			//~ (*attackedsquares) |= (piecemask >> soEa);
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i - soEa, wking + coloffset); hashCastleO(&board, tomove == white ? 0 : 2); hashCastleO(&board, tomove == white ? 1 : 3);
 				board.castlerights &= (~ (3 << (tomove == white ? 0 : 2)));
@@ -1194,7 +1194,7 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 		if (onlytakes && ((piecemask << east) & enemy)){
 			deletePiece(&board, (piecemask << east), start, start + bking, rank, file + 1);
 			board.piece[wking + coloffset] = withoutpiece | (piecemask << east); 
-			(*attackedsquares) |= (piecemask << east);
+			//~ (*attackedsquares) |= (piecemask << east);
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i + east, wking + coloffset); hashCastleO(&board, tomove == white ? 0 : 2); hashCastleO(&board, tomove == white ? 1 : 3);
 				board.castlerights &= (~ (3 << (tomove == white ? 0 : 2)));
@@ -1205,7 +1205,7 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 		}
 		if (!onlytakes && ((piecemask << east) & enemy) == 0){
 			board.piece[wking + coloffset] = withoutpiece | (piecemask << east); 
-			(*attackedsquares) |= (piecemask << east);
+			//~ (*attackedsquares) |= (piecemask << east);
 			bool castleallow = false;
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i + east, wking + coloffset); hashCastleO(&board, tomove == white ? 0 : 2); hashCastleO(&board, tomove == white ? 1 : 3);
@@ -1241,7 +1241,7 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 		if (onlytakes && ((piecemask >> west) & enemy)){
 			deletePiece(&board, (piecemask >> west), start, start + bking, rank, file - 1);
 			board.piece[wking + coloffset] = withoutpiece | (piecemask >> west); 
-			(*attackedsquares) |= (piecemask >> west);
+			//~ (*attackedsquares) |= (piecemask >> west);
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i - west, wking + coloffset); hashCastleO(&board, tomove == white ? 0 : 2); hashCastleO(&board, tomove == white ? 1 : 3);
 				board.castlerights &= (~ (3 << (tomove == white ? 0 : 2)));
@@ -1252,7 +1252,7 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 		}
 		if (!onlytakes && ((piecemask >> west) & enemy) == 0){
 			board.piece[wking + coloffset] = withoutpiece | (piecemask >> west); 
-			(*attackedsquares) |= (piecemask >> west);
+			//~ (*attackedsquares) |= (piecemask >> west);
 			bool castleallow = false;
 			if (!bitInCheck(board, tomove)) {
 				hashPieceIO(&board, i - west, wking + coloffset); hashCastleO(&board, tomove == white ? 0 : 2); hashCastleO(&board, tomove == white ? 1 : 3);
@@ -1285,49 +1285,50 @@ static void addBitKingMoves(bitboard *legalmoves, int *array_index, bitboard boa
 }
 
 
-void bitGenerateLegalmoves(move_array* moves, bitboard board, bool tomove, u64 *attackedsquares, bool onlytakes){
+void bitGenerateLegalmoves(movearray* moves, bitboard board, bool tomove, bool onlytakes){
 	u64 enemy = enemypieces(board, !tomove); 
 	u64 friendly = enemypieces(board, tomove);
+
 	//~ printBitBoard2d(board);
 	
 	bitboard* legalmoves = moves->boards;
 	moves->size = 0;
 
-	addBitPawnMoves(legalmoves, &moves->size, board, tomove, true, attackedsquares, enemy, friendly);
-	addBitKnightMoves(legalmoves, &moves->size, board, tomove, true, attackedsquares, enemy, friendly);
-	addBitSlidingMoves(legalmoves, &moves->size, board, tomove, true, attackedsquares, enemy, friendly);
-	addBitKingMoves(legalmoves, &moves->size, board, tomove, true, attackedsquares, enemy, friendly);
+	addBitPawnMoves(legalmoves, &moves->size, board, tomove, true, enemy, friendly);
+	addBitKnightMoves(legalmoves, &moves->size, board, tomove, true, enemy, friendly);
+	addBitSlidingMoves(legalmoves, &moves->size, board, tomove, true, enemy, friendly);
+	addBitKingMoves(legalmoves, &moves->size, board, tomove, true, enemy, friendly);
 	
 	if (onlytakes) return;
 	
-	addBitSlidingMoves(legalmoves, &moves->size, board, tomove, false, attackedsquares, enemy, friendly);
-	addBitKnightMoves(legalmoves, &moves->size, board, tomove, false, attackedsquares, enemy, friendly);
-	addBitPawnMoves(legalmoves, &moves->size, board, tomove, false, attackedsquares, enemy, friendly);/**/
-	addBitKingMoves(legalmoves, &moves->size, board, tomove, false, attackedsquares, enemy, friendly);
+	addBitSlidingMoves(legalmoves, &moves->size, board, tomove, false, enemy, friendly);
+	addBitKnightMoves(legalmoves, &moves->size, board, tomove, false, enemy, friendly);
+	addBitPawnMoves(legalmoves, &moves->size, board, tomove, false, enemy, friendly);/**/
+	addBitKingMoves(legalmoves, &moves->size, board, tomove, false, enemy, friendly);
 }
 
 resultconst gameend(bitboard board, bool tomove){
 	u64 enemy = enemypieces(board, !tomove); 
 	u64 friendly = enemypieces(board, tomove);
-	u64 attackedsquares = 0;
+	
 	bitboard legalmoves[MAXMOVECOUNT_INPOS];
 	int array_index = 0;
 	
-	addBitKingMoves(legalmoves, &array_index, board, tomove, true, &attackedsquares, enemy, friendly);
+	addBitKingMoves(legalmoves, &array_index, board, tomove, true, enemy, friendly);
 	if (array_index != 0) return ongoing;
-	addBitKingMoves(legalmoves, &array_index, board, tomove, false, &attackedsquares, enemy, friendly);
+	addBitKingMoves(legalmoves, &array_index, board, tomove, false, enemy, friendly);
 	if (array_index != 0) return ongoing;
-	addBitSlidingMoves(legalmoves, &array_index, board, tomove, true, &attackedsquares, enemy, friendly);
+	addBitSlidingMoves(legalmoves, &array_index, board, tomove, true, enemy, friendly);
 	if (array_index != 0) return ongoing;
-	addBitSlidingMoves(legalmoves, &array_index, board, tomove, false, &attackedsquares, enemy, friendly);
+	addBitSlidingMoves(legalmoves, &array_index, board, tomove, false, enemy, friendly);
 	if (array_index != 0) return ongoing;
-	addBitKnightMoves(legalmoves, &array_index, board, tomove, true, &attackedsquares, enemy, friendly);
+	addBitKnightMoves(legalmoves, &array_index, board, tomove, true, enemy, friendly);
 	if (array_index != 0) return ongoing;
-	addBitKnightMoves(legalmoves, &array_index, board, tomove, false, &attackedsquares, enemy, friendly);
+	addBitKnightMoves(legalmoves, &array_index, board, tomove, false, enemy, friendly);
 	if (array_index != 0) return ongoing;
-	addBitPawnMoves(legalmoves, &array_index, board, tomove, false, &attackedsquares, enemy, friendly);
+	addBitPawnMoves(legalmoves, &array_index, board, tomove, false, enemy, friendly);
 	if (array_index != 0) return ongoing;
-	addBitPawnMoves(legalmoves, &array_index, board, tomove, true, &attackedsquares, enemy, friendly);
+	addBitPawnMoves(legalmoves, &array_index, board, tomove, true, enemy, friendly);
 	if (array_index != 0) return ongoing;
 	
 	if (bitInCheck(board, tomove)) return (tomove == white ? blackwon : whitewon);

@@ -25,7 +25,7 @@
 
 bool bitInCheck(bitboard board, bool tomove);
 
-void bitGenerateLegalmoves(move_array* moves, bitboard board, bool tomove, u64 *attackedsquares, bool onlytakes);
+void bitGenerateLegalmoves(movearray* moves, bitboard board, bool tomove, bool onlytakes);
 
 resultconst gameend(bitboard board, bool tomove);
 
