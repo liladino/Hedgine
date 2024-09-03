@@ -1,9 +1,33 @@
 #include "hash.h"
 
-#define TableSizeMB 16
-const int TableSize =            (TableSizeMB * 1024 * 1024 / sizeof(hashentry))	;
-hashentry TranspositionTable    [(TableSizeMB * 1024 * 1024 / sizeof(hashentry))]	;
+int TableSizeMB = 0;
+int TableSize = 0;
+hashentry* TranspositionTable = NULL;
 
+hashentry* allocTransTable(const int sizeInMB){
+	TableSizeMB = sizeInMB;
+	TableSize = TableSizeMB * 1024 * 1024 / sizeof(hashentry);	
+	if (sizeInMB == 0){
+		TableSize++;
+	}
+	TranspositionTable = malloc( TableSize * sizeof(hashentry) );
+	
+	if (TranspositionTable == NULL) return NULL;
+	
+	for (int i = 0; i < TableSize; i++){
+		TranspositionTable[i].pos = 0;
+	}
+	
+	return TranspositionTable;
+}
+
+void freeTransTable(){
+	if (TranspositionTable != NULL){
+		free(TranspositionTable);
+	}
+	
+	TableSize = TableSizeMB = 0;
+}
 
 typedef struct key{
 	u64 squares[64][12]; //12 pieces
@@ -70,6 +94,7 @@ void setHashKey(){
 		Zobrist.enpassantfile[i] = rand64();
 	}
 	Zobrist.tomove = rand64();
+	
 #ifdef DEBUG 
 	#define endl printf("\n")
 	printf("%d MB, %d", TableSizeMB, TableSize);

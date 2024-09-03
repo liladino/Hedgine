@@ -7,7 +7,7 @@ void printmove(move m) {
 
 /* kiirja a tablat egyszeru szovegkent, egyszeru karakterekkel,
  * ha a megjelenites alapbol rossz, ez valoszinuleg mukodik.*/
-void printboard_letters(char board[12][12]){
+void printboardLetters(char board[12][12]){
 	printf("|");
 	for (int j = 2; j < 9; j++){
 		printf("---+");
@@ -30,7 +30,7 @@ void printboard_letters(char board[12][12]){
 void printBitBoard2d(bitboard bboard){
 	char board[12][12];
 	boardConvertBack(board, bboard);
-	printboard_letters(board);
+	printboardLetters(board);
 }
 
 void printBitBoard(bitboard board){

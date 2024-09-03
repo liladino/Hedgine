@@ -147,4 +147,12 @@ typedef struct hashentry{
 	//move m;
 }hashentry;
 
+typedef struct gameInfo{
+	long int startTime;
+	bool timeControl;
+	bool quit;
+	int moveTime;
+}gameInfo;
+
+
 #endif

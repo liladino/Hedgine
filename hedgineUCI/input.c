@@ -21,7 +21,8 @@ size_t getLine(char** str, const size_t maxSize){
 		}
 		else{
 			if (succesfullyRead == 0 && isspace(c)) {
-				continue; //start reading the line after whitespaces are gone
+				if (c == '\n') c = 0;
+				else continue; //start reading the line after whitespaces are gone
 			}
 			
 			if (c == '\n' || maxSize == size + succesfullyRead){
@@ -86,7 +87,8 @@ move readLongAlgebraicNotation(char str[]){
 
 // FEN stuff
 
-int setboardFEN(char FEN[], char board[12][12], bool *tomove, int castling[], squarenums *enpass, int *fmv, int *movenum){ 
+int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int castling[], squarenums *enpass, int *fmv, int *movenum){ 
+	char board[12][12] = {0};
 	//startallas: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 	for (int i = 0; i < 12; i++){
 		for (int j = 0; j < 12; j++){
@@ -110,7 +112,7 @@ int setboardFEN(char FEN[], char board[12][12], bool *tomove, int castling[], sq
 					return 1;
 				}
 				board[rank][file] = ' ';
-			//	printboard_letters(board);
+			//	printboardLetters(board);
 				file++;
 			}
 			file--;
@@ -121,7 +123,7 @@ int setboardFEN(char FEN[], char board[12][12], bool *tomove, int castling[], sq
 				return 1;
 			}
 			board[rank][file] = FEN[i];
-		//	printboard_letters(board);
+		//	printboardLetters(board);
 		}
 		else if (FEN[i] == ' '){
 			boardread = false;
@@ -245,6 +247,9 @@ int setboardFEN(char FEN[], char board[12][12], bool *tomove, int castling[], sq
 		*movenum = 0; 
 	}
 	free(metadata);
+	
+	(*bboard) = boardConvert(board, castling, *enpass, tomove);
+	
 	return 0;
 }
 

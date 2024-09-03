@@ -329,11 +329,7 @@ u64 nextp; //next position
 int maxdepth;
 int absoluteMaxDepth = MAXSEARCHDEPTH;
 
-volatile sig_atomic_t stopSearchingRecieved = false;
-
-void handle(/*int sig*/){
-	stopSearchingRecieved = true;
-}
+bool stopSearch = false;
 
 static int capturesearch(bitboard board, bool tomove, int alpha, int beta){
 	int eval = fulleval(board, tomove);
@@ -367,8 +363,25 @@ void printLegalmoves(movearray legalmoves, bitboard board, bool tomove){
 }
 #endif
 
+void communicate() {
+	// if time is up break here
+	if(info.timeControl == true && getTimems()-info.startTime > info.moveTime) {
+		// tell engine to stop calculating
+		stopSearch = true;
+	}
+	
+	// read GUI input
+	readInput();
+}
+
+unsigned int searchedNodes;
+
 int search(bitboard board, bool tomove, int depth, int alpha, int beta){
-	if (stopSearchingRecieved) {
+	searchedNodes++;
+	if (searchedNodes % 2011 == 0){
+		communicate();
+	}	
+	if (stopSearch) {
 		return 0;
 	}
 	
@@ -407,7 +420,7 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	for (int i = 0; i < legalmoves.size; i++){
 		eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
 		
-		if (stopSearchingRecieved) {
+		if (stopSearch) {
 			for (int i = depth; i < maxdepth; i++){
 				PV[depth][i] = PV[depth + 1][i];
 				PVhash[depth][i+1] = PVhash[depth + 1][i+1];
@@ -453,14 +466,9 @@ move engine(bitboard board, bool tomove){
 		PVhash[0][i] = 0;
 	}
 
-	static bool installed = false; 
-	if (!installed) {
-		signal(SIGALRM, handle);
-		installed = true;
-	}
 	
-	stopSearchingRecieved = false;
-	alarm(2);
+	stopSearch = false;
+	info.startTime = getTimems();
 	
 	int i;
 	for (i = 1; i < absoluteMaxDepth + 1; i++){
@@ -478,22 +486,24 @@ move engine(bitboard board, bool tomove){
 		
 		storePos(nextp, temp, lastBest, maxdepth);
 		
-		//~ #ifdef DEBUG
+		#ifdef DEBUG
 		printf("depth %d\n", i);
 		movearray legalmoves;
 		bitGenerateLegalmoves(&legalmoves, board, tomove, false);		
 		orderMoves(&legalmoves);
 		printmove(boardConvertTomove(board, legalmoves.boards[0], tomove));
 		printHashEntry(legalmoves.boards[0].hashValue);	
-		for (int j = 0; j < i && PV[0][j].from.rank != -1 && !stopSearchingRecieved; j++){
+		#endif
+		
+		for (int j = 0; j < i && PV[0][j].from.rank != -1 && !stopSearch; j++){
 			printmove(PV[0][j]);
 		}
 		printf("\n");
-		//~ #endif
+		
 		
 		if (PV[0][0].from.rank != -1) nextm = PV[0][0];
 		
-		if (stopSearchingRecieved){
+		if (stopSearch){
 			#ifdef DEBUG
 			printf("stopped\n\n");
 			#endif
@@ -529,10 +539,10 @@ move engine(bitboard board, bool tomove){
 
 /* felhasznalo kivalasztja, hogy milyen erossegu sakkmotorral gondolkozzon a 
  * program, es ez visszaad a megfelelo erosseggel egy lepest*/
-move CPU(int cpulvl, char board[12][12], bool tomove, int castling[4], squarenums enpass){
+move CPU(int cpulvl, bitboard bboard, bool tomove){
 	squarenums start = {-1, -1};
 	move m = initializemove(start, start, 0);
-	bitboard bboard = boardConvert(board, castling, enpass, tomove);
+	//~ bitboard bboard = boardConvert(board, castling, enpass, tomove);
 
 	//Engine depth should be determined by the maximum depth it can reach or the thinking time
 	//i'm thinking max depth is slightly more reasonable
@@ -544,6 +554,14 @@ move CPU(int cpulvl, char board[12][12], bool tomove, int castling[4], squarenum
 			break;
 		case 1: 
 			absoluteMaxDepth = 2;
+			m = engine(bboard, tomove);	
+			break;
+		case 2: 
+			absoluteMaxDepth = 4;
+			m = engine(bboard, tomove);	
+			break;
+		case 3: 
+			absoluteMaxDepth = 6;
 			m = engine(bboard, tomove);	
 			break;
 		default: 

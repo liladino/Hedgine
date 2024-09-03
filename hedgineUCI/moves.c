@@ -130,7 +130,7 @@ int countmoves(movelist *head) {
  * however out of convinience ill call them moves, because they are technically moves 
  * */
  
-int isMoveLegal(const bitboard* board, const movearray* legalmoves, const bool tomove, const move m){
+int isMoveInMoveArray(const bitboard* board, const movearray* legalmoves, const bool tomove, const move m){
 	for (int i = 0; i < legalmoves->size; i++){
 		move curr = boardConvertTomove(*board, legalmoves->boards[i], tomove);
 		if (curr.from.file == m.from.file && curr.from.rank == m.from.rank && curr.to.file == m.to.file && curr.to.rank == m.to.rank && m.promotion == curr.promotion){
@@ -139,6 +139,25 @@ int isMoveLegal(const bitboard* board, const movearray* legalmoves, const bool t
 	}
 	return -1;
 } 
+
+int isMoveLegal(bitboard* board, const bool tomove, const move m){
+	movearray legalmoves;
+	bitGenerateLegalmoves(&legalmoves, *board, tomove, false);
+	int x = isMoveInMoveArray(board, &legalmoves, tomove, m);
+	
+	if (x == -1){
+		return 1;
+	}
+	
+	*board = legalmoves.boards[x];
+	
+	legalmoves.size = 0;
+	bitGenerateLegalmoves(&legalmoves, *board, !tomove, false);
+	
+	if (legalmoves.size == 0) return 2;
+	
+	return 0;
+}
 
 bitboard boardConvert(char board2d[12][12], int castling[4], squarenums enpass, bool tomove){
 	/*castling: [3:0] = qkQk

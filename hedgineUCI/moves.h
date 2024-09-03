@@ -33,7 +33,9 @@ void freemoves(movelist *head);
 
 //bits:
 
-int isMoveLegal(const bitboard* board, const movearray* legalmoves, const bool tomove, const move m);
+int isMoveInMoveArray(const bitboard* board, const movearray* legalmoves, const bool tomove, const move m);
+
+int isMoveLegal(bitboard* board, const bool tomove, const move m);
 
 bitboard boardConvert(char board2d[12][12], int castling[4], squarenums enpass, bool tomove);
 

@@ -22,7 +22,7 @@ enum {
     debugmalloc_tablesize = 256,
     
     /* max block size for allocation, can be modified with debugmalloc_max_block_size() */
-    debugmalloc_max_block_size_default = 1048576
+    debugmalloc_max_block_size_default = 4194304 /*default: 1 MiB = 1048576*/
 };
 
 

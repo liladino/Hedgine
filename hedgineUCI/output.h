@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-void printboard_letters(char board[12][12]);
+void printboardLetters(char board[12][12]);
 
 void printBitBoard2d(bitboard board);
 

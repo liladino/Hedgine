@@ -17,6 +17,6 @@ size_t getLine(char** str, const size_t maxSize);
 
 move readLongAlgebraicNotation(char str[]);
 
-int setboardFEN(char FEN[], char board[12][12], bool *tomove, int castling[], squarenums *enpass, int *fmv, int *movenum);
+int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int castling[], squarenums *enpass, int *fmv, int *movenum);
 
 #endif
