@@ -54,7 +54,7 @@ size_t getLine(char** str, const size_t maxSize){
 /* moves in the form of e.g. e1g1 or e7e8q
  * expects str to be at least 1 char long and ends with 0
  * */
-move readLongAlgebraicNotation(char str[]){
+move parseLongAlgebraicNotation(char str[]){
 	move nullmove = {{-1, -1}, {-1, -1}, 0};
 	move current = {{-1, -1}, {-1, -1}, 0};
 	

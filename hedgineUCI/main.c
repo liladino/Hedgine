@@ -46,7 +46,7 @@ void moveReaderTest(){
 
 	printBitBoard2d(board);
 	while (scanf("%5s", movestr) != EOF){
-		move m = readLongAlgebraicNotation(movestr);
+		move m = parseLongAlgebraicNotation(movestr);
 		
 		int x = isMoveLegal(&board, tomove, m);
 		if (x == 1){
@@ -69,7 +69,7 @@ void LANTester(){
 	char movestr[5] = {0};
 	scanf("%5s", movestr);
 
-	move m = readLongAlgebraicNotation(movestr);
+	move m = parseLongAlgebraicNotation(movestr);
 	printmove(m);
 }
 
