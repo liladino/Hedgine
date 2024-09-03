@@ -1,3 +1,8 @@
+Date:   Sep 03 2024
+	UCI:
+		Some stuff now works, mainly the milisec specified thinking time, and the stop command. Forked the functions
+		from BBC by Code Monkey King & VICE by bluefeversoft. 
+
 Date:   Aug 31 2024
 	Hedgine:
 		separated into a new program. Goal is to be UCI compatible, and to be used with e.g. PyChess, or any other programs.
