@@ -2,10 +2,10 @@
 
 
 int main(){
+	long int runTime = getTime_ms();
+	
 	initializeAll();
 	
-	
-	long int engineTime = getTime_ms();
 	bool tomove = white;
 	int movenum = 1, fmv = 0; //fifty-move rule
 	
@@ -14,24 +14,29 @@ int main(){
 	//~ readFEN(&board, &tomove, &fmv, &movenum);
 	
 	char *input = NULL;
-	getLineDynamic(&input, 200);
+	getLineDynamic(&input, 1000);
 	
-	
-	//   position startpos moves e2e4 e7e5 g1f3
 	//   position fen rnbqkbnr/ppp2ppp/4p3/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3 moves e5d6
-	parsePosition(input, &board, &tomove, &fmv, &movenum);
+	//   position startpos moves d2d4
+	//   go movetime 1000
 	
+	parsePosition(input, &board, &tomove, &fmv, &movenum);
 	free(input);
+	input = NULL;
+	
+	getLineDynamic(&input, 1000);
+	
+	parseGo(input, &board, &tomove);
+	free(input);
+	
 	//main uci loop
 	//~ UCIloop();
 	
 	//~ moveReaderTest();
-	
-	CPU(4, board, white);
-	
+		
 	freeTransTable();
 	
-	printf("runtime: %ld\n", getTime_ms() - engineTime);
+	printf("runtime: %ld\n", getTime_ms() - runTime);
 	
 	return 0;
 }

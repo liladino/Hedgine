@@ -84,114 +84,75 @@ void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* 
 		}		
 	}
 	
-	// print board
+	#ifdef DEBUG
+	printf("tomove: %d\tfifty move count: %d\tmove num: %d\n", *tomove, *fmv, *movenum);
 	printBitBoard2d(*board);
+	#endif
 }
 
 // reset time control variables
 void resetTimeControl(){
-	info.engineTime = 2000;
-	info.timeControl = false;
-	info.moveTime = 1000;
+	info.timeControl = true;
+	info.moveTime = 1234;
 }
 
-//~ // parse UCI command "go"
-//~ void parse_go(char *command)
-//~ {
-	//~ // reset time control
-	//~ reset_time_control();
+// parse UCI command "go"
+void parseGo(char *command, bitboard* board, bool *tomove){
+	// reset time control
+	resetTimeControl();
+
+	// init argument
+	char *argument = NULL;
+
+	// infinite search
+	if ((argument = strstr(command,"infinite"))) {
+		info.timeControl = false;
+	}
+
+	// match UCI increments: doesn't change program behacvior at the moment
+	if ((argument = strstr(command,"binc"))) {
+		info.timeControl = true;
+	}
+	if ((argument = strstr(command,"winc"))) {
+		info.timeControl = true;
+	}
 	
-	//~ // init parameters
-	//~ int depth = -1;
+	
+	if ((argument = strstr(command,"wtime")) && *tomove == white) {
+		setMoveTime();
+		info.timeControl = true;
+	}
 
-	//~ // init argument
-	//~ char *argument = NULL;
+	if ((argument = strstr(command,"btime")) && *tomove == black) {
+		setMoveTime();
+		info.timeControl = true;
+	}
 
-	//~ // infinite search
-	//~ if ((argument = strstr(command,"infinite"))) {}
 
-	//~ // match UCI "binc" command
-	//~ if ((argument = strstr(command,"binc")) && side == black)
-		//~ // parse black time increment
-		//~ inc = atoi(argument + 5);
+	if ((argument = strstr(command,"movestogo"))){
+		info.timeControl = true;
+	}
 
-	//~ // match UCI "winc" command
-	//~ if ((argument = strstr(command,"winc")) && side == white)
-		//~ // parse white time increment
-		//~ inc = atoi(argument + 5);
+	if ((argument = strstr(command,"movetime"))) {
+		info.timeControl = true;
+		info.moveTime = atoi(argument + 9);
+	}
 
-	//~ // match UCI "wtime" command
-	//~ if ((argument = strstr(command,"wtime")) && side == white)
-		//~ // parse white time limit
-		//~ time = atoi(argument + 6);
+	int cpulvl = 40;
+	if ((argument = strstr(command,"depth")))
+		// parse search depth
+		cpulvl = atoi(argument + 6);
 
-	//~ // match UCI "btime" command
-	//~ if ((argument = strstr(command,"btime")) && side == black)
-		//~ // parse black time limit
-		//~ time = atoi(argument + 6);
+	// init start time
+	info.startTime = getTime_ms();
 
-	//~ // match UCI "movestogo" command
-	//~ if ((argument = strstr(command,"movestogo")))
-		//~ // parse number of moves to go
-		//~ movestogo = atoi(argument + 10);
-
-	//~ // match UCI "movetime" command
-	//~ if ((argument = strstr(command,"movetime")))
-		//~ // parse amount of time allowed to spend to make a move
-		//~ movetime = atoi(argument + 9);
-
-	//~ // match UCI "depth" command
-	//~ if ((argument = strstr(command,"depth")))
-		//~ // parse search depth
-		//~ depth = atoi(argument + 6);
-
-	//~ // if move time is not available
-	//~ if(movetime != -1)
-	//~ {
-		//~ // set time equal to move time
-		//~ time = movetime;
-
-		//~ // set moves to go to 1
-		//~ movestogo = 1;
-	//~ }
-
-	//~ // init start time
-	//~ starttime = get_time_ms();
-
-	//~ // init search depth
-	//~ depth = depth;
-
-	//~ // if time control is available
-	//~ if(time != -1)
-	//~ {
-		//~ // flag we're playing with time control
-		//~ timeset = 1;
-
-		//~ // set up timing
-		//~ time /= movestogo;
-		
-		//~ // disable time buffer when time is almost up
-		//~ if (time > 1500) time -= 50;
-		
-		//~ // init stoptime
-		//~ stoptime = starttime + time + inc;
-		
-		//~ // treat increment as seconds per move when time is almost up
-		//~ if (time < 1500 && inc && depth == 64) stoptime = starttime + inc - 50;
-	//~ }
-
-	//~ // if depth is not available
-	//~ if(depth == -1)
-		//~ // set depth to 64 plies (takes ages to complete...)
-		//~ depth = 64;
-
-	//~ // print debug info
-	//~ printf("time: %d  start: %u  stop: %u  depth: %d  timeset:%d\n",
-			//~ time, starttime, stoptime, depth, timeset);
-
-	//~ // search position
-	//~ search_position(depth);
-//~ }
+	#ifdef DEBUG
+	// print debug info
+	printf("time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, cpulvl);
+	#endif
+	
+	CPU(cpulvl, *board, tomove);
+}
 
 
 
@@ -302,7 +263,7 @@ void initializeAll(){
 	
 	//set game info
 	info.quit = false;
-	info.moveTime = 1000;
+	info.moveTime = -1;
 	info.timeControl = false;
 
 	
@@ -371,40 +332,35 @@ int inputWaiting(){
 
 // read GUI/user input
 void readInput() {
-    // GUI/user input
-    char* input = NULL;  
-    size_t bytesRead;
+	// GUI/user input
+	char* input = NULL;  
+	size_t bytesRead;
 
-    // "listen" to STDIN
-    if (inputWaiting()) {
+	// "listen" to STDIN
+	if (inputWaiting()) {
 		//~ printf("joskapista\n");
 		
-        // Tell engine to stop calculating
-        stopSearch = true;
+		// Tell engine to stop calculating
+		stopSearch = true;
 
-        // Read input using getLineDynamic function
-        bytesRead = getLineDynamic(&input, 1000);  // Read up to 1000 bytes -> about 200 plies
-        
-        // If input is available
-        if (bytesRead > 0) {
-            // Match UCI "quit" command
-            if (!strncmp(input, "quit", 4)) {
-                // Tell engine to terminate execution    
-                stopSearch = true;
-                info.quit = true;
-            }
-            // Match UCI "stop" command
-            else if (!strncmp(input, "stop", 4)) {
-                // Tell engine to stop searching
-                stopSearch = true;
-                //~ info.quit = true;
-            }
-        }
-        
-        if (input != NULL) {
-			free(input);
-			input = NULL;
+		// Read input using getLineDynamic function
+		bytesRead = getLineDynamic(&input, 1000);  // Read up to 1000 bytes -> about 200 plies
+		
+		// If input is available
+		if (bytesRead > 0) {
+			// Match UCI "quit" command
+			if (!strncmp(input, "quit", 4)) {
+				// Tell engine to terminate execution	
+				stopSearch = true;
+				info.quit = true;
+			}
+			// Match UCI "stop" command
+			else if (!strncmp(input, "stop", 4)) {
+				// Tell engine to stop searching
+				stopSearch = true;
+				//~ info.quit = true;
+			}
 		}
-    }
+	}
 }
-
+	

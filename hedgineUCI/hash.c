@@ -216,15 +216,15 @@ int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const i
 	
 	/* Pseudocode:
 	 *  if ttEntry is valid and ttEntry.depth ≥ depth then
-        if ttEntry.flag = EXACT then
-            return ttEntry.value
-        else if ttEntry.flag = LOWERBOUND then
-            α := max(α, ttEntry.value)
-        else if ttEntry.flag = UPPERBOUND then
-            β := min(β, ttEntry.value)
+		if ttEntry.flag = EXACT then
+			return ttEntry.value
+		else if ttEntry.flag = LOWERBOUND then
+			α := max(α, ttEntry.value)
+		else if ttEntry.flag = UPPERBOUND then
+			β := min(β, ttEntry.value)
 
-        if α ≥ β then
-            return ttEntry.value
+		if α ≥ β then
+			return ttEntry.value
 	 * */
 	
 	int tempeval = current->eval; 

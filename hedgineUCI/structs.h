@@ -76,13 +76,13 @@ typedef enum piecenums{
 
 typedef enum raydir{
 	/*
-	 * noWe d4     e5 nort     f5  noEa
-	 *         +7    +8    +9
-	 *             \  |  /
+	 * noWe d4	 e5 nort	 f5  noEa
+	 *		 +7	+8	+9
+	 *			 \  |  /
 	 * west c4 -1 <- e4 -> +1  f4  east
-	 *             /  |  \
-	 *         -9    -8    -7
-	 * soWe c3     e3 sout     f3  soEa
+	 *			 /  |  \
+	 *		 -9	-8	-7
+	 * soWe c3	 e3 sout	 f3  soEa
 	 * 
 	 * */
 	 // shift dir: <<
@@ -102,8 +102,8 @@ typedef struct bitboard{
 	/* a1 = LSB
 	 * a8 b8 c8 d8 ... h8
 	 * .  .
-	 * .     .
-	 * .        .
+	 * .	 .
+	 * .		.
 	 * a1 b1 c1 d1 ... h1
 	 * => 
 	 * h8g8...h7g7f7...h1g1f1...c1b1a1 = 0000000...0000
@@ -125,8 +125,8 @@ typedef struct bitboard{
 }bitboard;
 
 typedef struct movearray{
-    bitboard boards[MAXMOVECOUNT_INPOS];
-    int size;
+	bitboard boards[MAXMOVECOUNT_INPOS];
+	int size;
 } movearray;
 
 typedef enum evalflag{
@@ -143,7 +143,7 @@ typedef struct hashentry{
 }hashentry;
 
 typedef struct gameInfo{
-	long int engineTime;
+	long int startTime;
 	bool timeControl;
 	bool quit;
 	int moveTime;

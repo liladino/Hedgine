@@ -365,7 +365,7 @@ void printLegalmoves(movearray legalmoves, bitboard board, bool tomove){
 
 void communicate() {
 	// if time is up break here
-	if(info.timeControl == true && getTime_ms()-info.engineTime > info.moveTime) {
+	if(info.timeControl == true && getTime_ms()-info.startTime > info.moveTime) {
 		// tell engine to stop calculating
 		stopSearch = true;
 	}
@@ -375,51 +375,51 @@ void communicate() {
 }
 
 void setMoveTime(){
-	if (info.engineTime <= 500){ //half a sec left
+	if (info.startTime <= 500){ //half a sec left
 		info.moveTime = 50;
 		return;
 	}
-	if (info.engineTime <= 1000){ //1 sec left
+	if (info.startTime <= 1000){ //1 sec left
 		info.moveTime = 100;
 		return;
 	}
-	if (info.engineTime <= 2000){ //2 sec left
-		info.moveTime = info.engineTime / 5; //gets down from .4 sec to .1 sec
+	if (info.startTime <= 2000){ //2 sec left
+		info.moveTime = info.startTime / 5; //gets down from .4 sec to .1 sec
 		return;
 	}
-	if (info.engineTime <= 10 * 1000){ //10 sec left
-		info.moveTime = 500 + (info.engineTime - 2000) / 16; //1 sec and gets down to half sec
+	if (info.startTime <= 10 * 1000){ //10 sec left
+		info.moveTime = 500 + (info.startTime - 2000) / 16; //1 sec and gets down to half sec
 		return;
 	}
-	if (info.engineTime <= 30 * 1000){ //30 sec left
+	if (info.startTime <= 30 * 1000){ //30 sec left
 		info.moveTime = 1500; //1.5 sec
 		return;
 	}
-	if (info.engineTime <= 60 * 1000){ //1 min left
+	if (info.startTime <= 60 * 1000){ //1 min left
 		info.moveTime = 2000; //2 sec
 		return;
 	}
-	if (info.engineTime <= 2 * 60 * 1000){ //2 min left
+	if (info.startTime <= 2 * 60 * 1000){ //2 min left
 		info.moveTime = 3000; //3 sec
 		return;
 	}
-	if (info.engineTime <= 3 * 60 * 1000){ //3 min left
+	if (info.startTime <= 3 * 60 * 1000){ //3 min left
 		info.moveTime = 4000; //4 sec
 		return;
 	}
-	if (info.engineTime <= 5 * 60 * 1000){ //5 min left
+	if (info.startTime <= 5 * 60 * 1000){ //5 min left
 		info.moveTime = 6000; 
 		return;
 	}
-	if (info.engineTime <= 10 * 60 * 1000){ //10 min left
+	if (info.startTime <= 10 * 60 * 1000){ //10 min left
 		info.moveTime = 8000; 
 		return;
 	}
-	if (info.engineTime <= 20 * 60 * 1000){ //20 min left
+	if (info.startTime <= 20 * 60 * 1000){ //20 min left
 		info.moveTime = 15000; 
 		return;
 	}
-	if (info.engineTime <= 45 * 60 * 1000){ //45 min left
+	if (info.startTime <= 45 * 60 * 1000){ //45 min left
 		info.moveTime = 30000; 
 		return;
 	}
@@ -520,7 +520,7 @@ move engine(bitboard board, bool tomove){
 
 	
 	stopSearch = false;
-	info.engineTime = getTime_ms();
+	info.startTime = getTime_ms();
 	
 	int i;
 	for (i = 1; i < absoluteMaxDepth + 1; i++){
@@ -599,27 +599,13 @@ move CPU(int cpulvl, bitboard bboard, bool tomove){
 	//Engine depth should be determined by the maximum depth it can reach or the thinking time
 	//i'm thinking max depth is slightly more reasonable
 	
-	switch(cpulvl){
-		case 0: 
-			usleep(millisec * 50);//hogy ne azonnal lepjen, nem letszukseglet
-			m = randomBot(bboard, tomove);
-			break;
-		case 1: 
-			absoluteMaxDepth = 2;
-			m = engine(bboard, tomove);	
-			break;
-		case 2: 
-			absoluteMaxDepth = 4;
-			m = engine(bboard, tomove);	
-			break;
-		case 3: 
-			absoluteMaxDepth = 6;
-			m = engine(bboard, tomove);	
-			break;
-		default: 
-			absoluteMaxDepth = 40;
-			m = engine(bboard, tomove);		
-		
+	if (cpulvl == 0){
+		usleep(millisec * 50);//hogy ne azonnal lepjen, nem letszukseglet
+		m = randomBot(bboard, tomove);
+	}	
+	else{
+		absoluteMaxDepth = (cpulvl > 40 ? 40 : cpulvl);
+		m = engine(bboard, tomove);	
 	}
 	return m;
 }

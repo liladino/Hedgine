@@ -24,6 +24,6 @@ void readInput();
 
 void parsePosition(char *command, bitboard* bboard, bool *tomove, int* fmv, int* movenum);
 
-
+void parseGo(char *command, bitboard* board, bool *tomove);
 
 #endif
