@@ -10,98 +10,90 @@ gameInfo info;
  * forked from VICE
  * by Richard Allbert
  */
+
  
-//~ // parse UCI "position" command
-//~ void parsePosition(char *command)
-//~ {
-	//~ // shift pointer to the right where next token begins
-	//~ command += 9;
+// parse UCI "position" command
+void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* movenum){
+	// init pointer to the current character in the command string
+	char *current_char = command+9;//shifted 9 from the position token 
 	
-	//~ // init pointer to the current character in the command string
-	//~ char *current_char = command;
 	
-	//~ // parse UCI "startpos" command
-	//~ if (strncmp(command, "startpos", 8) == 0)
-		//~ // init chess board with start position
-		//~ parse_fen(start_position);
-	
-	//~ // parse UCI "fen" command 
-	//~ else
-	//~ {
-		//~ // make sure "fen" command is available within command string
-		//~ current_char = strstr(command, "fen");
+	// parse UCI "startpos" command
+	if (strncmp(command+9, "startpos", 8) == 0){
+		setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", board, tomove, fmv, movenum);
+	}
+	else { // parse UCI "fen" command 
+		// make sure "fen" command is available within command string
+		current_char = strstr(command, "fen");
 		
-		//~ // if no "fen" command is available within command string
-		//~ if (current_char == NULL)
-			//~ // init chess board with start position
-			//~ parse_fen(start_position);
+		// if no "fen" command is available within command string
+		if (current_char == NULL){
+			// init chess board with start position, nothing was specified
+			setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", board, tomove, fmv, movenum);
+		}
+		else{
+			// shift pointer to the right where next token begins
+			current_char += 4;
 			
-		//~ // found "fen" substring
-		//~ else
-		//~ {
-			//~ // shift pointer to the right where next token begins
-			//~ current_char += 4;
-			
-			//~ // init chess board with position from FEN string
-			//~ parse_fen(current_char);
-		//~ }
-	//~ }
+			// init chess board with position from FEN string
+			readFEN(current_char, board, tomove, fmv, movenum);
+			#ifdef DEBUG
+			printBitBoard2d(*board);
+			#endif
+		}
+	}
 	
-	//~ // parse moves after position
-	//~ current_char = strstr(command, "moves");
+	current_char = strstr(command, "moves");
 	
-	//~ // moves available
-	//~ if (current_char != NULL)
-	//~ {
-		//~ // shift pointer to the right where next token begins
-		//~ current_char += 6;
+	// moves available
+	if (current_char != NULL){
+		// shift pointer to the right where next token begins
+		current_char += 6;
 		
-		//~ // loop over moves within a move string
-		//~ while(*current_char)
-		//~ {
-			//~ // parse next move
-			//~ int move = parse_move(current_char);
+		// loop over moves within a move string
+		while(*current_char != 0){
+			// parse next move
+			move m = parseLongAlgebraicNotation(current_char);
 			
-			//~ // if no more moves
-			//~ if (move == 0)
-				//~ // break out of the loop
-				//~ break;
+			// if no more moves
+			if (m.from.file == -1) break;
 			
-			//~ // increment repetition index
 			//~ repetition_index++;
-			
-			//~ // wtire hash key into a repetition table
 			//~ repetition_table[repetition_index] = hash_key;
 			
-			//~ // make move on the chess board
-			//~ make_move(move, all_moves);
+			// make move on the chess board
+			int x = isMoveLegal(board, *tomove, m);
+			if (x == 1){
+				//the move was illegal
+				continue;
+			}
+			else if (x == 2){
+				//no legal moves left
+				info.quit = true;
+				break;
+			}
 			
-			//~ // move current character mointer to the end of current move
-			//~ while (*current_char && *current_char != ' ') current_char++;
+			if (*tomove == black) (*movenum)++;
+			*tomove = !(*tomove);
 			
-			//~ // go to the next move
-			//~ current_char++;
-		//~ }		
-	//~ }
+			// move current character mointer to the end of current move
+			while (*current_char && *current_char != ' ') current_char++;
+			
+			// go to the next move
+			current_char++;
+		}		
+	}
 	
-	//~ // print board
-	//~ print_board();
-//~ }
+	// print board
+	printBitBoard2d(*board);
+}
 
-//~ // reset time control variables
-//~ void reset_time_control()
-//~ {
-	//~ // reset timing
-	//~ quit = 0;
-	//~ movestogo = 30;
-	//~ movetime = -1;
-	//~ time = -1;
-	//~ inc = 0;
-	//~ starttime = 0;
-	//~ stoptime = 0;
-	//~ timeset = 0;
-	//~ stopped = 0;
-//~ }
+// reset time control variables
+void resetTimeControl(){
+	info.engineTime = 2000;
+	info.timeControl = false;
+	info.moveTime = 1000;
+}
 
 //~ // parse UCI command "go"
 //~ void parse_go(char *command)
@@ -310,16 +302,16 @@ void initializeAll(){
 	
 	//set game info
 	info.quit = false;
-	info.moveTime = 1;
+	info.moveTime = 1000;
 	info.timeControl = false;
+
 	
-	
-	// init hash table with default 4 MB
-	allocTransTable(4);
+	// init hash table with default 1 MB
+	if (allocTransTable(1) == NULL) exit(1);
 }
 
 // get time in milliseconds
-long int getTimems(){
+long int getTime_ms(){
 	
 	#ifdef WIN64
 		return GetTickCount();
@@ -380,18 +372,18 @@ int inputWaiting(){
 // read GUI/user input
 void readInput() {
     // GUI/user input
-    char *input = NULL;  // Initialize to NULL for getLine()
+    char* input = NULL;  
     size_t bytesRead;
 
     // "listen" to STDIN
     if (inputWaiting()) {
-		printf("joskapista\n");
+		//~ printf("joskapista\n");
 		
         // Tell engine to stop calculating
         stopSearch = true;
 
-        // Read input using getLine function
-        bytesRead = getLine(&input, 1000);  // Read up to 1000 bytes -> about 200 plies
+        // Read input using getLineDynamic function
+        bytesRead = getLineDynamic(&input, 1000);  // Read up to 1000 bytes -> about 200 plies
         
         // If input is available
         if (bytesRead > 0) {
@@ -409,25 +401,10 @@ void readInput() {
             }
         }
         
-        // Free the dynamically allocated input string
         if (input != NULL) {
-            free(input);
-            input = NULL;
-        }
+			free(input);
+			input = NULL;
+		}
     }
 }
-
-
-//~ // a bridge function to interact between search and GUI input
-//~ void communicate() {
-	//~ // if time is up break here
-	//~ if(timeset == 1 && get_time_ms() > stoptime) {
-		//~ // tell engine to stop calculating
-		//~ stopped = 1;
-	//~ }
-	
-	//~ // read GUI input
-	//~ read_input();
-//~ }
-
 

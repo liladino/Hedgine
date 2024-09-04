@@ -46,11 +46,6 @@ typedef struct movelist {
 	struct movelist *next;
 } movelist;
 
-typedef struct movewitheval {
-	move m;
-	double eval;
-} movewitheval;
-
 typedef enum resultconst{
 	whitewon =  100000,
 	blackwon = -100000,
@@ -148,10 +143,15 @@ typedef struct hashentry{
 }hashentry;
 
 typedef struct gameInfo{
-	long int startTime;
+	long int engineTime;
 	bool timeControl;
 	bool quit;
 	int moveTime;
+	
+	bool UCI_ShowCurrLine;
+	//~ bool OwnBook;
+	//~ int UCI_Elo;
+	//~ bool UCI_LimitStrength;
 }gameInfo;
 
 

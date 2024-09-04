@@ -8,7 +8,7 @@
  * 
  * returns the number of succesfully read in characters
  * */
-size_t getLine(char** str, const size_t maxSize){
+size_t getLineDynamic(char** str, const size_t maxSize){
 	size_t size;
 	if (*str == NULL) size = 0;
 	else size = strlen(*str);
@@ -32,7 +32,7 @@ size_t getLine(char** str, const size_t maxSize){
 		
 		char *newstr = (char*) malloc((size + succesfullyRead + 1) * sizeof(char));
 		if (newstr == NULL){
-			printf(TXT_RED "Memory allocation failed\n" DEFAULT);
+			fprintf(stderr, TXT_RED "Memory allocation failed\n" DEFAULT);
 			exit(1);
 		}
 		
@@ -87,8 +87,11 @@ move parseLongAlgebraicNotation(char str[]){
 
 // FEN stuff
 
-int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int castling[], squarenums *enpass, int *fmv, int *movenum){ 
+int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int *fmv, int *movenum){ 
 	char board[12][12] = {0};
+	int castling[4];
+	squarenums enpass = {-1, -1};
+	
 	//startallas: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 	for (int i = 0; i < 12; i++){
 		for (int j = 0; j < 12; j++){
@@ -108,7 +111,7 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int castling[], squa
 		else if (FEN[i] >= '1' && FEN[i] <= '8'){
 			for (int j = 0; j < FEN[i] - '0'; j++){
 				if (file > 9) {
-					printf("too wide rank!\n");
+					fprintf(stderr, "too wide rank!\n");
 					return 1;
 				}
 				board[rank][file] = ' ';
@@ -119,7 +122,7 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int castling[], squa
 		}
 		else if (FEN[i] == 'r' || FEN[i] == 'R' || FEN[i] == 'n' || FEN[i] == 'N' || FEN[i] == 'b' || FEN[i] == 'B' || FEN[i] == 'q' || FEN[i] == 'Q' || FEN[i] == 'k' || FEN[i] == 'K' || FEN[i] == 'p' || FEN[i] == 'P' ){
 			if (file > 9){
-				printf("too wide rank!\n");
+				fprintf(stderr, "too wide rank!\n");
 				return 1;
 			}
 			board[rank][file] = FEN[i];
@@ -129,7 +132,7 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int castling[], squa
 			boardread = false;
 		}
 		else{
-			printf("unknown symbol!\n");
+			fprintf(stderr, "unknown symbol!\n");
 			return 1;
 		}
 		i++;
@@ -145,7 +148,7 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int castling[], squa
 		}
 	}
 	if (wking != 1 || bking != 1){
-		printf("unusual number of kings on board!\n");
+		fprintf(stderr, "unusual number of kings on board!\n");
 		return 1;
 	}
 	
@@ -179,7 +182,7 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int castling[], squa
 	char enpass_str[5] = {0};
 	if (sscanf(metadata, "%c %4s %2s", &tomove_char, castle_str, enpass_str) != 3){
 		free(metadata);	
-		printf("couldnt read metadata!\n");
+		fprintf(stderr, "couldnt read metadata!\n");
 		return 1;
 	}
 	
@@ -222,19 +225,19 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int castling[], squa
 	}
 
 	if (enpass_str[0] == '-'){
-		enpass->file = -1;
-		enpass->rank = -1;
+		enpass.file = -1;
+		enpass.rank = -1;
 	}
 	else{
 		if (enpass_str[0] >= 'a' && enpass_str[0] <= 'h'){
-			enpass->file = enpass_str[0] - 'a' + 2;
+			enpass.file = enpass_str[0] - 'a' + 2;
 		}
 		else{
 			free(metadata);	
 			return 1;
 		}
 		if (enpass_str[1] == '3' || enpass_str[1] == '6'){
-			enpass->rank = enpass_str[1] - '0' + 1;
+			enpass.rank = enpass_str[1] - '0' + 1;
 		}
 		else{
 			free(metadata);	
@@ -242,14 +245,46 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int castling[], squa
 		}
 	}
 	if (sscanf(metadata, "%*s %*s %*s %d %d", fmv, movenum) != 2){
-		//~ printf("couldn't read move numbers\n");
+		fprintf(stderr, "couldn't read move numbers\n");
+		return 1;
 		*fmv = 0;
 		*movenum = 0; 
 	}
 	free(metadata);
 	
-	(*bboard) = boardConvert(board, castling, *enpass, tomove);
+	(*bboard) = boardConvert(board, castling, enpass, tomove);
 	
 	return 0;
 }
 
+
+void readFEN(char str[], bitboard* bboard, bool *tomove, int* fmv, int* movenum){
+	//rnbqkbnr/ppp2ppp/4p3/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3
+	char pos[64+8] = {0}; //overly cautius upper bound (64 squares + 7 slahshes + 0 at the end)
+	char tomovestr[2] = {0};
+	char castlerights[5] = {0};
+	char enpassanttarget[3] = {0};
+	sscanf(str, "%71s %1s %4s %2s %d %d", pos, tomovestr, castlerights, enpassanttarget, fmv, movenum);
+	
+	char FEN[129] = {0};
+	char space[] = " ";
+	strcat(FEN, pos);
+	strcat(FEN, space);
+	
+	strcat(FEN, tomovestr);
+	strcat(FEN, space);
+	
+	strcat(FEN, castlerights);
+	strcat(FEN, space);
+	
+	strcat(FEN, enpassanttarget);
+	strcat(FEN, space);
+	
+	char numbers[10] = {0};
+	snprintf(numbers, 7, "%d %d", (*fmv) % 100, (*movenum) % 1000);
+	strcat(FEN, numbers);
+	
+	if (setboardFEN(FEN, bboard, tomove, fmv, movenum)){
+		setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", bboard, tomove, fmv, movenum);
+	}
+}

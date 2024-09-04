@@ -365,13 +365,65 @@ void printLegalmoves(movearray legalmoves, bitboard board, bool tomove){
 
 void communicate() {
 	// if time is up break here
-	if(info.timeControl == true && getTimems()-info.startTime > info.moveTime) {
+	if(info.timeControl == true && getTime_ms()-info.engineTime > info.moveTime) {
 		// tell engine to stop calculating
 		stopSearch = true;
 	}
 	
 	// read GUI input
 	readInput();
+}
+
+void setMoveTime(){
+	if (info.engineTime <= 500){ //half a sec left
+		info.moveTime = 50;
+		return;
+	}
+	if (info.engineTime <= 1000){ //1 sec left
+		info.moveTime = 100;
+		return;
+	}
+	if (info.engineTime <= 2000){ //2 sec left
+		info.moveTime = info.engineTime / 5; //gets down from .4 sec to .1 sec
+		return;
+	}
+	if (info.engineTime <= 10 * 1000){ //10 sec left
+		info.moveTime = 500 + (info.engineTime - 2000) / 16; //1 sec and gets down to half sec
+		return;
+	}
+	if (info.engineTime <= 30 * 1000){ //30 sec left
+		info.moveTime = 1500; //1.5 sec
+		return;
+	}
+	if (info.engineTime <= 60 * 1000){ //1 min left
+		info.moveTime = 2000; //2 sec
+		return;
+	}
+	if (info.engineTime <= 2 * 60 * 1000){ //2 min left
+		info.moveTime = 3000; //3 sec
+		return;
+	}
+	if (info.engineTime <= 3 * 60 * 1000){ //3 min left
+		info.moveTime = 4000; //4 sec
+		return;
+	}
+	if (info.engineTime <= 5 * 60 * 1000){ //5 min left
+		info.moveTime = 6000; 
+		return;
+	}
+	if (info.engineTime <= 10 * 60 * 1000){ //10 min left
+		info.moveTime = 8000; 
+		return;
+	}
+	if (info.engineTime <= 20 * 60 * 1000){ //20 min left
+		info.moveTime = 15000; 
+		return;
+	}
+	if (info.engineTime <= 45 * 60 * 1000){ //45 min left
+		info.moveTime = 30000; 
+		return;
+	}
+	info.moveTime = 40000; 
 }
 
 unsigned int searchedNodes;
@@ -468,7 +520,7 @@ move engine(bitboard board, bool tomove){
 
 	
 	stopSearch = false;
-	info.startTime = getTimems();
+	info.engineTime = getTime_ms();
 	
 	int i;
 	for (i = 1; i < absoluteMaxDepth + 1; i++){

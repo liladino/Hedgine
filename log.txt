@@ -1,3 +1,7 @@
+Date:   Sep 04 2024
+	UCI:
+		parse position now works! - can read a starting fen and the following legal moves.
+
 Date:   Sep 03 2024
 	UCI:
 		Some stuff now works, mainly the milisec specified thinking time, and the stop command. Forked the functions
@@ -8,7 +12,7 @@ Date:   Aug 31 2024
 		separated into a new program. Goal is to be UCI compatible, and to be used with e.g. PyChess, or any other programs.
 		The main goal is it to be tested by making it play against itself some games, so that i actually know if i made it better or not
 		
-		Looked at the UCI protocol, and started implementing some utility functions (getLine, and one that manages a game internally).
+		Looked at the UCI protocol, and started implementing some utility functions (getLineDynamic, and one that manages a game internally).
 		
 		Plans:
 			Have a separate repetition table, which should prevent loops in endgames.

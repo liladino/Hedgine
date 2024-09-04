@@ -2,33 +2,36 @@
 
 
 int main(){
-	long int startTime = getTimems();
-	
 	initializeAll();
 	
+	
+	long int engineTime = getTime_ms();
+	bool tomove = white;
+	int movenum = 1, fmv = 0; //fifty-move rule
+	
+	bitboard board;
+	//~ setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", &board, &tomove, &fmv, &movenum);
+	//~ readFEN(&board, &tomove, &fmv, &movenum);
+	
+	char *input = NULL;
+	getLineDynamic(&input, 200);
+	
+	
+	//   position startpos moves e2e4 e7e5 g1f3
+	//   position fen rnbqkbnr/ppp2ppp/4p3/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3 moves e5d6
+	parsePosition(input, &board, &tomove, &fmv, &movenum);
+	
+	free(input);
 	//main uci loop
 	//~ UCIloop();
 	
 	//~ moveReaderTest();
 	
-	
-	bool tomove = white;
-	int movenum = 1, fmv = 0; //fifty-move rule
-	int castling[4];
-	squarenums enpass = {-1, -1};
-	
-	bitboard board;
-	setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", &board, &tomove, castling, &enpass, &fmv, &movenum);
-	
-	printBitBoard2d(board);
-	
-	info.timeControl = false;
-	info.moveTime = 10000;
 	CPU(4, board, white);
 	
 	freeTransTable();
 	
-	printf("runtime: %ld\n", getTimems() - startTime);
+	printf("runtime: %ld\n", getTime_ms() - engineTime);
 	
 	return 0;
 }
@@ -36,11 +39,9 @@ int main(){
 void moveReaderTest(){
 	bool tomove = white;
 	int movenum = 1, fmv = 0; //fifty-move rule
-	int castling[4];
-	squarenums enpass = {-1, -1};
 	
 	bitboard board;
-	setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", &board, &tomove, castling, &enpass, &fmv, &movenum);
+	setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", &board, &tomove, &fmv, &movenum);
 	
 	char movestr[5] = {0};
 
@@ -73,12 +74,12 @@ void LANTester(){
 	printmove(m);
 }
 
-void getLinetester(){
+void getLineDynamictester(){
 	size_t limit = 10;
 	printf("\n\nGetline test\n----\nGive strings (stops at %ld characters):\n", limit);
 	char* str = NULL;
 	int a;
-	while((a = getLine(&str, limit))){
+	while((a = getLineDynamic(&str, limit))){
 		printf("%s,\t%d\n", str, a);
 	}
 	printf("%s,\t%d\n", str, a);

@@ -18,6 +18,11 @@ hashentry* allocTransTable(const int sizeInMB){
 		TranspositionTable[i].pos = 0;
 	}
 	
+	#ifdef DEBUG
+	printf("%d MB, %d\n", TableSizeMB, TableSize);
+	#endif
+	
+	
 	return TranspositionTable;
 }
 
@@ -94,32 +99,6 @@ void setHashKey(){
 		Zobrist.enpassantfile[i] = rand64();
 	}
 	Zobrist.tomove = rand64();
-	
-#ifdef DEBUG 
-	#define endl printf("\n")
-	printf("%d MB, %d", TableSizeMB, TableSize);
-	endl;
-	/*for (int i = 0; i < 64; i++){
-		for (int j = 0; j < 12; j++){
-			printBitPiece(Zobrist.squares[i][j]);
-		}
-		endl;
-	}
-	endl;
-	for (int i = 0; i < 4; i++){
-		for (int j = 0; j < 2; j++){
-			printBitPiece(Zobrist.castlerights[i][j]);
-		}
-		endl;
-	}
-	endl;
-	for (int i = 0; i < 8; i++){
-		printBitPiece(Zobrist.enpassantfile[i]);
-	}
-	endl;
-	printBitPiece(Zobrist.tomove);
-	endl;*/
-#endif
 }
 
 u64 hashPosition(const bitboard* board, bool tomove){
@@ -191,7 +170,7 @@ u64 Wcollision = 0;
 u64 Wmatch = 0;
 void printCollisionStats(){
 	//printTransTable();
-	printf("Reading:\n");
+	printf("TTable reading:\n");
 	printf("Collisions: %llu\n", Rcollision);
 	printf("Matches: %llu\n", Rmatch);
 	printf("Ratio to all: %lf\n\n", (double)Rmatch / (Rmatch + Rcollision + 1));
