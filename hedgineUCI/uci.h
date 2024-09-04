@@ -26,4 +26,6 @@ void parsePosition(char *command, bitboard* bboard, bool *tomove, int* fmv, int*
 
 void parseGo(char *command, bitboard* board, bool *tomove);
 
+void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum);
+
 #endif

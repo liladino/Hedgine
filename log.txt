@@ -1,5 +1,13 @@
 Date:   Sep 04 2024
 	UCI:
+		GOOD NEWS, EVERYONE
+		a very very basic version of the UCI engine now works! Can even be used with Arena GUI,and I'm as happy as it gets
+		
+		Still it's a long way to go, as some important features are missing - mainly the repetition detection and the 
+		transposition table along with it.
+		
+		It'd be cool too if some basic openings were to be implemented.
+	
 		parse position now works! - can read a starting fen and the following legal moves.
 		parse go seems to be working as well
 

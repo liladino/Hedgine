@@ -119,11 +119,13 @@ void parseGo(char *command, bitboard* board, bool *tomove){
 	
 	
 	if ((argument = strstr(command,"wtime")) && *tomove == white) {
+		info.timeRemaining = atoi(argument + 6);
 		setMoveTime();
 		info.timeControl = true;
 	}
 
 	if ((argument = strstr(command,"btime")) && *tomove == black) {
+		info.timeRemaining = atoi(argument + 6);
 		setMoveTime();
 		info.timeControl = true;
 	}
@@ -151,110 +153,88 @@ void parseGo(char *command, bitboard* board, bool *tomove){
 	printf("time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, cpulvl);
 	#endif
 	
-	CPU(cpulvl, *board, tomove);
+	move m = CPU(cpulvl, *board, tomove);
+	printf("bestmove ");
+	printmove(m);
+	printf("\n");
 }
 
 
 
-//~ // main UCI loop
-//~ void UCIloop()
-//~ {
-	//~ // max hash MB
-	//~ int max_hash = 128;
+// main UCI loop
+void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
+	// reset STDIN & STDOUT buffers
+	setbuf(stdin, NULL);
+	setbuf(stdout, NULL);
 	
-	//~ // default MB value
-	//~ int mb = 64;
-
-	//~ // reset STDIN & STDOUT buffers
-	//~ setbuf(stdin, NULL);
-	//~ setbuf(stdout, NULL);
+	// define user / GUI input buffer
+	char* input = NULL;
 	
-	//~ // define user / GUI input buffer
-	//~ char input[2000];
+	// print engine info
+	printf("id name Hedgine\n");
+	printf("id author B.M.\n");
+	printf("option name Hash type spin default %d min %d max %d\n", TT_DEF_SIZE_MB, TT_MIN_SIZE_MB, TT_MAX_SIZE_MB);
+	printf("uciok\n");
 	
-	//~ // print engine info
-	//~ printf("id name HEDGINE\n");
-	//~ printf("id author B.M.\n");
-	//~ printf("option name Hash type spin default 64 min 4 max %d\n", max_hash);
-	//~ printf("uciok\n");
-	
-	//~ // main loop
-	//~ while (1)
-	//~ {
-		//~ // reset user /GUI input
-		//~ memset(input, 0, sizeof(input));
+	// main loop
+	while (!info.quit) {		
+		// make sure output reaches the GUI
+		fflush(stdout);
 		
-		//~ // make sure output reaches the GUI
-		//~ fflush(stdout);
+		int temp = getLineDynamic(&input, 1000);
+		if (temp == 0){
+			if (input != NULL){
+				free(input);
+			}
+			input = NULL;
+			continue;
+		}
+		else if (strncmp(input, "isready", 7) == 0){
+			printf("readyok\n");
+		}
+		else if (strncmp(input, "position", 8) == 0) {
+			parsePosition(input, board, tomove, fmv, movenum);
 		
-		//~ // get user / GUI input
-		//~ if (!fgets(input, 2000, stdin))
-			//~ // continue the loop
-			//~ continue;
-		
-		//~ // make sure input is available
-		//~ if (input[0] == '\n')
-			//~ // continue the loop
-			//~ continue;
-		
-		//~ // parse UCI "isready" command
-		//~ if (strncmp(input, "isready", 7) == 0)
-		//~ {
-			//~ printf("readyok\n");
-			//~ continue;
-		//~ }
-		
-		//~ // parse UCI "position" command
-		//~ else if (strncmp(input, "position", 8) == 0)
-		//~ {
-			//~ // call parse position function
-			//~ parse_position(input);
-		
-			//~ // clear hash table
-			//~ clear_hash_table();
-		//~ }
-		//~ // parse UCI "ucinewgame" command
-		//~ else if (strncmp(input, "ucinewgame", 10) == 0)
-		//~ {
-			//~ // call parse position function
-			//~ parse_position("position startpos");
+			//~ clearTransTable();
+		}
+		else if (strncmp(input, "ucinewgame", 10) == 0) {
+			parsePosition("position startpos", board, tomove, fmv, movenum);
 			
-			//~ // clear hash table
-			//~ clear_hash_table();
-		//~ }
-		//~ // parse UCI "go" command
-		//~ else if (strncmp(input, "go", 2) == 0)
-			//~ // call parse go function
-			//~ parse_go(input);
-		
-		//~ // parse UCI "quit" command
-		//~ else if (strncmp(input, "quit", 4) == 0)
-			//~ // quit from the UCI loop (terminate program)
-			//~ break;
-		
-		//~ // parse UCI "uci" command
-		//~ else if (strncmp(input, "uci", 3) == 0)
-		//~ {
-			//~ // print engine info
-			//~ printf("id name BBC %s\n", version);
-			//~ printf("id author Code Monkey King\n");
-			//~ printf("uciok\n");
-		//~ }
-		
-		//~ else if (!strncmp(input, "setoption name Hash value ", 26)) {			
-			//~ // init MB
-			//~ sscanf(input,"%*s %*s %*s %*s %d", &mb);
+			clearTransTable();
+		}
+		else if (strncmp(input, "go", 2) == 0){
+			parseGo(input, board, tomove);
+		}
+		else if (strncmp(input, "quit", 4) == 0){
+			info.quit = true;
+		}
+		else if (strncmp(input, "uci", 3) == 0)	{
+			// print engine info
+			printf("id name Hedgine\n");
+			printf("id author B.M.\n");
+			printf("uciok\n");
+		}
+		else if (!strncmp(input, "setoption name Hash value ", 26)) {
+			int mb;
+			sscanf(input,"%*s %*s %*s %*s %d", &mb);
 			
-			//~ // adjust MB if going beyond the aloowed bounds
-			//~ if(mb < 4) mb = 4;
-			//~ if(mb > max_hash) mb = max_hash;
+			if(mb < TT_MIN_SIZE_MB) mb = TT_MIN_SIZE_MB;
+			if(mb > TT_MAX_SIZE_MB) mb = TT_MAX_SIZE_MB;
 			
-			//~ // set hash table size in MB
-			//~ printf("	Set hash table size to %dMB\n", mb);
-			//~ init_hash_table(mb);
-		//~ }
-	//~ }
-//~ }
+			freeTransTable();
+			if (allocTransTable( mb ) == NULL){
+				exit(1);
+			}
+			
+			printf("	Set hash table size to %dMB\n", mb);
+		}
+		
+		if (input != NULL){
+			free(input);
+		}
+		input = NULL;
+	}
+}
 
 // init all variables
 void initializeAll(){
@@ -267,13 +247,14 @@ void initializeAll(){
 	info.timeControl = false;
 
 	
-	// init hash table with default 1 MB
-	if (allocTransTable(1) == NULL) exit(1);
+	// init hash table with default size
+	if (allocTransTable( TT_DEF_SIZE_MB ) == NULL){
+		exit(1);
+	}
 }
 
 // get time in milliseconds
 long int getTime_ms(){
-	
 	#ifdef WIN64
 		return GetTickCount();
 	#else
@@ -343,8 +324,7 @@ void readInput() {
 		// Tell engine to stop calculating
 		stopSearch = true;
 
-		// Read input using getLineDynamic function
-		bytesRead = getLineDynamic(&input, 1000);  // Read up to 1000 bytes -> about 200 plies
+		bytesRead = getLineDynamic(&input, 100);  
 		
 		// If input is available
 		if (bytesRead > 0) {

@@ -375,51 +375,51 @@ void communicate() {
 }
 
 void setMoveTime(){
-	if (info.startTime <= 500){ //half a sec left
+	if (info.timeRemaining <= 500){ //half a sec left
 		info.moveTime = 50;
 		return;
 	}
-	if (info.startTime <= 1000){ //1 sec left
+	if (info.timeRemaining <= 1000){ //1 sec left
 		info.moveTime = 100;
 		return;
 	}
-	if (info.startTime <= 2000){ //2 sec left
-		info.moveTime = info.startTime / 5; //gets down from .4 sec to .1 sec
+	if (info.timeRemaining <= 2000){ //2 sec left
+		info.moveTime = info.timeRemaining / 5; //gets down from .4 sec to .1 sec
 		return;
 	}
-	if (info.startTime <= 10 * 1000){ //10 sec left
-		info.moveTime = 500 + (info.startTime - 2000) / 16; //1 sec and gets down to half sec
+	if (info.timeRemaining <= 10 * 1000){ //10 sec left
+		info.moveTime = 500 + (info.timeRemaining - 2000) / 16; //1 sec and gets down to half sec
 		return;
 	}
-	if (info.startTime <= 30 * 1000){ //30 sec left
+	if (info.timeRemaining <= 30 * 1000){ //30 sec left
 		info.moveTime = 1500; //1.5 sec
 		return;
 	}
-	if (info.startTime <= 60 * 1000){ //1 min left
+	if (info.timeRemaining <= 60 * 1000){ //1 min left
 		info.moveTime = 2000; //2 sec
 		return;
 	}
-	if (info.startTime <= 2 * 60 * 1000){ //2 min left
+	if (info.timeRemaining <= 2 * 60 * 1000){ //2 min left
 		info.moveTime = 3000; //3 sec
 		return;
 	}
-	if (info.startTime <= 3 * 60 * 1000){ //3 min left
+	if (info.timeRemaining <= 3 * 60 * 1000){ //3 min left
 		info.moveTime = 4000; //4 sec
 		return;
 	}
-	if (info.startTime <= 5 * 60 * 1000){ //5 min left
+	if (info.timeRemaining <= 5 * 60 * 1000){ //5 min left
 		info.moveTime = 6000; 
 		return;
 	}
-	if (info.startTime <= 10 * 60 * 1000){ //10 min left
+	if (info.timeRemaining <= 10 * 60 * 1000){ //10 min left
 		info.moveTime = 8000; 
 		return;
 	}
-	if (info.startTime <= 20 * 60 * 1000){ //20 min left
+	if (info.timeRemaining <= 20 * 60 * 1000){ //20 min left
 		info.moveTime = 15000; 
 		return;
 	}
-	if (info.startTime <= 45 * 60 * 1000){ //45 min left
+	if (info.timeRemaining <= 45 * 60 * 1000){ //45 min left
 		info.moveTime = 30000; 
 		return;
 	}

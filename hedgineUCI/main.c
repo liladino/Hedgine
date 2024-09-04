@@ -2,7 +2,9 @@
 
 
 int main(){
+	#ifdef DEBUG
 	long int runTime = getTime_ms();
+	#endif
 	
 	initializeAll();
 	
@@ -13,30 +15,31 @@ int main(){
 	//~ setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", &board, &tomove, &fmv, &movenum);
 	//~ readFEN(&board, &tomove, &fmv, &movenum);
 	
-	char *input = NULL;
-	getLineDynamic(&input, 1000);
+	//~ char *input = NULL;
+	//~ getLineDynamic(&input, 1000);
 	
 	//   position fen rnbqkbnr/ppp2ppp/4p3/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3 moves e5d6
+	//   go wtime 33650 btime 54164
 	//   position startpos moves d2d4
 	//   go movetime 1000
 	
-	parsePosition(input, &board, &tomove, &fmv, &movenum);
-	free(input);
-	input = NULL;
+	//~ parsePosition(input, &board, &tomove, &fmv, &movenum);
+	//~ free(input);
+	//~ input = NULL;
 	
-	getLineDynamic(&input, 1000);
+	//~ getLineDynamic(&input, 1000);
 	
-	parseGo(input, &board, &tomove);
-	free(input);
+	//~ parseGo(input, &board, &tomove);
+	//~ free(input);
 	
 	//main uci loop
-	//~ UCIloop();
-	
-	//~ moveReaderTest();
-		
+	UCIloop(&board, &tomove, &fmv, &movenum);
+			
 	freeTransTable();
 	
+	#ifdef DEBUG
 	printf("runtime: %ld\n", getTime_ms() - runTime);
+	#endif
 	
 	return 0;
 }

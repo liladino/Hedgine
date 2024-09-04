@@ -20,6 +20,13 @@
 
 #define MAXMOVECOUNT_INPOS 218
 #define NO_HASH_ENTRY 21454837
+#define TT_MAX_SIZE_MB 128
+#define TT_MIN_SIZE_MB 1
+#ifdef DEBUG
+	#define TT_DEF_SIZE_MB 1
+#else
+	#define TT_DEF_SIZE_MB 16
+#endif
 
 typedef unsigned long long u64;
 
@@ -76,13 +83,13 @@ typedef enum piecenums{
 
 typedef enum raydir{
 	/*
-	 * noWe d4	 e5 nort	 f5  noEa
-	 *		 +7	+8	+9
-	 *			 \  |  /
+	 * noWe d4     e5 nort     f5  noEa
+	 *         +7    +8    +9
+	 *             \  |  /
 	 * west c4 -1 <- e4 -> +1  f4  east
-	 *			 /  |  \
-	 *		 -9	-8	-7
-	 * soWe c3	 e3 sout	 f3  soEa
+	 *             /  |  \
+	 *         -9    -8    -7
+	 * soWe c3     e3 sout     f3  soEa
 	 * 
 	 * */
 	 // shift dir: <<
@@ -144,6 +151,7 @@ typedef struct hashentry{
 
 typedef struct gameInfo{
 	long int startTime;
+	int timeRemaining;
 	bool timeControl;
 	bool quit;
 	int moveTime;
