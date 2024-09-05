@@ -156,7 +156,9 @@ typedef struct gameInfo{
 	bool quit;
 	int moveTime;
 	
-	bool UCI_ShowCurrLine;
+	//~ bool UCI_ShowCurrLine;
+	
+	bool newgame;
 	//~ bool OwnBook;
 	//~ int UCI_Elo;
 	//~ bool UCI_LimitStrength;

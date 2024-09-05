@@ -281,7 +281,7 @@ void readFEN(char str[], bitboard* bboard, bool *tomove, int* fmv, int* movenum)
 	strcat(FEN, space);
 	
 	char numbers[10] = {0};
-	snprintf(numbers, 7, "%d %d", (*fmv) % 100, (*movenum) % 1000);
+	snprintf(numbers, sizeof(numbers), "%d %d", (int)((*fmv) % 100), (int)((*movenum) % 1000));
 	strcat(FEN, numbers);
 	
 	if (setboardFEN(FEN, bboard, tomove, fmv, movenum)){

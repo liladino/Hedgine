@@ -396,23 +396,23 @@ void setMoveTime(){
 		return;
 	}
 	if (info.timeRemaining <= 60 * 1000){ //1 min left
-		info.moveTime = 2000; //2 sec
+		info.moveTime = 2100; //2.1 sec
 		return;
 	}
 	if (info.timeRemaining <= 2 * 60 * 1000){ //2 min left
-		info.moveTime = 3000; //3 sec
+		info.moveTime = 3720; //3.7 sec
 		return;
 	}
 	if (info.timeRemaining <= 3 * 60 * 1000){ //3 min left
-		info.moveTime = 4000; //4 sec
+		info.moveTime = 5450; //5.5 sec
 		return;
 	}
 	if (info.timeRemaining <= 5 * 60 * 1000){ //5 min left
-		info.moveTime = 6000; 
+		info.moveTime = 7910; 
 		return;
 	}
 	if (info.timeRemaining <= 10 * 60 * 1000){ //10 min left
-		info.moveTime = 8000; 
+		info.moveTime = 9900; 
 		return;
 	}
 	if (info.timeRemaining <= 20 * 60 * 1000){ //20 min left
@@ -509,8 +509,10 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 }
 
 move engine(bitboard board, bool tomove){
+	searchedNodes = 0;
 	move nullmove = {{-1, -1}, {-1, -1}, 0};
 	move nextm = nullmove;
+	printf("info thinking time %d\n", info.moveTime);
 	
 	PVhash[0][0] = board.hashValue;
 	for (int i = 1; i < MAXSEARCHDEPTH; i++){
@@ -547,6 +549,7 @@ move engine(bitboard board, bool tomove){
 		printHashEntry(legalmoves.boards[0].hashValue);	
 		#endif
 		
+		printf("info depth %d score cp %d pv ", i, (tomove == black ? -1 : 1) * temp);
 		for (int j = 0; j < i && PV[0][j].from.rank != -1 && !stopSearch; j++){
 			printmove(PV[0][j]);
 		}

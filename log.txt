@@ -1,3 +1,9 @@
+Date:   Sep 05 2024
+	UCI:
+		bugs:
+			when the engine sopped thinging, and we start a new game with ucinewgame, it could make an illegal moves
+			
+		
 Date:   Sep 04 2024
 	UCI:
 		GOOD NEWS, EVERYONE

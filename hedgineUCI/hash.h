@@ -3,6 +3,7 @@
 
 #include "structs.h"
 #include "moves.h"
+#include "output.h"
 #include "legalmoves.h"
 #include "mtwister.h"
 

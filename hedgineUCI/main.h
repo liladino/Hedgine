@@ -10,7 +10,7 @@
 	#include "debugmalloc.h"
 #endif
 
-void moveReaderTest();
+//~ void moveReaderTest();
 
 
 #endif

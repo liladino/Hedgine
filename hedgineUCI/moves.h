@@ -3,6 +3,7 @@
 
 #include "structs.h"
 #include "hash.h"
+#include "output.h"
 
 #ifdef DEBUG
 	#include "debugmalloc.h"

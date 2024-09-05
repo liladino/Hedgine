@@ -12,26 +12,7 @@ int main(){
 	int movenum = 1, fmv = 0; //fifty-move rule
 	
 	bitboard board;
-	//~ setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", &board, &tomove, &fmv, &movenum);
-	//~ readFEN(&board, &tomove, &fmv, &movenum);
-	
-	//~ char *input = NULL;
-	//~ getLineDynamic(&input, 1000);
-	
-	//   position fen rnbqkbnr/ppp2ppp/4p3/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3 moves e5d6
-	//   go wtime 33650 btime 54164
-	//   position startpos moves d2d4
-	//   go movetime 1000
-	
-	//~ parsePosition(input, &board, &tomove, &fmv, &movenum);
-	//~ free(input);
-	//~ input = NULL;
-	
-	//~ getLineDynamic(&input, 1000);
-	
-	//~ parseGo(input, &board, &tomove);
-	//~ free(input);
-	
+
 	//main uci loop
 	UCIloop(&board, &tomove, &fmv, &movenum);
 			
@@ -73,23 +54,23 @@ void moveReaderTest(){
 	}
 }
 	
-void LANTester(){
-	printf("Long algebraic notation test\n----\nGive a move (e.g. e2e4):\n");
-	char movestr[5] = {0};
-	scanf("%5s", movestr);
+//~ void LANTester(){
+	//~ printf("Long algebraic notation test\n----\nGive a move (e.g. e2e4):\n");
+	//~ char movestr[5] = {0};
+	//~ scanf("%5s", movestr);
 
-	move m = parseLongAlgebraicNotation(movestr);
-	printmove(m);
-}
+	//~ move m = parseLongAlgebraicNotation(movestr);
+	//~ printmove(m);
+//~ }
 
-void getLineDynamictester(){
-	size_t limit = 10;
-	printf("\n\nGetline test\n----\nGive strings (stops at %ld characters):\n", limit);
-	char* str = NULL;
-	int a;
-	while((a = getLineDynamic(&str, limit))){
-		printf("%s,\t%d\n", str, a);
-	}
-	printf("%s,\t%d\n", str, a);
-	free(str);
-}
+//~ void getLineDynamictester(){
+	//~ size_t limit = 10;
+	//~ printf("\n\nGetline test\n----\nGive strings (stops at %ld characters):\n", limit);
+	//~ char* str = NULL;
+	//~ int a;
+	//~ while((a = getLineDynamic(&str, limit))){
+		//~ printf("%s,\t%d\n", str, a);
+	//~ }
+	//~ printf("%s,\t%d\n", str, a);
+	//~ free(str);
+//~ }

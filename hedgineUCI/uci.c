@@ -150,13 +150,15 @@ void parseGo(char *command, bitboard* board, bool *tomove){
 
 	#ifdef DEBUG
 	// print debug info
-	printf("time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, cpulvl);
+	printf("info time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, cpulvl);
+	printBitBoard2d(*board);
 	#endif
 	
 	move m = CPU(cpulvl, *board, tomove);
 	printf("bestmove ");
 	printmove(m);
 	printf("\n");
+	fflush(stdout);
 }
 
 
@@ -171,15 +173,21 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 	char* input = NULL;
 	
 	// print engine info
-	printf("id name Hedgine\n");
-	printf("id author B.M.\n");
-	printf("option name Hash type spin default %d min %d max %d\n", TT_DEF_SIZE_MB, TT_MIN_SIZE_MB, TT_MAX_SIZE_MB);
-	printf("uciok\n");
+	//~ printf("id name Hedgine\n");
+	//~ printf("id author B.M.\n");
+	//~ printf("option name Hash type spin default %d min %d max %d\n", TT_DEF_SIZE_MB, TT_MIN_SIZE_MB, TT_MAX_SIZE_MB);
+	//~ printf("uciok\n");
 	
 	// main loop
 	while (!info.quit) {		
 		// make sure output reaches the GUI
 		fflush(stdout);
+		
+		if (info.newgame){
+			parsePosition("position startpos", board, tomove, fmv, movenum);
+			clearTransTable();
+			info.newgame = false;
+		}
 		
 		int temp = getLineDynamic(&input, 1000);
 		if (temp == 0){
@@ -212,6 +220,7 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 			// print engine info
 			printf("id name Hedgine\n");
 			printf("id author B.M.\n");
+			printf("option name Hash type spin default %d min %d max %d\n", TT_DEF_SIZE_MB, TT_MIN_SIZE_MB, TT_MAX_SIZE_MB);
 			printf("uciok\n");
 		}
 		else if (!strncmp(input, "setoption name Hash value ", 26)) {
@@ -226,7 +235,7 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 				exit(1);
 			}
 			
-			printf("	Set hash table size to %dMB\n", mb);
+			printf("info set hash table size to %dMB\n", mb);
 		}
 		
 		if (input != NULL){
@@ -245,6 +254,7 @@ void initializeAll(){
 	info.quit = false;
 	info.moveTime = -1;
 	info.timeControl = false;
+	info.newgame = false;
 
 	
 	// init hash table with default size
@@ -318,9 +328,7 @@ void readInput() {
 	size_t bytesRead;
 
 	// "listen" to STDIN
-	if (inputWaiting()) {
-		//~ printf("joskapista\n");
-		
+	if (inputWaiting()) {		
 		// Tell engine to stop calculating
 		stopSearch = true;
 
@@ -328,19 +336,21 @@ void readInput() {
 		
 		// If input is available
 		if (bytesRead > 0) {
-			// Match UCI "quit" command
-			if (!strncmp(input, "quit", 4)) {
-				// Tell engine to terminate execution	
+			if (strncmp(input, "quit", 4) == 0) {
 				stopSearch = true;
 				info.quit = true;
 			}
-			// Match UCI "stop" command
-			else if (!strncmp(input, "stop", 4)) {
-				// Tell engine to stop searching
+			else if (strncmp(input, "stop", 4) == 0) {
 				stopSearch = true;
+				//~ info.quit = true;
+			}
+			else if (strncmp(input, "ucinewgame", 10) == 0) {
+				stopSearch = true;
+				info.newgame = true;
 				//~ info.quit = true;
 			}
 		}
 	}
+	if (input != NULL) free(input);
 }
 	
