@@ -37,9 +37,9 @@ void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* 
 			
 			// init chess board with position from FEN string
 			readFEN(current_char, board, tomove, fmv, movenum);
-			#ifdef DEBUG
-			printBitBoard2d(*board);
-			#endif
+			//~ #ifdef DEBUG
+			//~ printBitBoard2d(*board);
+			//~ #endif
 		}
 	}
 	
@@ -65,11 +65,14 @@ void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* 
 			int x = isMoveLegal(board, *tomove, m);
 			if (x == 1){
 				//the move was illegal
-				continue;
+				info.quit = true;
+				fprintf(stderr, TXT_RED "Ilegal move found!\n" DEFAULT);
+				break;
 			}
 			else if (x == 2){
 				//no legal moves left
 				info.quit = true;
+				fprintf(stderr, TXT_RED "No legal moves in position!\n" DEFAULT);
 				break;
 			}
 			
@@ -85,8 +88,8 @@ void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* 
 	}
 	
 	#ifdef DEBUG
-	printf("tomove: %d\tfifty move count: %d\tmove num: %d\n", *tomove, *fmv, *movenum);
-	printBitBoard2d(*board);
+	printf("debug\ttomove: %d\tfifty move count: %d\tmove num: %d\n", *tomove, *fmv, *movenum);
+	//~ printBitBoard2d(*board);
 	#endif
 }
 
@@ -150,11 +153,11 @@ void parseGo(char *command, bitboard* board, bool *tomove){
 
 	#ifdef DEBUG
 	// print debug info
-	printf("info time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, cpulvl);
+	printf("debug time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, cpulvl);
 	printBitBoard2d(*board);
 	#endif
 	
-	move m = CPU(cpulvl, *board, tomove);
+	move m = CPU(cpulvl, *board, *tomove);
 	printf("bestmove ");
 	printmove(m);
 	printf("\n");
@@ -204,11 +207,15 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 			parsePosition(input, board, tomove, fmv, movenum);
 		
 			//~ clearTransTable();
+			//~ printBitBoard2d(*board);
 		}
 		else if (strncmp(input, "ucinewgame", 10) == 0) {
 			parsePosition("position startpos", board, tomove, fmv, movenum);
 			
 			clearTransTable();
+			#ifdef DEBUG
+			printBitBoard2d(*board);
+			#endif
 		}
 		else if (strncmp(input, "go", 2) == 0){
 			parseGo(input, board, tomove);

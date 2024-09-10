@@ -20,12 +20,14 @@
 
 #define MAXMOVECOUNT_INPOS 218
 #define NO_HASH_ENTRY 21454837
-#define TT_MAX_SIZE_MB 128
 #define TT_MIN_SIZE_MB 1
-#ifdef DEBUG
-	#define TT_DEF_SIZE_MB 1
-#else
+
+#ifndef DEBUG
 	#define TT_DEF_SIZE_MB 16
+	#define TT_MAX_SIZE_MB 128
+#else
+	#define TT_DEF_SIZE_MB 1
+	#define TT_MAX_SIZE_MB 2
 #endif
 
 typedef unsigned long long u64;

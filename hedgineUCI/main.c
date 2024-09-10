@@ -25,34 +25,34 @@ int main(){
 	return 0;
 }
 	
-void moveReaderTest(){
-	bool tomove = white;
-	int movenum = 1, fmv = 0; //fifty-move rule
+//~ void moveReaderTest(){
+	//~ bool tomove = white;
+	//~ int movenum = 1, fmv = 0; //fifty-move rule
 	
-	bitboard board;
-	setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", &board, &tomove, &fmv, &movenum);
+	//~ bitboard board;
+	//~ setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", &board, &tomove, &fmv, &movenum);
 	
-	char movestr[5] = {0};
+	//~ char movestr[5] = {0};
 
-	printBitBoard2d(board);
-	while (scanf("%5s", movestr) != EOF){
-		move m = parseLongAlgebraicNotation(movestr);
+	//~ printBitBoard2d(board);
+	//~ while (scanf("%5s", movestr) != EOF){
+		//~ move m = parseLongAlgebraicNotation(movestr);
 		
-		int x = isMoveLegal(&board, tomove, m);
-		if (x == 1){
-			continue;
-		}
+		//~ int x = isMoveLegal(&board, tomove, m);
+		//~ if (x == 1){
+			//~ continue;
+		//~ }
 		
-		if (tomove == black) movenum++;
-		tomove = !tomove;
-		//update fmv
-		//..or maybe not, it unnecesarily complicates matters
+		//~ if (tomove == black) movenum++;
+		//~ tomove = !tomove;
+		//~ //update fmv
+		//~ //..or maybe not, it unnecesarily complicates matters
 		
-		printBitBoard2d(board);
+		//~ printBitBoard2d(board);
 		
-		if (x == 2) break;
-	}
-}
+		//~ if (x == 2) break;
+	//~ }
+//~ }
 	
 //~ void LANTester(){
 	//~ printf("Long algebraic notation test\n----\nGive a move (e.g. e2e4):\n");

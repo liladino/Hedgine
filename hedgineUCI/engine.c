@@ -540,15 +540,6 @@ move engine(bitboard board, bool tomove){
 		
 		storePos(nextp, temp, lastBest, maxdepth);
 		
-		#ifdef DEBUG
-		printf("depth %d\n", i);
-		movearray legalmoves;
-		bitGenerateLegalmoves(&legalmoves, board, tomove, false);		
-		orderMoves(&legalmoves);
-		printmove(boardConvertTomove(board, legalmoves.boards[0], tomove));
-		printHashEntry(legalmoves.boards[0].hashValue);	
-		#endif
-		
 		printf("info depth %d score cp %d pv ", i, (tomove == black ? -1 : 1) * temp);
 		for (int j = 0; j < i && PV[0][j].from.rank != -1 && !stopSearch; j++){
 			printmove(PV[0][j]);
@@ -559,9 +550,9 @@ move engine(bitboard board, bool tomove){
 		if (PV[0][0].from.rank != -1) nextm = PV[0][0];
 		
 		if (stopSearch){
-			#ifdef DEBUG
-			printf("stopped\n\n");
-			#endif
+			//~ #ifdef DEBUG
+			//~ printf("stopped\n\n");
+			//~ #endif
 			break;
 		} 
 		
@@ -571,8 +562,8 @@ move engine(bitboard board, bool tomove){
 	rmBestMoveFlag(nextp);
 	
 	#ifdef DEBUG
-	printCollisionStats();
-	printf("\n\n");
+	//~ printCollisionStats();
+	//~ printf("\n\n");
 	#endif 
 	
 	
@@ -602,12 +593,15 @@ move CPU(int cpulvl, bitboard bboard, bool tomove){
 	//Engine depth should be determined by the maximum depth it can reach or the thinking time
 	//i'm thinking max depth is slightly more reasonable
 	
+	if (cpulvl < 0) cpulvl = 0;
+	if (cpulvl > 39) cpulvl = 39;
+	
 	if (cpulvl == 0){
 		usleep(millisec * 50);//hogy ne azonnal lepjen, nem letszukseglet
 		m = randomBot(bboard, tomove);
 	}	
 	else{
-		absoluteMaxDepth = (cpulvl > 40 ? 40 : cpulvl);
+		absoluteMaxDepth = cpulvl;
 		m = engine(bboard, tomove);	
 	}
 	return m;

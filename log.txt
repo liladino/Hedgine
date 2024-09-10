@@ -1,57 +1,87 @@
+Date:   Sep 05 2024:
+	Engine:
+		i forgot to dereference the bool pointer tomove when passing it to the 
+		engine to start thinking. It caused the engine to always think it's 
+		black, because it got a non-zero value into tomove (a pointer). For some 
+		(for me) unexplainable reasons this doesn't even gave me a warning.
+	UCI:
+		the sudden illegal moves seemed to stop, tho i have limitid idea what 
+		actually caused the bug.
+		Move input:
+			changed the behaviour when an illegal move is recieved:
+			if an illegal move is recieved, the program exits, instead of 
+			waiting for a legal move. The latter was not good practice, as it
+			left the engine unresponsive to further input
+
 Date:   Sep 05 2024
 	UCI:
 		bugs:
-			when the engine sopped thinging, and we start a new game with ucinewgame, it could make an illegal moves
+			when the engine sopped thinging, and we start a new game with 
+			ucinewgame, it could make an illegal moves
 			
 		
 Date:   Sep 04 2024
 	UCI:
 		GOOD NEWS, EVERYONE
-		a very very basic version of the UCI engine now works! Can even be used with Arena GUI,and I'm as happy as it gets
+		a very very basic version of the UCI engine now works! Can even be used 
+		with Arena GUI,and I'm as happy as it gets
 		
-		Still it's a long way to go, as some important features are missing - mainly the repetition detection and the 
-		transposition table along with it.
+		Still it's a long way to go, as some important features are missing - 
+		mainly the repetition detection and the transposition table along with 
+		it.
 		
 		It'd be cool too if some basic openings were to be implemented.
 	
-		parse position now works! - can read a starting fen and the following legal moves.
-		parse go seems to be working as well
+		parse position now works! - can read a starting fen and the following 
+		legal moves. parse go seems to be working as well
 
 Date:   Sep 03 2024
 	UCI:
-		Some stuff now works, mainly the milisec specified thinking time, and the stop command. Forked the functions
-		from BBC by Code Monkey King & VICE by bluefeversoft. 
+		Some stuff now works, mainly the milisec specified thinking time, and 
+		the stop command. Forked the functions from BBC by Code Monkey King & 
+		VICE by bluefeversoft. 
 
 Date:   Aug 31 2024
 	Hedgine:
-		separated into a new program. Goal is to be UCI compatible, and to be used with e.g. PyChess, or any other programs.
-		The main goal is it to be tested by making it play against itself some games, so that i actually know if i made it better or not
+		separated into a new program. Goal is to be UCI compatible, and to be 
+		used with e.g. PyChess, or any other programs. The main goal is it to be
+		tested by making it play against itself some games, so that i actually
+		know if i made it better or not
 		
-		Looked at the UCI protocol, and started implementing some utility functions (getLineDynamic, and one that manages a game internally).
+		Looked at the UCI protocol, and started implementing some utility
+		functions (getLineDynamic, and one that manages a game internally).
 		
 		Plans:
-			Have a separate repetition table, which should prevent loops in endgames.
+			Have a separate repetition table, which should prevent loops in
+			endgames.
 			Have a small opening book:
-				don't know what's the best option, but i'm thinking about generating a file from drawn GM/high level games, and storing
+				don't know what's the best option, but i'm thinking about
+				generating a file from drawn GM/high level games, and storing
 				the frist 5 or so positions of them, 
 	CLC:
-		currently abandoned, if hedgine is working properly with uci, i will make an interface here too.
+		currently abandoned, if hedgine is working properly with uci, i will
+		make an interface here too.
 	
 Date:   Aug 26 2024
 	Hashing:
 		During hashing the position is now accessed via a pointer 
 	PV:
-		have to rework the PV system, the TT isn't much help this way. Probably doing something among the lines of a PV search, even if
-		maybe not interpreted completely. That way i dont need the PV hash array, just the alpha and beta scores, which tells me is the
-		current node is a PV node or not.
+		have to rework the PV system, the TT isn't much help this way. Probably
+		doing something among the lines of a PV search, even if	maybe not
+		interpreted completely. That way i dont need the PV hash array, just the
+		alpha and beta scores, which tells me is the current node is a PV node
+		or not.
 
 Date:   Aug 23 2024
 	FEN input:
-		if the move counters aren't present, it printed out a message twice. The message was unnecesary, so now it doesn't print anything
+		if the move counters aren't present, it printed out a message twice. The
+		message was unnecesary, so now it doesn't print anything
 	SAN input:
-		fixed the bug where the move is considered invalid, if it is in the form of for example N6xe5 (taking and the rank is specified)
+		fixed the bug where the move is considered invalid, if it is in the form
+		of for example N6xe5 (taking and the rank is specified)
 	eval:
-		pawn is slightly changed, now it heavily favors going forward in the endgame
+		pawn is slightly changed, now it heavily favors going forward in the
+		endgame
 
 Date:   Aug 22 2024
 	PV:
@@ -59,38 +89,48 @@ Date:   Aug 22 2024
 
 Date:   Aug 21 2024
 	TT:
-		Less buggy, but I'm not impressed with it, as it doesn't really help much with the speed and depth reached.
-		Turns out i messed up something agian, tomorrow ill look at it again.
+		Less buggy, but I'm not impressed with it, as it doesn't really help 
+		uch with the speed and depth reached. Turns out i messed up something
+		agian, tomorrow ill look at it again.
 	PV:
 		still faulty at times, not sure why
 
 Date:   Aug 20 2024
 	Best line:
-		renamed to be principal variation, as it is it's standard name. Also fixed bugs with it, now it should print the moves correctly.
-		Fixed a bug, where if the line ends shorter than the max depth, a faulty move can occur (e.g. one side is already checkmated)
+		renamed to be principal variation, as it is it's standard name. Also
+		fixed bugs with it, now it should print the moves correctly. Fixed a 
+		bug, where if the line ends shorter than the max depth, a faulty move
+		can occur (e.g. one side is already checkmated)
 	TT:
 		still buggy, so currently not working. 
 
 Date:   Sun Aug 18 15:33:15 2024 +0200
 	Added time limits: 
-		The search is 4 plyes minimum, and extends indefinetly, while it is within the limits of thinking time.
+		The search is 4 plyes minimum, and extends indefinetly, while it is
+		within the limits of thinking time.
 		SIGALRM is used to achieve this.
 		
-		Might change this later to actually cut the tree search if the time is up, not necceseraly after one finished search.
+		Might change this later to actually cut the tree search if the time is
+		up, not necceseraly after one finished search.
 		
 	TransTable elements shortened:
-		Now doesn't contain the next position's hash or the best move, just the current hash, the evaluation and the flag.
-		A new flag added, that signals that it was the best move in the last search. This ensures, that the next search begins with this move
+		Now doesn't contain the next position's hash or the best move, just
+		the current hash, the evaluation and the flag. A new flag added, that
+		signals that it was the best move in the last search. This ensures,
+		that the next search begins with this move
 		
 		BUGS, BUGS, EVERYEHRE
-		Somehow i messed up mates, and now the easy endgames arent as easy, because the TT gives faulty results regarding mates.
+		Somehow i messed up mates, and now the easy endgames arent as easy,
+		because the TT gives faulty results regarding mates.
 		
 	Eval:
-		changed the king slightly to make it's position less relevant for the attacking side
-		There is something going on with it tho, as sometimes it says a king - king+rook position is sometimes better for the empty king
+		changed the king slightly to make it's position less relevant for the
+		attacking side. There is something going on with it tho, as sometimes it
+		says a king - king+rook position is sometimes better for the empty king
 	
 	Best line:
-		I'm too tired to debug this, or to even be sure this works, it's just there, hoping to be used.
+		I'm too tired to debug this, or to even be sure this works, it's just
+		there, hoping to be used.
 		
 
 
@@ -98,11 +138,15 @@ Date:   Wed Feb 28 19:13:10 2024 +0100
 
 	Fixed fen input bug
 	
-	It never read the halfmove and the move counter, because i forgot how sscanf works :((
+	It never read the halfmove and the move counter, because i forgot how sscanf
+	works :((
 	
-	Toggled one - to + in the engine, because it may have misinterpreted some positions, where there are multiple mates with different lengths, and it wouldn't found the shortest.
+	Toggled one - to + in the engine, because it may have misinterpreted some
+	positions, where there are multiple mates with different lengths, and it
+	wouldn't found the shortest.
 	
-	Changed the formatting of printmove to represent the more often used format with no spaces, and only lowercase letters.
+	Changed the formatting of printmove to represent the more often used format
+	with no spaces, and only lowercase letters.
 	e.g. e7 e8 Q => e7e8q
 
 
