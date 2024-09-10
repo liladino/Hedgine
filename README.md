@@ -25,7 +25,7 @@ a command line chess program && engine in c
   |                                                                        |
   **************************************************************************
 ``` 
-And the engine, Hedgine
+
 ```
                                      /    #
  .  .     .                       #   *.  # #   ##  .#
