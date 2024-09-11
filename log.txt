@@ -1,4 +1,17 @@
-Date:   Sep 05 2024:
+Date:   Sep 11 2024:
+	Output:
+		printLegalmoves migrated to output.c
+	Engine:
+		rearranged the file a bit, so that the order of the functions make a bit
+		more sense. Also now there are some coments wht those functions are
+		doing generally.
+		
+		Also started working on PV search.
+		
+	UCI:
+		mate is n moves away now correctly outputted
+
+Date:   Sep 10 2024:
 	Engine:
 		i forgot to dereference the bool pointer tomove when passing it to the 
 		engine to start thinking. It caused the engine to always think it's 
