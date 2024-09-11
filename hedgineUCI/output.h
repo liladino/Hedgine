@@ -19,7 +19,9 @@ void printBitPieceAsBoard(u64 piece);
 
 void printmove(move m);
 
-
+#ifdef DEBUG
+void printLegalmoves(movearray legalmoves, bitboard board, bool tomove);
+#endif
 
 
 #endif

@@ -4,6 +4,17 @@ void printmove(move m) {
 	printf("%c%d%c%d%c ", m.from.file+'a'-2, m.from.rank-1, m.to.file+'a'-2, m.to.rank-1, (m.promotion >= 'a' && m.promotion <= 'z' ? m.promotion : ' ') );
 }
 
+#ifdef DEBUG
+void printLegalmoves(movearray legalmoves, bitboard board, bool tomove){
+	printf("\nLegal moves:\n");
+	for (int i = 0; i < legalmoves.size; i++){
+		printmove(boardConvertTomove(board, legalmoves.boards[i], tomove));
+		printHashEntry(legalmoves.boards[i].hashValue);
+		//~ printf("%lf\n", legalmoves.boards[i].eval * 0.01);
+	}
+}
+#endif
+
 
 /* kiirja a tablat egyszeru szovegkent, egyszeru karakterekkel,
  * ha a megjelenites alapbol rossz, ez valoszinuleg mukodik.*/

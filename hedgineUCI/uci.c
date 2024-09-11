@@ -10,7 +10,6 @@ gameInfo info;
  * forked from VICE
  * by Richard Allbert
  */
-
  
 // parse UCI "position" command
 void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* movenum){
@@ -153,7 +152,7 @@ void parseGo(char *command, bitboard* board, bool *tomove){
 
 	#ifdef DEBUG
 	// print debug info
-	printf("debug time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, cpulvl);
+	printf("debug\ttime control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, cpulvl);
 	printBitBoard2d(*board);
 	#endif
 	

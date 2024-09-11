@@ -8,6 +8,14 @@ static int max(int a, int b){
 	return (a > b ? a : b);
 }
 
+static int absint(int a){
+	return (a < 0 ? -a : a);
+}
+
+/*
+ * TABLE BONUSES
+ * */
+
 int openingking[8][8] = {
 	{  90, 100,  30,   0,  30, -30, 100, 100}, 
 	{ -50, -80, -80, -80, -80,-100, -80, -50},
@@ -129,6 +137,9 @@ int endgamecenter[8][8] = {
 	{   0,   1,   2,   3,   3,   2,   1,   0}, //8
 };
 
+/*
+ * BENCHMARK
+ * */
 
 #define benchdepth 4
 int endcount;
@@ -178,6 +189,77 @@ void makeBenchTest(char board[12][12], bool tomove, int castling[4], squarenums 
 		printf("%d ply:\nAll leaves: %d\nGame ends (total): %d\n\n", i, allmovecount, endcount);
 	}
 }
+
+/*
+ * UCI comunication
+ * */
+
+void communicate() {
+	// if time is up break here
+	if(info.timeControl == true && getTime_ms()-info.startTime > info.moveTime) {
+		// tell engine to stop calculating
+		stopSearch = true;
+	}
+	
+	// read GUI input
+	readInput();
+}
+
+void setMoveTime(){
+	if (info.timeRemaining <= 500){ //half a sec left
+		info.moveTime = 50;
+		return;
+	}
+	if (info.timeRemaining <= 1000){ //1 sec left
+		info.moveTime = 100;
+		return;
+	}
+	if (info.timeRemaining <= 2000){ //2 sec left
+		info.moveTime = info.timeRemaining / 5; //gets down from .4 sec to .1 sec
+		return;
+	}
+	if (info.timeRemaining <= 10 * 1000){ //10 sec left
+		info.moveTime = 500 + (info.timeRemaining - 2000) / 16; //1 sec and gets down to half sec
+		return;
+	}
+	if (info.timeRemaining <= 30 * 1000){ //30 sec left
+		info.moveTime = 1500; //1.5 sec
+		return;
+	}
+	if (info.timeRemaining <= 60 * 1000){ //1 min left
+		info.moveTime = 2100; //2.1 sec
+		return;
+	}
+	if (info.timeRemaining <= 2 * 60 * 1000){ //2 min left
+		info.moveTime = 3720; //3.7 sec
+		return;
+	}
+	if (info.timeRemaining <= 3 * 60 * 1000){ //3 min left
+		info.moveTime = 5450; //5.5 sec
+		return;
+	}
+	if (info.timeRemaining <= 5 * 60 * 1000){ //5 min left
+		info.moveTime = 7910; 
+		return;
+	}
+	if (info.timeRemaining <= 10 * 60 * 1000){ //10 min left
+		info.moveTime = 9900; 
+		return;
+	}
+	if (info.timeRemaining <= 20 * 60 * 1000){ //20 min left
+		info.moveTime = 15000; 
+		return;
+	}
+	if (info.timeRemaining <= 45 * 60 * 1000){ //45 min left
+		info.moveTime = 30000; 
+		return;
+	}
+	info.moveTime = 40000; 	
+}
+
+/*
+ * EVALUATION
+ * */
 
 static int countPieces(bitboard board){
 	u64 all = (board.piece[wqueen] | board.piece[wbishop] | board.piece[wknight] | board.piece[wrook] | board.piece[bqueen] | board.piece[bbishop] | board.piece[bknight] | board.piece[brook]);
@@ -292,6 +374,10 @@ static int fulleval(bitboard board, bool tomove){
 	return (sideEval(board, white) + sideEval(board, black)) * (tomove == white ? 1 : -1);
 }
 
+/* 
+ * RANDOM MOVER BOT
+ *  */
+
 move randomBot(bitboard board, bool tomove){
 	#ifdef DEBUG
 	printf("w_eval: %d\n", sideEval(board, white));
@@ -322,7 +408,7 @@ move randomBot(bitboard board, bool tomove){
 //~ u64 CurrentlineposHashes[absoluteMaxDepth + 1];
 
 move PV     [MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
-u64  PVhash [MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
+//~ u64  PVhash [MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
 
 //~ move nextm; //next move
 u64 nextp; //next position
@@ -331,7 +417,7 @@ int absoluteMaxDepth = MAXSEARCHDEPTH;
 
 bool stopSearch = false;
 
-static int capturesearch(bitboard board, bool tomove, int alpha, int beta){
+static int quiescenceSearch(bitboard board, bool tomove, int alpha, int beta){
 	int eval = fulleval(board, tomove);
 	if (eval >= beta) return beta;
 	alpha = max(alpha, eval);
@@ -343,87 +429,13 @@ static int capturesearch(bitboard board, bool tomove, int alpha, int beta){
 	}
 	
 	for (int i = 0; i < legalmoves.size; i++){
-		int eval = -capturesearch(legalmoves.boards[i], !tomove, -beta, -alpha);
+		int eval = -quiescenceSearch(legalmoves.boards[i], !tomove, -beta, -alpha);
 		if (eval >= beta){
 			return beta;
 		}
 		alpha = max(alpha, eval);
 	}
 	return alpha;
-}
-
-#ifdef DEBUG
-void printLegalmoves(movearray legalmoves, bitboard board, bool tomove){
-	printf("\nLegal moves:\n");
-	for (int i = 0; i < legalmoves.size; i++){
-		printmove(boardConvertTomove(board, legalmoves.boards[i], tomove));
-		printHashEntry(legalmoves.boards[i].hashValue);
-		//~ printf("%lf\n", legalmoves.boards[i].eval * 0.01);
-	}
-}
-#endif
-
-void communicate() {
-	// if time is up break here
-	if(info.timeControl == true && getTime_ms()-info.startTime > info.moveTime) {
-		// tell engine to stop calculating
-		stopSearch = true;
-	}
-	
-	// read GUI input
-	readInput();
-}
-
-void setMoveTime(){
-	if (info.timeRemaining <= 500){ //half a sec left
-		info.moveTime = 50;
-		return;
-	}
-	if (info.timeRemaining <= 1000){ //1 sec left
-		info.moveTime = 100;
-		return;
-	}
-	if (info.timeRemaining <= 2000){ //2 sec left
-		info.moveTime = info.timeRemaining / 5; //gets down from .4 sec to .1 sec
-		return;
-	}
-	if (info.timeRemaining <= 10 * 1000){ //10 sec left
-		info.moveTime = 500 + (info.timeRemaining - 2000) / 16; //1 sec and gets down to half sec
-		return;
-	}
-	if (info.timeRemaining <= 30 * 1000){ //30 sec left
-		info.moveTime = 1500; //1.5 sec
-		return;
-	}
-	if (info.timeRemaining <= 60 * 1000){ //1 min left
-		info.moveTime = 2100; //2.1 sec
-		return;
-	}
-	if (info.timeRemaining <= 2 * 60 * 1000){ //2 min left
-		info.moveTime = 3720; //3.7 sec
-		return;
-	}
-	if (info.timeRemaining <= 3 * 60 * 1000){ //3 min left
-		info.moveTime = 5450; //5.5 sec
-		return;
-	}
-	if (info.timeRemaining <= 5 * 60 * 1000){ //5 min left
-		info.moveTime = 7910; 
-		return;
-	}
-	if (info.timeRemaining <= 10 * 60 * 1000){ //10 min left
-		info.moveTime = 9900; 
-		return;
-	}
-	if (info.timeRemaining <= 20 * 60 * 1000){ //20 min left
-		info.moveTime = 15000; 
-		return;
-	}
-	if (info.timeRemaining <= 45 * 60 * 1000){ //45 min left
-		info.moveTime = 30000; 
-		return;
-	}
-	info.moveTime = 40000; 
 }
 
 unsigned int searchedNodes;
@@ -442,22 +454,22 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	
 	int eval = NO_HASH_ENTRY;
 	
-	//have to rework the PV system, the TT isn't much help this way
+	bool PVnode = (beta - alpha > 1);
 	
-	if (PVhash[0][depth] != board.hashValue){
+	if (!PVnode && searchedNodes > 1){
 		//~ eval = readHashEntry(board.hashValue, &alpha, &beta, depth, maxdepth, oddity);
 		if (eval != NO_HASH_ENTRY){
 			move nullmove = {{-1, -1}, {-1, -1}, 0};
 			for (int i = depth; i <= maxdepth; i++){
 				PV[depth][i] = nullmove;
-				PVhash[depth][i+1] = 0;
+				//~ PVhash[depth][i+1] = 0;
 			}
 			return eval;
 		}
 	}
 	
 	if (depth == maxdepth){
-		return capturesearch(board, tomove, alpha, beta);
+		return quiescenceSearch(board, tomove, alpha, beta);
 	}
 	
 	movearray legalmoves;
@@ -470,12 +482,20 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	orderMoves(&legalmoves);
 	
 	for (int i = 0; i < legalmoves.size; i++){
-		eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
+		if (i == 0 || maxdepth < 3){
+			eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
+		}
+		else {
+			eval = -search(legalmoves.boards[i], !tomove, depth+1, -alpha-1, -alpha);
+			if (eval > alpha){
+				eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
+			}
+		}
 		
 		if (stopSearch) {
 			for (int i = depth; i < maxdepth; i++){
 				PV[depth][i] = PV[depth + 1][i];
-				PVhash[depth][i+1] = PVhash[depth + 1][i+1];
+				//~ PVhash[depth][i+1] = PVhash[depth + 1][i+1];
 			}
 			return 0;
 		}
@@ -495,12 +515,12 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 				nextp = legalmoves.boards[i].hashValue;
 			}
 			PV[depth+1][depth] = boardConvertTomove(board, legalmoves.boards[i], tomove);
-			PVhash[depth+1][depth+1] = legalmoves.boards[i].hashValue;
+			//~ PVhash[depth+1][depth+1] = legalmoves.boards[i].hashValue;
 		}
 	}
 	for (int i = depth; i < maxdepth; i++){
 		PV[depth][i] = PV[depth + 1][i];
-		PVhash[depth][i+1] = PVhash[depth + 1][i+1];
+		//~ PVhash[depth][i+1] = PVhash[depth + 1][i+1];
 	}
 	
 	if (oddity) storePos(board.hashValue, -alpha, flag, maxdepth - depth);
@@ -512,18 +532,18 @@ move engine(bitboard board, bool tomove){
 	searchedNodes = 0;
 	move nullmove = {{-1, -1}, {-1, -1}, 0};
 	move nextm = nullmove;
-	printf("info thinking time %d\n", info.moveTime);
+	printf("debug\tthinking time %d\n", info.moveTime);
 	
-	PVhash[0][0] = board.hashValue;
+	//~ PVhash[0][0] = board.hashValue;
 	for (int i = 1; i < MAXSEARCHDEPTH; i++){
-		//~ PV[0][i] = nullmove;
-		PVhash[0][i] = 0;
+		PV[0][i] = nullmove;
+		//~ PVhash[0][i] = 0;
 	}
 
 	
 	stopSearch = false;
 	info.startTime = getTime_ms();
-	
+	int temp = 0;
 	int i;
 	for (i = 1; i < absoluteMaxDepth + 1; i++){
 		for (unsigned j = 0; j < MAXSEARCHDEPTH; j++){
@@ -535,49 +555,40 @@ move engine(bitboard board, bool tomove){
 		
 		maxdepth = i;
 		
-		int temp = search(board, tomove, 0, NegINF, PosINF);
+		temp = search(board, tomove, 0, NegINF, PosINF);
 		//~ printf("%d\n", temp);
 		
 		storePos(nextp, temp, lastBest, maxdepth);
 		
-		printf("info depth %d score cp %d pv ", i, (tomove == black ? -1 : 1) * temp);
+		if (PV[0][0].from.rank != -1) nextm = PV[0][0];
+		
+		if (stopSearch){
+			break;
+		} 
+		
+		printf("info depth %d", i);
+		
+		if (temp >= whitewon || temp <= blackwon){
+			printf(" score mate %d pv ", absint(temp) - whitewon + 1);
+		}
+		else{
+			printf(" score cp %d pv ", (tomove == black ? -1 : 1) * temp);
+		}
+		
 		for (int j = 0; j < i && PV[0][j].from.rank != -1 && !stopSearch; j++){
 			printmove(PV[0][j]);
 		}
 		printf("\n");
-		
-		
-		if (PV[0][0].from.rank != -1) nextm = PV[0][0];
-		
-		if (stopSearch){
-			//~ #ifdef DEBUG
-			//~ printf("stopped\n\n");
-			//~ #endif
-			break;
-		} 
 		
 		if (temp >= whitewon || temp <= blackwon) break; //dont think if not neccesary
 	}
 	
 	rmBestMoveFlag(nextp);
 	
-	#ifdef DEBUG
+	//~ #ifdef DEBUG
 	//~ printCollisionStats();
 	//~ printf("\n\n");
-	#endif 
-	
-	
-	//maxdepth = 4;
-	/*search(board, tomove, maxdepth, NegINF, PosINF);
-	
-	u64 temp;
-	movearray legalmoves;
-	bitGenerateLegalmoves(&legalmoves, board, tomove, &temp, false);
-	
-	printLegalmoves(legalmoves, board, tomove);
-	printLegalmoves(legalmoves, board, tomove);*/
-	
-	
+	//~ #endif 
 	
 	return nextm;
 }
