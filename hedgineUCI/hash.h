@@ -6,6 +6,7 @@
 #include "output.h"
 #include "legalmoves.h"
 #include "mtwister.h"
+#include "engine.h" //for the PosINF macro
 
 #ifdef DEBUG
 	#include "debugmalloc.h"
@@ -31,7 +32,7 @@ int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const i
 
 //~ move readHashEntryMove(const u64 pos);
 
-void storePos(const u64 pos, const int eval, const evalflag flag, const int depth/*, const move m, const u64 next*/);
+void storePosTT(const u64 pos, const int eval, const evalflag flag, const int depth/*, const move m, const u64 next*/);
 
 void hashPieceIO(bitboard *board, int sq, int piece);
 
@@ -53,6 +54,8 @@ void printCollisionStats();
 
 void clearTransTable();
 
-void rmBestMoveFlag(u64 pos);
+//~ void rmBestMoveFlag(u64 pos);
+
+extern int RTwriteindex;
 
 #endif

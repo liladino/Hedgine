@@ -1,28 +1,27 @@
 #include "hash.h"
 
-int TableSizeMB = 0;
-int TableSize = 0;
+int TTableSizeMB = 0;
+int TTableSize = 0;
 TThashentry* TranspositionTable = NULL;
 
 TThashentry* allocTransTable(const int sizeInMB){
-	TableSizeMB = sizeInMB;
-	TableSize = TableSizeMB * 1024 * 1024 / sizeof(TThashentry);	
+	TTableSizeMB = sizeInMB;
+	TTableSize = TTableSizeMB * 1024 * 1024 / sizeof(TThashentry);	
 	if (sizeInMB == 0){
-		TableSize++;
+		TTableSize++;
 	}
-	TranspositionTable = malloc( TableSize * sizeof(TThashentry) );
+	TranspositionTable = malloc( TTableSize * sizeof(TThashentry) );
 	
 	if (TranspositionTable == NULL) return NULL;
 	
-	for (int i = 0; i < TableSize; i++){
+	for (int i = 0; i < TTableSize; i++){
 		TranspositionTable[i].pos = 0;
 	}
 	
 	#ifdef DEBUG
-	printf("%d MB, %d\n", TableSizeMB, TableSize);
+	printf("Transposition Table:\t%d MB, %d\n", TTableSizeMB, TTableSize);
+	printf("Repetition Table:\t%d MB, %d\n", RT_SIZE_kB, RTableSize);
 	#endif
-	
-	
 	return TranspositionTable;
 }
 
@@ -31,7 +30,7 @@ void freeTransTable(){
 		free(TranspositionTable);
 	}
 	
-	TableSize = TableSizeMB = 0;
+	TTableSize = TTableSizeMB = 0;
 }
 
 typedef struct key{
@@ -137,7 +136,7 @@ u64 hashPosition(const bitboard* board, bool tomove){
 }
 
 TThashentry* lookup(const u64 position){
-	const u64 tmp = position % TableSize;
+	const u64 tmp = position % TTableSize;
 	if (TranspositionTable[tmp].pos == position){
 		return &TranspositionTable[tmp];
 	}
@@ -145,9 +144,9 @@ TThashentry* lookup(const u64 position){
 }
 
 void printTransTable(){
-	for (int i = 0; i < TableSize; i++){
+	for (int i = 0; i < TTableSize; i++){
 		if (TranspositionTable[i].pos != 0){
-			printf("place: %lld\n", TranspositionTable[i].pos % (TableSize));
+			printf("place: %lld\n", TranspositionTable[i].pos % (TTableSize));
 		/*	printf("hash: ");
 			printBitPiece(TranspositionTable[i].pos);
 			printf("eval: %d\n", TranspositionTable[i].eval);
@@ -158,7 +157,7 @@ void printTransTable(){
 }
 
 void clearTransTable(){
-	for (int i = 0; i < TableSize; i++){
+	for (int i = 0; i < TTableSize; i++){
 		TranspositionTable[i].pos = 0;
 	}
 }
@@ -180,15 +179,15 @@ void printCollisionStats(){
 	//~ printf("Ratio to all: %lf\n\n", (double)Wmatch / (Wmatch + Wcollision + 1));
 	
 	u64 count = 0;
-	for (int i = 0; i < TableSize; i++){
+	for (int i = 0; i < TTableSize; i++){
 		if (TranspositionTable[i].pos != 0){
 			count++;
 		}
 	}
 	printf("\nTTable: \n");
 	printf("Filled: %llu\n", count);
-	printf("All: %d\n", TableSize);
-	printf("Ratio to all: %lf\n", (double)count / TableSize);
+	printf("All: %d\n", TTableSize);
+	printf("Ratio to all: %lf\n", (double)count / TTableSize);
 	
 	Rcollision = Rmatch = 0;
 	Wcollision = Wmatch = 0;
@@ -196,7 +195,7 @@ void printCollisionStats(){
 #endif
 
 int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const int maxdepth, const int oddity){
-	TThashentry *current = &TranspositionTable[pos % TableSize];
+	TThashentry *current = &TranspositionTable[pos % TTableSize];
 	//~ return NO_HASH_ENTRY;
 	
 	if (current->pos != pos) {
@@ -279,13 +278,13 @@ int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const i
 
 //~ move readHashEntryMove(const u64 pos){
 	//~ //assuming readHashEntry was already called, and we tested it is indeed the pos we want to see
-	//~ TThashentry *current = &TranspositionTable[pos % TableSize];
+	//~ TThashentry *current = &TranspositionTable[pos % TTableSize];
 	//~ return current->m;
 //~ }
 
 
-void storePos(const u64 pos, const int eval, const evalflag flag, const int depth /*, const move m, const u64 next*/){
-	u64 current = pos % TableSize;
+void storePosTT(const u64 pos, const int eval, const evalflag flag, const int depth /*, const move m, const u64 next*/){
+	u64 current = pos % TTableSize;
 	#ifdef DEBUG
 	if (TranspositionTable[current].pos == 0) Wmatch++;
 	else Wcollision++;
@@ -299,26 +298,11 @@ void storePos(const u64 pos, const int eval, const evalflag flag, const int dept
 	//~ TranspositionTable[current].next = next;
 	
 	
-	//~ printf("tablesize: %ld\n", TableSize);
+	//~ printf("tablesize: %ld\n", TTableSize);
 	//~ printf("currenthash: \n");
 	//~ printBitPieceAsBoard(pos);
 	//~ printTransTable();
 }
-
-
-//~ void printBestLine(u64 pos, bool tomove){
-	//~ //printTransTable();
-	//~ TThashentry* current = lookup(pos);
-	//~ int parity = (tomove == white ? 1 : -1);
-	//~ int counter = 0; //if theres a collision, prevent loops
-	//~ printf("Best line:\n");
-	//~ while (current != NULL && current->m.from.file != -1 && counter < 20) { //no node, or noMove
-		//~ printmove(current->m);
-		//~ printf("%lf \n", current->eval * 0.01 * parity);
-		//~ current = lookup(current->next);
-		//~ counter++;
-	//~ }
-//~ }
 
 void printHashEntry(u64 pos){
 	TThashentry* current = lookup(pos);
@@ -330,13 +314,13 @@ void printHashEntry(u64 pos){
 	printBitPiece(pos);
 }
 
-void rmBestMoveFlag(u64 pos){
-	TThashentry* current = lookup(pos);
-	if (current == NULL) {
-		return;
-	}
-	current->flag = exactFlag;
-}
+//~ void rmBestMoveFlag(u64 pos){
+	//~ TThashentry* current = lookup(pos);
+	//~ if (current == NULL) {
+		//~ return;
+	//~ }
+	//~ current->flag = exactFlag;
+//~ }
 
 static inline void swap(bitboard* a, bitboard* b) { 
 	bitboard temp = *a;
@@ -347,9 +331,13 @@ static inline void swap(bitboard* a, bitboard* b) {
 
 
 static inline int getEval(u64 pos){
-	TThashentry *current = &TranspositionTable[pos % TableSize];
+	TThashentry *current = &TranspositionTable[pos % TTableSize];
 	if (current->pos == pos){
-		if (current->flag == lastBest) return 1000000 + current->depth;
+		if (current->flag == lastBest) {
+			//remove the flag
+			current->flag = exactFlag;
+			return 1000000 + current->depth;
+		}
 		if (current->flag == exactFlag || current->flag == alphaFlag) return current->eval;
 	}
 	return -1000000;
@@ -363,6 +351,26 @@ void orderMoves(movearray* legalmoves){
 			if (getEval(legalmoves->boards[j].hashValue) < getEval(legalmoves->boards[j+1].hashValue)) swap(&legalmoves->boards[j], &legalmoves->boards[j+1]);
 		}
 	}
+}
+
+
+/* 
+ * REPETITION TABLE
+ * */
+
+u64 RepetitionTable[REPETITION_TABLE_SIZE];
+int RTwriteindex = 0;
+
+/* The last capture, castling or pawn move marks the last position that could be
+ * a repetition. When reading the moves from the input, we can reset the write 
+ * index to 0, if the move was special. If a new move was searched, we increase
+ * the write index, and if the move was taken back, we decrease the write index.
+ * This way the new positions constantly get overwritten, while the older ones
+ * are kept. If the search is cancelled, we will get new line of moves, so
+ * it dowsn't matter if we lost track of the write index. */
+
+bool isRepetition(u64 pos){
+	
 }
 
 

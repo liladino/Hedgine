@@ -21,7 +21,6 @@
 #include <signal.h>
 
 #define millisec 1000
-#define epsilon 0.00005
 #define PosINF 2147483640
 #define NegINF -2147483640
 #define MAXSEARCHDEPTH 40

@@ -239,8 +239,8 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 		}
 		
 		if (eval >= beta){
-			if (oddity) storePos(board.hashValue, -beta, betaFlag, maxdepth - depth);
-			else storePos(board.hashValue, beta, betaFlag, maxdepth - depth);
+			if (oddity) storePosTT(board.hashValue, -beta, betaFlag, maxdepth - depth);
+			else storePosTT(board.hashValue, beta, betaFlag, maxdepth - depth);
 			return beta;
 		}
 		if (alpha < eval){ 
@@ -257,8 +257,8 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 		PV[depth][i] = PV[depth + 1][i];
 	}
 	
-	if (oddity) storePos(board.hashValue, -alpha, flag, maxdepth - depth);
-	else storePos(board.hashValue, alpha, flag, maxdepth - depth);
+	if (oddity) storePosTT(board.hashValue, -alpha, flag, maxdepth - depth);
+	else storePosTT(board.hashValue, alpha, flag, maxdepth - depth);
 	return alpha;
 }
 
@@ -286,13 +286,12 @@ move engine(bitboard board, bool tomove){
 				PV[j][k] = nullmove;
 			}
 		}
-		
 		maxdepth = i;
 		
 		temp = search(board, tomove, 0, NegINF, PosINF);
-		//~ printf("%d\n", temp);
 		
-		storePos(nextp, temp, lastBest, maxdepth);
+		//store the best move with a special flag to make sure next search starts with it
+		storePosTT(nextp, temp, lastBest, maxdepth);
 		
 		if (PV[0][0].from.rank != -1) nextm = PV[0][0];
 		
@@ -317,7 +316,7 @@ move engine(bitboard board, bool tomove){
 		if (temp >= whitewon || temp <= blackwon) break; //dont think if not neccesary
 	}
 	
-	rmBestMoveFlag(nextp);
+	//~ rmBestMoveFlag(nextp);
 	
 	//~ #ifdef DEBUG
 	//~ printCollisionStats();
@@ -326,7 +325,6 @@ move engine(bitboard board, bool tomove){
 	
 	return nextm;
 }
-
 
 /* 
  * CPU

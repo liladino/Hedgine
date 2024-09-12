@@ -1,10 +1,20 @@
+Date:   Sep 13 2024:
+	Repetition table:
+		it is a single array of hashes. Thought about quadratic hashing, but the
+		removing and writing of new elements is a whole lot more difficult, so
+		I'm not convinced if this is a speed increase with such small elements
+		and	table sizes.
+
 Date:   Sep 12 2024:
 	Engine:
 		Evaluation is now separated into a different unit, as i'd like to rework
 		parts of it. 
 		The thinking time now depends on the increment to:
 			thinking time = increment + old think time
-		
+			
+	Repetition table:
+		after trying out n ideas, i decided to not reinvent the wheel.
+			
 Date:   Sep 11 2024:
 	Output:
 		printLegalmoves migrated to output.c
