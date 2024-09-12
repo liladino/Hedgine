@@ -23,12 +23,14 @@
 #define TT_MIN_SIZE_MB 1
 
 #ifndef DEBUG
-	#define TT_DEF_SIZE_MB 16
+	#define TT_DEF_SIZE_MB 12
 	#define TT_MAX_SIZE_MB 128
 #else
 	#define TT_DEF_SIZE_MB 1
 	#define TT_MAX_SIZE_MB 2
 #endif
+
+#define RT_SIZE_MB 1
 
 typedef unsigned long long u64;
 
@@ -142,14 +144,14 @@ typedef enum evalflag{
 	exactFlag = 1, alphaFlag = 2, betaFlag = 3, lastBest = 4
 }evalflag;
 
-typedef struct hashentry{
+typedef struct TThashentry{
 	u64 pos; //key
 	//u64 next; 
 	int eval;
 	evalflag flag;
 	int depth;
 	//move m;
-}hashentry;
+}TThashentry;
 
 typedef struct gameInfo{
 	long int startTime;

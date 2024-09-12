@@ -102,7 +102,9 @@ void resetTimeControl(){
 void parseGo(char *command, bitboard* board, bool *tomove){
 	// reset time control
 	resetTimeControl();
-
+	
+	int increment = 0;
+	
 	// init argument
 	char *argument = NULL;
 
@@ -112,23 +114,25 @@ void parseGo(char *command, bitboard* board, bool *tomove){
 	}
 
 	// match UCI increments: doesn't change program behacvior at the moment
-	if ((argument = strstr(command,"binc"))) {
+	if ((argument = strstr(command,"binc")) && *tomove == black) {
+		increment = atoi(argument + 5);
 		info.timeControl = true;
 	}
-	if ((argument = strstr(command,"winc"))) {
+	if ((argument = strstr(command,"winc")) && *tomove == white) {
+		increment = atoi(argument + 5);
 		info.timeControl = true;
 	}
 	
 	
 	if ((argument = strstr(command,"wtime")) && *tomove == white) {
 		info.timeRemaining = atoi(argument + 6);
-		setMoveTime();
+		setMoveTime(increment);
 		info.timeControl = true;
 	}
 
 	if ((argument = strstr(command,"btime")) && *tomove == black) {
 		info.timeRemaining = atoi(argument + 6);
-		setMoveTime();
+		setMoveTime(increment);
 		info.timeControl = true;
 	}
 
@@ -264,7 +268,7 @@ void initializeAll(){
 
 	
 	// init hash table with default size
-	if (allocTransTable( TT_DEF_SIZE_MB ) == NULL){
+	if (allocTransTable(TT_DEF_SIZE_MB) == NULL){
 		exit(1);
 	}
 }

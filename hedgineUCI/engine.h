@@ -3,19 +3,14 @@
 
 #include "structs.h"
 #include "moves.h"
-#include "output.h"
 #include "legalmoves.h"
 #include "hash.h"
 #include "uci.h"
+#include "engine.h"
+#include "eval.h"
 
 #ifdef DEBUG
 	#include "debugmalloc.h"
-	#include "output.h"
-	//~ #include "input.h"
-#endif
-#ifdef BENCH
-	//~ #include "input.h"
-	#include "output.h"
 #endif
 
 #include <stdio.h>
@@ -39,6 +34,6 @@ move CPU(int cpulvl, bitboard bboard, bool tomove);
 
 void makeBenchTest(char board[12][12], bool tomove, int castling[4], squarenums enpass);
 
-void setMoveTime();
+void setMoveTime(int increment);
 
 #endif

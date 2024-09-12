@@ -2,15 +2,15 @@
 
 int TableSizeMB = 0;
 int TableSize = 0;
-hashentry* TranspositionTable = NULL;
+TThashentry* TranspositionTable = NULL;
 
-hashentry* allocTransTable(const int sizeInMB){
+TThashentry* allocTransTable(const int sizeInMB){
 	TableSizeMB = sizeInMB;
-	TableSize = TableSizeMB * 1024 * 1024 / sizeof(hashentry);	
+	TableSize = TableSizeMB * 1024 * 1024 / sizeof(TThashentry);	
 	if (sizeInMB == 0){
 		TableSize++;
 	}
-	TranspositionTable = malloc( TableSize * sizeof(hashentry) );
+	TranspositionTable = malloc( TableSize * sizeof(TThashentry) );
 	
 	if (TranspositionTable == NULL) return NULL;
 	
@@ -136,7 +136,7 @@ u64 hashPosition(const bitboard* board, bool tomove){
 	return result;
 }
 
-hashentry* lookup(const u64 position){
+TThashentry* lookup(const u64 position){
 	const u64 tmp = position % TableSize;
 	if (TranspositionTable[tmp].pos == position){
 		return &TranspositionTable[tmp];
@@ -196,7 +196,7 @@ void printCollisionStats(){
 #endif
 
 int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const int maxdepth, const int oddity){
-	hashentry *current = &TranspositionTable[pos % TableSize];
+	TThashentry *current = &TranspositionTable[pos % TableSize];
 	//~ return NO_HASH_ENTRY;
 	
 	if (current->pos != pos) {
@@ -279,7 +279,7 @@ int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const i
 
 //~ move readHashEntryMove(const u64 pos){
 	//~ //assuming readHashEntry was already called, and we tested it is indeed the pos we want to see
-	//~ hashentry *current = &TranspositionTable[pos % TableSize];
+	//~ TThashentry *current = &TranspositionTable[pos % TableSize];
 	//~ return current->m;
 //~ }
 
@@ -308,7 +308,7 @@ void storePos(const u64 pos, const int eval, const evalflag flag, const int dept
 
 //~ void printBestLine(u64 pos, bool tomove){
 	//~ //printTransTable();
-	//~ hashentry* current = lookup(pos);
+	//~ TThashentry* current = lookup(pos);
 	//~ int parity = (tomove == white ? 1 : -1);
 	//~ int counter = 0; //if theres a collision, prevent loops
 	//~ printf("Best line:\n");
@@ -321,7 +321,7 @@ void storePos(const u64 pos, const int eval, const evalflag flag, const int dept
 //~ }
 
 void printHashEntry(u64 pos){
-	hashentry* current = lookup(pos);
+	TThashentry* current = lookup(pos);
 	if (current == NULL) {
 		printf("No record/overweitten\n");
 		return;
@@ -331,7 +331,7 @@ void printHashEntry(u64 pos){
 }
 
 void rmBestMoveFlag(u64 pos){
-	hashentry* current = lookup(pos);
+	TThashentry* current = lookup(pos);
 	if (current == NULL) {
 		return;
 	}
@@ -347,7 +347,7 @@ static inline void swap(bitboard* a, bitboard* b) {
 
 
 static inline int getEval(u64 pos){
-	hashentry *current = &TranspositionTable[pos % TableSize];
+	TThashentry *current = &TranspositionTable[pos % TableSize];
 	if (current->pos == pos){
 		if (current->flag == lastBest) return 1000000 + current->depth;
 		if (current->flag == exactFlag || current->flag == alphaFlag) return current->eval;

@@ -17,13 +17,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-hashentry* allocTransTable(const int sizeInMB);
+TThashentry* allocTransTable(const int sizeInMB);
 
 void setHashKey();
 
 u64 hashPosition(const bitboard* board, bool tomove);
 
-hashentry* lookup(u64 position);
+TThashentry* lookup(u64 position);
 
 void freeTransTable();
 

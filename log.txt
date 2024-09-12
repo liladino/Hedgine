@@ -1,3 +1,10 @@
+Date:   Sep 12 2024:
+	Engine:
+		Evaluation is now separated into a different unit, as i'd like to rework
+		parts of it. 
+		The thinking time now depends on the increment to:
+			thinking time = increment + old think time
+		
 Date:   Sep 11 2024:
 	Output:
 		printLegalmoves migrated to output.c
