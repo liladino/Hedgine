@@ -54,6 +54,7 @@ test
 # notes and test files
 *.fen
 *.pgn
+test.txt
 meta/
 
 #older versions

@@ -44,6 +44,8 @@ void addPieceOnBoard(char board2d[12][12], u64 piece, char piecesymbol);
 
 void boardConvertBack(char board2d[12][12], bitboard board);
 
-move boardConvertTomove(bitboard board1, bitboard board2, bool tomove);
+move boardConvertTomove(const bitboard* const board1, const bitboard* const board2, bool tomove);
+
+bool lastMoveWasCapture(const bitboard* const lastboard, const move m, const bool tomove);
 
 #endif

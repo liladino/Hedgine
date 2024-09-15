@@ -8,7 +8,7 @@ void printmove(move m) {
 void printLegalmoves(movearray legalmoves, bitboard board, bool tomove){
 	printf("\nLegal moves:\n");
 	for (int i = 0; i < legalmoves.size; i++){
-		printmove(boardConvertTomove(board, legalmoves.boards[i], tomove));
+		printmove(boardConvertTomove(&board, &legalmoves.boards[i], tomove));
 		printHashEntry(legalmoves.boards[i].hashValue);
 		//~ printf("%lf\n", legalmoves.boards[i].eval * 0.01);
 	}

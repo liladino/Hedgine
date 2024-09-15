@@ -30,7 +30,7 @@
 	#define TT_MAX_SIZE_MB 2
 #endif
 
-#define REPETITION_TABLE_SIZE 1000
+#define REPETITION_TABLE_SIZE 1024
 
 typedef unsigned long long u64;
 

@@ -17,12 +17,10 @@ void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* 
 	char *current_char = command+9;//shifted 9 from the position token 
 	
 	
-	// parse UCI "startpos" command
 	if (strncmp(command+9, "startpos", 8) == 0){
 		setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", board, tomove, fmv, movenum);
 	}
-	else { // parse UCI "fen" command 
-		// make sure "fen" command is available within command string
+	else { 
 		current_char = strstr(command, "fen");
 		
 		// if no "fen" command is available within command string
@@ -31,7 +29,7 @@ void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* 
 			setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", board, tomove, fmv, movenum);
 		}
 		else{
-			// shift pointer to the right where next token begins
+			// shift to next token
 			current_char += 4;
 			
 			// init chess board with position from FEN string
@@ -44,12 +42,15 @@ void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* 
 	
 	current_char = strstr(command, "moves");
 	
-	// moves available
+	
+	
 	if (current_char != NULL){
+		//store the start position in the repetition table too
+		storeRepetiton(board->hashValue);
+		
 		// shift pointer to the right where next token begins
 		current_char += 6;
 		
-		// loop over moves within a move string
 		while(*current_char != 0){
 			// parse next move
 			move m = parseLongAlgebraicNotation(current_char);
@@ -57,10 +58,7 @@ void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* 
 			// if no more moves
 			if (m.from.file == -1) break;
 			
-			//~ repetition_index++;
-			//~ repetition_table[repetition_index] = hash_key;
-			
-			// make move on the chess board
+			bitboard last = *board; 
 			int x = isMoveLegal(board, *tomove, m);
 			if (x == 1){
 				//the move was illegal
@@ -75,13 +73,30 @@ void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* 
 				break;
 			}
 			
+			/* store in the repetition table 
+			 * 
+			 * if the move was a capture, castling, a pawn move, or the en 
+			 * passant target square changed(/got deleted), the position can't
+			 * be repeated anymore => the write index can be 0 again */
+			if (
+				last.piece[wpawn] != board->piece[wpawn] || 
+				last.piece[bpawn] != board->piece[bpawn] || 
+				last.castlerights != board->castlerights || 
+				last.enpassanttarget != board->enpassanttarget || 
+				lastMoveWasCapture(&last, m, tomove)
+					){
+				RTwriteIndex = 0;
+			}
+			storeRepetiton(board->hashValue);
+			
+			
 			if (*tomove == black) (*movenum)++;
 			*tomove = !(*tomove);
 			
-			// move current character mointer to the end of current move
+			
 			while (*current_char && *current_char != ' ') current_char++;
 			
-			// go to the next move
+			//skip ' '
 			current_char++;
 		}		
 	}
@@ -141,9 +156,9 @@ void parseGo(char *command, bitboard* board, bool *tomove){
 		info.timeControl = true;
 	}
 
-	if ((argument = strstr(command,"movetime"))) {
+	if ((argument = strstr(command,"movetime"))) { //in seconds
 		info.timeControl = true;
-		info.moveTime = atoi(argument + 9);
+		info.moveTime = atoi(argument + 9) * 1000;
 	}
 
 	int cpulvl = 40;

@@ -133,7 +133,7 @@ static int max(int a, int b){
 	return (a > b ? a : b);
 }
 
-static int countPieces(const bitboard* board){
+static int countPieces(const bitboard* const board){
 	u64 all = (board->piece[wqueen] | board->piece[wbishop] | board->piece[wknight] | board->piece[wrook] | board->piece[bqueen] | board->piece[bbishop] | board->piece[bknight] | board->piece[brook]);
 	u64 mask = 1;
 	int count = 0;
@@ -144,7 +144,7 @@ static int countPieces(const bitboard* board){
 	return count;
 }
 
-static int countFriendlyPieces(const bitboard* board, bool tomove){
+static int countFriendlyPieces(const bitboard* const board, bool tomove){
 	u64 all;
 	if (white == tomove) all = (board->piece[wqueen] | board->piece[wbishop] | board->piece[wknight] | board->piece[wpawn]);
 	else all = (board->piece[bpawn] | board->piece[bqueen] | board->piece[bbishop] | board->piece[bknight] | board->piece[brook]);
@@ -158,7 +158,7 @@ static int countFriendlyPieces(const bitboard* board, bool tomove){
 	return count;
 }
 
-static int sideEval(const bitboard* board, bool tomove){
+static int sideEval(const bitboard* const board, bool tomove){
 	int offset = (tomove == white ? 0 : bking);
 	u64 piecemask = 1;
 	int eval = 0;
@@ -240,7 +240,7 @@ static int sideEval(const bitboard* board, bool tomove){
 	return eval;
 }
 
-int fulleval(const bitboard* board, bool tomove){
+int fulleval(const bitboard* const board, bool tomove){
 	resultconst r = gameend(*board, tomove);
 	if (r != ongoing) return (tomove == white ? r : -r);
 	return (sideEval(board, white) + sideEval(board, black)) * (tomove == white ? 1 : -1);

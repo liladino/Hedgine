@@ -47,7 +47,7 @@ int benchTest(bitboard board, bool tomove, int depth, int maxd){
 		}
 		#endif
 		if (maxd == benchdepth && maxd == depth){
-			printmove(boardConvertTomove(board, legalmoves.boards[i], tomove));
+			printmove(boardConvertTomove(&board, &legalmoves.boards[i], tomove));
 			printf(": %d\n", x);
 		}
 	}
@@ -144,7 +144,7 @@ move randomBot(bitboard board, bool tomove){
 	bitGenerateLegalmoves(&legalmoves, board, tomove, false);
 	
 	int i = (rand() % legalmoves.size);
-	move m = boardConvertTomove(board, legalmoves.boards[i], tomove);
+	move m = boardConvertTomove(&board, &legalmoves.boards[i], tomove);
 	
 	return m;
 }
@@ -189,6 +189,8 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 		return 0;
 	}
 	
+	//~ if (depth != 0 && isRepetition(board.hashValue)) return 0;
+	
 	const int oddity = depth % 2;
 	evalflag flag = alphaFlag;
 	
@@ -219,8 +221,9 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	}
 	
 	orderMoves(&legalmoves);
-	
+		
 	for (int i = 0; i < legalmoves.size; i++){
+		storeRepetiton(board.hashValue);
 		if (i == 0 || maxdepth < 2){
 			eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
 		}
@@ -230,17 +233,12 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 				eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
 			}
 		}
-		
-		if (stopSearch) {
-			for (int i = depth; i < maxdepth; i++){
-				PV[depth][i] = PV[depth + 1][i];
-			}
-			return 0;
-		}
+		rmLastRepetition();
 		
 		if (eval >= beta){
 			if (oddity) storePosTT(board.hashValue, -beta, betaFlag, maxdepth - depth);
 			else storePosTT(board.hashValue, beta, betaFlag, maxdepth - depth);
+			
 			return beta;
 		}
 		if (alpha < eval){ 
@@ -250,9 +248,18 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 			if (depth == 0){
 				nextp = legalmoves.boards[i].hashValue;
 			}
-			PV[depth+1][depth] = boardConvertTomove(board, legalmoves.boards[i], tomove);
+			PV[depth+1][depth] = boardConvertTomove(&board, &legalmoves.boards[i], tomove);
+		}
+		
+		if (stopSearch) {
+			for (int i = depth; i < maxdepth; i++){
+				PV[depth][i] = PV[depth + 1][i];
+			}
+			
+			return 0;
 		}
 	}
+	
 	for (int i = depth; i < maxdepth; i++){
 		PV[depth][i] = PV[depth + 1][i];
 	}

@@ -19,8 +19,8 @@ TThashentry* allocTransTable(const int sizeInMB){
 	}
 	
 	#ifdef DEBUG
-	printf("Transposition Table:\t%d MB, %d\n", TTableSizeMB, TTableSize);
-	printf("Repetition Table:\t%d MB, %d\n", RT_SIZE_kB, RTableSize);
+	printf("Transposition Table:\t%d MB, %d entry\n", TTableSizeMB, TTableSize);
+	printf("Repetition Table:\t%lf kB, %d entry\n", (double) REPETITION_TABLE_SIZE * sizeof(u64) / 1024, REPETITION_TABLE_SIZE);
 	#endif
 	return TranspositionTable;
 }
@@ -100,7 +100,7 @@ void setHashKey(){
 	Zobrist.tomove = rand64();
 }
 
-u64 hashPosition(const bitboard* board, bool tomove){
+u64 hashPosition(const bitboard* const board, bool tomove){
 	u64 result = 0;
 	u64 mask = 1;
 	for (int i = 0; i < 64; i++){
@@ -359,7 +359,7 @@ void orderMoves(movearray* legalmoves){
  * */
 
 u64 RepetitionTable[REPETITION_TABLE_SIZE];
-int RTwriteindex = 0;
+int RTwriteIndex = 0;
 
 /* The last capture, castling or pawn move marks the last position that could be
  * a repetition. When reading the moves from the input, we can reset the write 
@@ -367,10 +367,29 @@ int RTwriteindex = 0;
  * the write index, and if the move was taken back, we decrease the write index.
  * This way the new positions constantly get overwritten, while the older ones
  * are kept. If the search is cancelled, we will get new line of moves, so
- * it dowsn't matter if we lost track of the write index. */
+ * it dowsn't matter if we lost track of the write index. 
+ * 
+ * The position is considered a draw after the FIRST repetition, so the engine
+ * avoids previous positions like fire, if it think's it's better. */
 
-bool isRepetition(u64 pos){
+bool isRepetition(const u64 pos){
+	for (int i = (RTwriteIndex > REPETITION_TABLE_SIZE ? REPETITION_TABLE_SIZE : RTwriteIndex); i >= 0; i--){
+		if (RepetitionTable[i] == pos)	return true;
+	}
 	
+	return false;
 }
 
+void storeRepetiton(const u64 pos){
+	RTwriteIndex++;
+	
+	if (RTwriteIndex < REPETITION_TABLE_SIZE){
+		//store the position if there's room for it	
+		RepetitionTable[RTwriteIndex] = pos;
+	}
+} 
 
+
+void rmLastRepetition(){
+	if (RTwriteIndex > 0) RTwriteIndex--;
+}

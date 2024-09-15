@@ -6,7 +6,6 @@
 #include "output.h"
 #include "legalmoves.h"
 #include "mtwister.h"
-#include "engine.h" //for the PosINF macro
 
 #ifdef DEBUG
 	#include "debugmalloc.h"
@@ -22,7 +21,7 @@ TThashentry* allocTransTable(const int sizeInMB);
 
 void setHashKey();
 
-u64 hashPosition(const bitboard* board, bool tomove);
+u64 hashPosition(const bitboard* const board, bool tomove);
 
 TThashentry* lookup(u64 position);
 
@@ -32,7 +31,7 @@ int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const i
 
 //~ move readHashEntryMove(const u64 pos);
 
-void storePosTT(const u64 pos, const int eval, const evalflag flag, const int depth/*, const move m, const u64 next*/);
+void storePosTT(const u64 pos, const int eval, const evalflag flag, const int depth);
 
 void hashPieceIO(bitboard *board, int sq, int piece);
 
@@ -56,6 +55,12 @@ void clearTransTable();
 
 //~ void rmBestMoveFlag(u64 pos);
 
-extern int RTwriteindex;
+extern int RTwriteIndex;
+
+void storeRepetiton(const u64 pos); 
+
+void rmLastRepetition();
+
+bool isRepetition(const u64 pos);
 
 #endif

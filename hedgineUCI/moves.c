@@ -130,9 +130,9 @@ int countmoves(movelist *head) {
  * however out of convinience ill call them moves, because they are technically moves 
  * */
  
-int isMoveInMoveArray(const bitboard* board, const movearray* legalmoves, const bool tomove, const move m){
+int isMoveInMoveArray(const bitboard* const board, const movearray* legalmoves, const bool tomove, const move m){
 	for (int i = 0; i < legalmoves->size; i++){
-		move curr = boardConvertTomove(*board, legalmoves->boards[i], tomove);
+		move curr = boardConvertTomove(board, &legalmoves->boards[i], tomove);
 		if (curr.from.file == m.from.file && curr.from.rank == m.from.rank && curr.to.file == m.to.file && curr.to.rank == m.to.rank && m.promotion == curr.promotion){
 			return i;
 		}
@@ -243,18 +243,18 @@ void boardConvertBack(char board2d[12][12], bitboard board){
 	addPieceOnBoard(board2d, board.piece[bking], 'k');
 }
 
-move boardConvertTomove(bitboard board1, bitboard board2, bool tomove){
+move boardConvertTomove(const bitboard* const board1, const bitboard* const board2, bool tomove){
 	move m = {{-1, -1}, {-1, -1}, 0};
 	int offset = (tomove == white ? 0 : bking);
 	int differences = 0;
 	for (int i = wking + offset; i < bking + offset; i++){
-		if (board1.piece[i] != board2.piece[i]) {
+		if (board1->piece[i] != board2->piece[i]) {
 			differences = 0; 
 			u64 mask = 1;
 			for (int j = 0; j < 64; j++){
-				if ((board1.piece[i] & mask) != (board2.piece[i] & mask)){
+				if ((board1->piece[i] & mask) != (board2->piece[i] & mask)){
 					differences++;
-					if ((board1.piece[i] & mask)) {
+					if ((board1->piece[i] & mask)) {
 						m.from.rank = j / 8 + 2;
 						m.from.file = j % 8 + 2;
 					}
@@ -266,7 +266,7 @@ move boardConvertTomove(bitboard board1, bitboard board2, bool tomove){
 				mask = mask << 1;
 			}
 			if (differences == 2){
-				return m;//no need to checl for castling, cos the king was searched firstly
+				return m;//no need to check for castling, cos the king was searched firstly
 			}
 			else {
 				if (i != wpawn + offset){
@@ -289,4 +289,37 @@ move boardConvertTomove(bitboard board1, bitboard board2, bool tomove){
 		}
 	}
 	return m;
+}
+
+bool lastMoveWasCapture(const bitboard* const lastboard, const move m, const bool tomove){
+	u64 targetsquare = 1;
+	targetsquare = targetsquare << (m.to.file - 2 + (m.to.rank - 2) * 8);
+	
+	if ( 
+		(lastboard->piece[wpawn] & targetsquare)   | 
+		(lastboard->piece[wknight] & targetsquare) | 
+		(lastboard->piece[wbishop] & targetsquare) | 
+		(lastboard->piece[wrook] & targetsquare)   | 
+		(lastboard->piece[wqueen] & targetsquare)  |  
+		(lastboard->piece[bpawn] & targetsquare)   | 
+		(lastboard->piece[bknight] & targetsquare) | 
+		(lastboard->piece[bbishop] & targetsquare) | 
+		(lastboard->piece[brook] & targetsquare)   | 
+		(lastboard->piece[bqueen] & targetsquare)
+			){
+		//if any piece stood on the square we move to, it was a capture.
+		return true;
+	}
+	
+	targetsquare = lastboard->enpassanttarget;
+	if (targetsquare == 0) return false;
+	
+	if (tomove == white) {
+		if (lastboard->piece[bpawn] & (targetsquare >> 8)) return true;
+	}
+	else {
+		if (lastboard->piece[wpawn] & (targetsquare << 8)) return true;
+	}
+	
+	return false;
 }
