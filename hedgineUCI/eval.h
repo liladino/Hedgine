@@ -10,6 +10,6 @@
 
 #include <stdbool.h>
 
-int fulleval(const bitboard *board, bool tomove);
+int fulleval(const bitboard *board, bool tomove, int depth);
 
 #endif

@@ -62,7 +62,7 @@ typedef enum resultconst{
 	blackwon = -100000,
 	draw = 0,
 	ongoing = -1,
-	stalemate = 200000
+	//~ stalemate = 200000
 }resultconst;
 
 typedef enum sidetomove{
@@ -107,7 +107,6 @@ typedef enum raydir{
 	 sout = 8,
 	 soEa = 7
 }raydir;
-
 
 typedef struct bitboard{
 	/* a1 = LSB
@@ -159,8 +158,6 @@ typedef struct gameInfo{
 	bool timeControl;
 	bool quit;
 	int moveTime;
-	
-	//~ bool UCI_ShowCurrLine;
 	
 	bool newgame;
 	//~ bool OwnBook;

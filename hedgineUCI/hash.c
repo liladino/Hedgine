@@ -195,9 +195,9 @@ void printCollisionStats(){
 #endif
 
 int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const int maxdepth, const int oddity){
-	TThashentry *current = &TranspositionTable[pos % TTableSize];
 	//~ return NO_HASH_ENTRY;
-	
+	TThashentry *current = &TranspositionTable[pos % TTableSize];
+		
 	if (current->pos != pos) {
 		#ifdef DEBUG
 		if (current->pos != 0) Rcollision++;
@@ -205,7 +205,7 @@ int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const i
 		return NO_HASH_ENTRY;
 	}
 	
-	if (current->depth > maxdepth - depth){
+	if (current->depth <= maxdepth - depth){
 		return NO_HASH_ENTRY;	
 	}
 	
@@ -242,16 +242,16 @@ int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const i
 			case lastBest:
 				return tempeval;
 			case alphaFlag:
-				if (tempeval < -(*beta)) (*beta) = -tempeval;
+				//~ if (tempeval < -(*beta)) (*beta) = -tempeval;
 				break;
 			case betaFlag:
-				if (tempeval > -(*alpha)) (*alpha) = -tempeval;
+				//~ if (tempeval > -(*alpha)) (*alpha) = -tempeval;
 				break;
 		}
 		
-		if (-(*alpha) < -(*beta)){
-			return tempeval;
-		}
+		//~ if (-(*alpha) < -(*beta)){
+			//~ return tempeval;
+		//~ }
 	}
 	else {
 		switch (current->flag){
@@ -260,16 +260,16 @@ int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const i
 			case lastBest:
 				return tempeval;
 			case alphaFlag:
-				if (tempeval < *alpha) (*alpha) = tempeval;
+				//~ if (tempeval < *alpha) (*alpha) = tempeval;
 				break;
 			case betaFlag:
-				if (tempeval > *beta) (*beta) = tempeval;
+				//~ if (tempeval > *beta) (*beta) = tempeval;
 				break;
 		}
 		
-		if (*alpha > *beta){
-			return tempeval;
-		}
+		//~ if (*alpha > *beta){
+			//~ return tempeval;
+		//~ }
 	}
 
 	return NO_HASH_ENTRY;
@@ -283,7 +283,7 @@ int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const i
 //~ }
 
 
-void storePosTT(const u64 pos, const int eval, const evalflag flag, const int depth /*, const move m, const u64 next*/){
+void storePosTT(const u64 pos, const int eval, const evalflag flag, const int depth, const int maxdepth){
 	u64 current = pos % TTableSize;
 	#ifdef DEBUG
 	if (TranspositionTable[current].pos == 0) Wmatch++;
@@ -293,7 +293,7 @@ void storePosTT(const u64 pos, const int eval, const evalflag flag, const int de
 	TranspositionTable[current].pos = pos; //key 
 	TranspositionTable[current].eval = eval;
 	TranspositionTable[current].flag = flag;
-	TranspositionTable[current].depth = depth;
+	TranspositionTable[current].depth = maxdepth - depth;
 	//~ TranspositionTable[current].m = m;
 	//~ TranspositionTable[current].next = next;
 	
@@ -334,7 +334,7 @@ static inline int getEval(u64 pos){
 	TThashentry *current = &TranspositionTable[pos % TTableSize];
 	if (current->pos == pos){
 		if (current->flag == lastBest) {
-			//remove the flag
+			//remove the flag maybe?
 			current->flag = exactFlag;
 			return 1000000 + current->depth;
 		}

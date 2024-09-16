@@ -1,3 +1,18 @@
+Date:   Sep 16 2024:
+	TT:
+		The alpha-beta loader still needs to be tested, as im not sure the alpha
+		and beta adjustment are correct.
+		
+	UCI:
+		mate in x is now following conventions (positive if the engine mates, 
+		negative if engine gets mated). Might need to get debugged, sometimes it
+		puts out weird stuff
+		
+	Search:
+		Introduced a bug before, where the engine can blunder something as the 
+		search is cancelled. With the reordering of the search cancel consition
+		it seems to be gone.
+		
 Date:   Sep 15 2024:
 	Repetition table:
 		small progress, shortly it should be working.

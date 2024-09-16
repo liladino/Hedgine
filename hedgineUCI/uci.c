@@ -63,13 +63,13 @@ void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* 
 			if (x == 1){
 				//the move was illegal
 				info.quit = true;
-				fprintf(stderr, TXT_RED "Ilegal move found!\n" DEFAULT);
+				fprintf(stderr, /*TXT_RED*/ "Ilegal move found!\n" /*DEFAULT*/);
 				break;
 			}
 			else if (x == 2){
 				//no legal moves left
 				info.quit = true;
-				fprintf(stderr, TXT_RED "No legal moves in position!\n" DEFAULT);
+				fprintf(stderr, /*TXT_RED*/ "No legal moves in position!\n" /*DEFAULT*/);
 				break;
 			}
 			
@@ -156,9 +156,9 @@ void parseGo(char *command, bitboard* board, bool *tomove){
 		info.timeControl = true;
 	}
 
-	if ((argument = strstr(command,"movetime"))) { //in seconds
+	if ((argument = strstr(command,"movetime"))) { 
 		info.timeControl = true;
-		info.moveTime = atoi(argument + 9) * 1000;
+		info.moveTime = atoi(argument + 9);
 	}
 
 	int cpulvl = 40;

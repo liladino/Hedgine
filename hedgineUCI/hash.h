@@ -31,7 +31,7 @@ int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const i
 
 //~ move readHashEntryMove(const u64 pos);
 
-void storePosTT(const u64 pos, const int eval, const evalflag flag, const int depth);
+void storePosTT(const u64 pos, const int eval, const evalflag flag, const int depth, const int maxdepth);
 
 void hashPieceIO(bitboard *board, int sq, int piece);
 

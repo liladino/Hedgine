@@ -70,67 +70,64 @@ void makeBenchTest(char board[12][12], bool tomove, int castling[4], squarenums 
  * */
 
 void communicate() {
-	// if time is up break here
 	if(info.timeControl == true && getTime_ms()-info.startTime > info.moveTime) {
-		// tell engine to stop calculating
 		stopSearch = true;
 	}
 	
-	// read GUI input
 	readInput();
 }
 
 void setMoveTime(int increment){
 	info.moveTime = increment;
-	if (info.timeRemaining <= 500){ //half a sec left
+	if (info.timeRemaining <= 0.5 * SECOND){ //half a sec left
 		info.moveTime += 50;
 		return;
 	}
-	if (info.timeRemaining <= 1000){ //1 sec left
+	if (info.timeRemaining <= SECOND){ //1 sec left
 		info.moveTime += 100;
 		return;
 	}
-	if (info.timeRemaining <= 2000){ //2 sec left
+	if (info.timeRemaining <= 2 * SECOND){ //2 sec left
 		info.moveTime += info.timeRemaining / 5; //gets down from .4 sec to .1 sec
 		return;
 	}
-	if (info.timeRemaining <= 10 * 1000){ //10 sec left
+	if (info.timeRemaining <= 10 * SECOND){ //10 sec left
 		info.moveTime += 500 + (info.timeRemaining - 2000) / 16; //1 sec and gets down to half sec
 		return;
 	}
-	if (info.timeRemaining <= 30 * 1000){ //30 sec left
-		info.moveTime += 1500; //1.5 sec
+	if (info.timeRemaining <= 30 * SECOND){ //30 sec left
+		info.moveTime += 1.5 * SECOND; //1.5 sec
 		return;
 	}
-	if (info.timeRemaining <= 60 * 1000){ //1 min left
-		info.moveTime += 2100; //2.1 sec
+	if (info.timeRemaining <= 60 * SECOND){ //1 min left
+		info.moveTime += 2.1 * SECOND; //2.1 sec
 		return;
 	}
-	if (info.timeRemaining <= 2 * 60 * 1000){ //2 min left
-		info.moveTime += 3720; //3.7 sec
+	if (info.timeRemaining <= 2 * 60 * SECOND){ //2 min left
+		info.moveTime += 3.72 * SECOND; //3.7 sec
 		return;
 	}
-	if (info.timeRemaining <= 3 * 60 * 1000){ //3 min left
-		info.moveTime += 5450; //5.5 sec
+	if (info.timeRemaining <= 3 * 60 * SECOND){ //3 min left
+		info.moveTime += 5.45 * SECOND; //5.5 sec
 		return;
 	}
-	if (info.timeRemaining <= 5 * 60 * 1000){ //5 min left
-		info.moveTime += 7910; 
+	if (info.timeRemaining <= 5 * 60 * SECOND){ //5 min left
+		info.moveTime += 7.91 * SECOND; 
 		return;
 	}
-	if (info.timeRemaining <= 10 * 60 * 1000){ //10 min left
-		info.moveTime += 9900; 
+	if (info.timeRemaining <= 10 * 60 * SECOND){ //10 min left
+		info.moveTime += 9.9 * SECOND; 
 		return;
 	}
-	if (info.timeRemaining <= 20 * 60 * 1000){ //20 min left
-		info.moveTime += 15000; 
+	if (info.timeRemaining <= 20 * 60 * SECOND){ //20 min left
+		info.moveTime += 15 * SECOND; 
 		return;
 	}
-	if (info.timeRemaining <= 45 * 60 * 1000){ //45 min left
-		info.moveTime += 30000; 
+	if (info.timeRemaining <= 45 * 60 * SECOND){ //45 min left
+		info.moveTime += 30 * SECOND; 
 		return;
 	}
-	info.moveTime += 40000; 	
+	info.moveTime += 40 * SECOND; 	
 }
 
 /* 
@@ -158,7 +155,7 @@ int absoluteMaxDepth = MAXSEARCHDEPTH;
 bool stopSearch = false;
 
 static int quiescenceSearch(bitboard board, bool tomove, int alpha, int beta){
-	int eval = fulleval(&board, tomove);
+	int eval = fulleval(&board, tomove, maxdepth);
 	if (eval >= beta) return beta;
 	alpha = max(alpha, eval);
 	
@@ -189,17 +186,17 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 		return 0;
 	}
 	
-	//~ if (depth != 0 && isRepetition(board.hashValue)) return 0;
+	if (depth > 0 && isRepetition(board.hashValue)) return 0;
 	
 	const int oddity = depth % 2;
 	evalflag flag = alphaFlag;
 	
-	int eval = NO_HASH_ENTRY;
-	
 	bool PVnode = (beta - alpha > 1);
 	
-	if (!PVnode && searchedNodes > 1){
-		//~ eval = readHashEntry(board.hashValue, &alpha, &beta, depth, maxdepth, oddity);
+	int eval = NO_HASH_ENTRY;
+	
+	if (!PVnode && depth > 0){
+		eval = readHashEntry(board.hashValue, &alpha, &beta, depth, maxdepth, oddity);
 		if (eval != NO_HASH_ENTRY){
 			move nullmove = {{-1, -1}, {-1, -1}, 0};
 			for (int i = depth; i <= maxdepth; i++){
@@ -222,8 +219,8 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	
 	orderMoves(&legalmoves);
 		
+	storeRepetiton(board.hashValue);
 	for (int i = 0; i < legalmoves.size; i++){
-		storeRepetiton(board.hashValue);
 		if (i == 0 || maxdepth < 2){
 			eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
 		}
@@ -233,12 +230,19 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 				eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
 			}
 		}
-		rmLastRepetition();
+		
+		if (stopSearch) {
+			for (int i = depth; i < maxdepth; i++){
+				PV[depth][i] = PV[depth + 1][i];
+			}
+			rmLastRepetition();
+			return 0;
+		}
 		
 		if (eval >= beta){
-			if (oddity) storePosTT(board.hashValue, -beta, betaFlag, maxdepth - depth);
-			else storePosTT(board.hashValue, beta, betaFlag, maxdepth - depth);
-			
+			if (oddity) storePosTT(board.hashValue, -beta, betaFlag, depth, maxdepth);
+			else storePosTT(board.hashValue, beta, betaFlag, depth, maxdepth);
+			rmLastRepetition();
 			return beta;
 		}
 		if (alpha < eval){ 
@@ -250,22 +254,15 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 			}
 			PV[depth+1][depth] = boardConvertTomove(&board, &legalmoves.boards[i], tomove);
 		}
-		
-		if (stopSearch) {
-			for (int i = depth; i < maxdepth; i++){
-				PV[depth][i] = PV[depth + 1][i];
-			}
-			
-			return 0;
-		}
 	}
+	rmLastRepetition();
 	
 	for (int i = depth; i < maxdepth; i++){
 		PV[depth][i] = PV[depth + 1][i];
 	}
 	
-	if (oddity) storePosTT(board.hashValue, -alpha, flag, maxdepth - depth);
-	else storePosTT(board.hashValue, alpha, flag, maxdepth - depth);
+	if (oddity) storePosTT(board.hashValue, -alpha, flag, depth, maxdepth);
+	else storePosTT(board.hashValue, alpha, flag, depth, maxdepth);
 	return alpha;
 }
 
@@ -274,17 +271,16 @@ move engine(bitboard board, bool tomove){
 	move nullmove = {{-1, -1}, {-1, -1}, 0};
 	move nextm = nullmove;
 	#ifdef DEBUG
-	printf("debug\tthinking time %d\n", info.moveTime);
+	if (info.timeControl) printf("debug\tthinking time %d\n", info.moveTime);
 	#endif
 	
 	for (int i = 1; i < MAXSEARCHDEPTH; i++){
 		PV[0][i] = nullmove;
 	}
 
-	
 	stopSearch = false;
 	info.startTime = getTime_ms();
-	int temp = 0;
+	int eval = 0, lastEval = 0;
 	int i;
 	for (i = 1; i < absoluteMaxDepth + 1; i++){
 		for (unsigned j = 0; j < MAXSEARCHDEPTH; j++){
@@ -295,24 +291,39 @@ move engine(bitboard board, bool tomove){
 		}
 		maxdepth = i;
 		
-		temp = search(board, tomove, 0, NegINF, PosINF);
+		eval = search(board, tomove, 0, NegINF, PosINF);
 		
 		//store the best move with a special flag to make sure next search starts with it
-		storePosTT(nextp, temp, lastBest, maxdepth);
+		storePosTT(nextp, eval, lastBest, 0, maxdepth);
 		
 		if (PV[0][0].from.rank != -1) nextm = PV[0][0];
 		
 		if (stopSearch){
+			printf("info depth %d score cp %d pv ", i, lastEval);
+			for (int j = 0; j < i && PV[0][j].from.rank != -1; j++){
+				printmove(PV[0][j]);
+			}
+			printf("\n");
+			
 			break;
-		} 
+		}
+		
+		eval *= (tomove == black ? -1 : 1);
+		lastEval = eval;
 		
 		printf("info depth %d", i);
 		
-		if (temp >= whitewon || temp <= blackwon){
-			printf(" score mate %d pv ", absint(temp) - whitewon + 1);
+		if (eval >= whitewon || eval <= blackwon){
+			if ((tomove == black && eval <= blackwon) || (tomove == white && eval >= whitewon))
+				//engine is about to win
+				printf(" score mate %d pv ", (absint(absint(eval) - whitewon - 100 + 1))/2);
+			else
+				//we are about to win
+				printf(" score mate %d pv ", (absint(eval) - whitewon - 100 - 1)/2);
 		}
+		//~ printf("\n");
 		else{
-			printf(" score cp %d pv ", (tomove == black ? -1 : 1) * temp);
+			printf(" score cp %d pv ", eval);
 		}
 		
 		for (int j = 0; j < i && PV[0][j].from.rank != -1 && !stopSearch; j++){
@@ -320,7 +331,7 @@ move engine(bitboard board, bool tomove){
 		}
 		printf("\n");
 		
-		if (temp >= whitewon || temp <= blackwon) break; //dont think if not neccesary
+		if (eval >= whitewon || eval <= blackwon) break; //dont think if not neccesary
 	}
 	
 	//~ rmBestMoveFlag(nextp);
@@ -349,7 +360,8 @@ move CPU(int cpulvl, bitboard bboard, bool tomove){
 	if (cpulvl > 39) cpulvl = 39;
 	
 	if (cpulvl == 0){
-		usleep(millisec * 50);//hogy ne azonnal lepjen, nem letszukseglet
+		#define millisec 1000
+		usleep(25 * millisec);//hogy ne azonnal lepjen, nem letszukseglet
 		m = randomBot(bboard, tomove);
 	}	
 	else{

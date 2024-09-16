@@ -20,7 +20,7 @@
 #include <limits.h>
 #include <signal.h>
 
-#define millisec 1000
+#define SECOND 1000
 #define PosINF 2147483640
 #define NegINF -2147483640
 #define MAXSEARCHDEPTH 40

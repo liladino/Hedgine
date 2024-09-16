@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic
+CFLAGS = -Wall -Wextra -pedantic -MMD
 
 ifdef DEBUG
 CFLAGS += -g -DDEBUG
@@ -15,6 +15,7 @@ endif
 
 SRCS = $(wildcard *.c)
 OBJS = $(SRCS:.c=.o)
+DEPS = $(OBJS:.o=.d)
 TARGET = hedgine
 
 all: $(OBJS)
@@ -29,7 +30,7 @@ opt: $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $^
 
 clean:
-	rm -f *.o
+	rm -f *.o *.d
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@ 
@@ -38,3 +39,5 @@ release: CFLAGS += -O2
 release: $(OBJS)
 	$(CC) -Wall -Werror -pedantic -O2 -o $(TARGET) $^
 	rm -f *.o
+	
+-include $(DEPS)
