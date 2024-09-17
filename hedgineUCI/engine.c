@@ -195,7 +195,7 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	
 	int eval = NO_HASH_ENTRY;
 	
-	if (!PVnode && depth > 0){
+	if (!PVnode && depth > 0 && maxdepth > 1){ //don't swearch at depth 1 
 		eval = readHashEntry(board.hashValue, &alpha, &beta, depth, maxdepth, oddity);
 		if (eval != NO_HASH_ENTRY){
 			move nullmove = {{-1, -1}, {-1, -1}, 0};
@@ -226,7 +226,14 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 		}
 		else {
 			eval = -search(legalmoves.boards[i], !tomove, depth+1, -alpha-1, -alpha);
-			if (eval > alpha && eval < beta){
+			if (eval > alpha /*&& eval < beta*/ && !PVnode){ 
+				/* the non PVnode and eval < beta conditionss hould be the same, 
+				 * as:
+				 *   - if its a non PV node, beta = alpha + 1. This means, if 
+				 *     eval > alpha, then eval >= beta, but never <.
+				 *   - if it's a PV node, than beta > alpha + 1 (almost always),
+				 *     so the eval < beta is most likely satisfied. */
+				
 				eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
 			}
 		}
@@ -316,10 +323,10 @@ move engine(bitboard board, bool tomove){
 		if (eval >= whitewon || eval <= blackwon){
 			if ((tomove == black && eval <= blackwon) || (tomove == white && eval >= whitewon))
 				//engine is about to win
-				printf(" score mate %d pv ", (absint(absint(eval) - whitewon - 100 + 1))/2);
+				printf(" score mate %d pv ", (absint(absint(eval) - whitewon - 100) + 1) / 2);
 			else
 				//we are about to win
-				printf(" score mate %d pv ", (absint(eval) - whitewon - 100 - 1)/2);
+				printf(" score mate %d pv ", (absint(eval) - whitewon - 100 + 1) / 2);
 		}
 		//~ printf("\n");
 		else{

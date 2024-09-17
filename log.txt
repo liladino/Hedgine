@@ -10,7 +10,7 @@ Date:   Sep 16 2024:
 		
 	Search:
 		Introduced a bug before, where the engine can blunder something as the 
-		search is cancelled. With the reordering of the search cancel consition
+		search is cancelled. With the reordering of the search cancel condition
 		it seems to be gone.
 		
 Date:   Sep 15 2024:

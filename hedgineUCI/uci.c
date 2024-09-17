@@ -231,9 +231,6 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 			parsePosition("position startpos", board, tomove, fmv, movenum);
 			
 			clearTransTable();
-			#ifdef DEBUG
-			printBitBoard2d(*board);
-			#endif
 		}
 		else if (strncmp(input, "go", 2) == 0){
 			parseGo(input, board, tomove);

@@ -14,9 +14,7 @@ TThashentry* allocTransTable(const int sizeInMB){
 	
 	if (TranspositionTable == NULL) return NULL;
 	
-	for (int i = 0; i < TTableSize; i++){
-		TranspositionTable[i].pos = 0;
-	}
+	clearTransTable();
 	
 	#ifdef DEBUG
 	printf("Transposition Table:\t%d MB, %d entry\n", TTableSizeMB, TTableSize);
@@ -228,10 +226,10 @@ int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const i
 	
 	int tempeval = current->eval; 
 	if (tempeval >= whitewon){
-		tempeval = tempeval - depth /* - 1*/;
+		tempeval = tempeval - depth  - 1;
 	}
 	else if (tempeval <= blackwon){
-		tempeval += depth /* + 1*/;
+		tempeval += depth  + 1;
 	}
 	
 	if (oddity){	
