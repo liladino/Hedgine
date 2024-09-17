@@ -13,6 +13,10 @@ Date:   Sep 16 2024:
 		search is cancelled. With the reordering of the search cancel condition
 		it seems to be gone.
 		
+	Eval:
+		changed out the evaluation tables slightly, so that the values are a bit
+		less extreme.
+		
 Date:   Sep 15 2024:
 	Repetition table:
 		small progress, shortly it should be working.
