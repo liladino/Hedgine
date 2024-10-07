@@ -3,7 +3,9 @@ Date:   Oct 8 2024:
 		Namely illegal moves in the pv that gets printed out, and unreasonably 
 		high values in some search variations (5 or more in a materially equal
 		position). Sometimes makes weird blunders as well. 
-	
+	UCI:
+		Starting a new game sometimes leads to unexpected bugs and illegal moves
+		 
 Date:   Sep 16 2024:
 	TT:
 		The alpha-beta loader still needs to be tested, as im not sure the alpha
