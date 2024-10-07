@@ -196,7 +196,7 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	int eval = NO_HASH_ENTRY;
 	
 	if (!PVnode && depth > 0 && maxdepth > 1){ //don't swearch at depth 1 
-		eval = readHashEntry(board.hashValue, &alpha, &beta, depth, maxdepth, oddity);
+		//~ eval = readHashEntry(board.hashValue, &alpha, &beta, depth, maxdepth, oddity);
 		if (eval != NO_HASH_ENTRY){
 			move nullmove = {{-1, -1}, {-1, -1}, 0};
 			for (int i = depth; i <= maxdepth; i++){
@@ -221,7 +221,7 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 		
 	storeRepetiton(board.hashValue);
 	for (int i = 0; i < legalmoves.size; i++){
-		if (i == 0 || maxdepth < 2){
+		if (i == 0 || maxdepth < 2 || true){
 			eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
 		}
 		else {
