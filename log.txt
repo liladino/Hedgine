@@ -15,7 +15,10 @@ Date:   Sep 16 2024:
 		
 	Eval:
 		changed out the evaluation tables slightly, so that the values are a bit
-		less extreme.
+		less extreme. 
+		BUG:
+			sometimes during the search there are unreasonably high scores for 
+			one side (+1000 for a position with no material advantage)
 		
 Date:   Sep 15 2024:
 	Repetition table:
