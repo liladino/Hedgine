@@ -205,9 +205,10 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 		fflush(stdout);
 		
 		if (info.newgame){
-			parsePosition("position startpos", board, tomove, fmv, movenum);
+			//parsePosition("position startpos", board, tomove, fmv, movenum);
 			clearTransTable();
 			info.newgame = false;
+			*tomove = white;
 		}
 		
 		int temp = getLineDynamic(&input, 1000);
@@ -228,8 +229,8 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 			//~ printBitBoard2d(*board);
 		}
 		else if (strncmp(input, "ucinewgame", 10) == 0) {
-			parsePosition("position startpos", board, tomove, fmv, movenum);
-			
+			//parsePosition("position startpos", board, tomove, fmv, movenum);
+			*tomove = white;
 			clearTransTable();
 		}
 		else if (strncmp(input, "go", 2) == 0){

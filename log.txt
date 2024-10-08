@@ -5,7 +5,10 @@ Date:   Oct 8 2024:
 		position). Sometimes makes weird blunders as well. 
 	UCI:
 		Starting a new game sometimes leads to unexpected bugs and illegal moves
-		 
+		
+		When the program is optimized (-O2), the outputs sometimes won't arrive 
+		in time.
+		
 Date:   Sep 16 2024:
 	TT:
 		The alpha-beta loader still needs to be tested, as im not sure the alpha
