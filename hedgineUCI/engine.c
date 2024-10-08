@@ -4,6 +4,8 @@ void printLogo(){
 	printf("                                     /    #\n .  .     .                       #   *.  # #   ##  .#\n |__| _  _| _ . _  _       # (  #       #.   #,     /,##,     #(\n |  |(/,(_](_]|[ )(/,  (  #   ##                             # .,\n           ._|        # #.,                                      #\n                     #   #                                              /#\n                  ./##                           ||                  *#\n                   #                            ====                     ##\n                   #                       ____  ||  ____                  #\n                  +.    &&                / __ \\ /\\ / __ \\                /#\n                 &   &&     &&           | /  \\ |  | /  \\ |               #\n     &&*       &    *&& #      &         | \\   \\ \\/ /   / |                ,.\n   &    &#+&&     .#    &       &         \\ \\__/ || \\__/ /                (,\n   &     &         &  & &        &        |______________|                #*#\n    &&&&.           /&&          &         \\____________/                #\n        &                       /.                                 (###/  #\n         &        # &           &                                   (\n           *&      &           &                        .##    #   ###\n               *&&          *&#  ,##   #    ((##( /   ##  #  #*#\n                                     (#    ###     \n");	
 }
 
+const move nullmove = {{-1, -1}, {-1, -1}, 0};
+
 static int max(int a, int b){
 	return (a > b ? a : b);
 }
@@ -196,9 +198,8 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	int eval = NO_HASH_ENTRY;
 	
 	if (!PVnode && depth > 0 && maxdepth > 1){ //don't swearch at depth 1 
-		//~ eval = readHashEntry(board.hashValue, &alpha, &beta, depth, maxdepth, oddity);
+		eval = readHashEntry(board.hashValue, &alpha, &beta, depth, maxdepth, oddity);
 		if (eval != NO_HASH_ENTRY){
-			move nullmove = {{-1, -1}, {-1, -1}, 0};
 			for (int i = depth; i <= maxdepth; i++){
 				PV[depth][i] = nullmove;
 			}
@@ -226,22 +227,15 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 		}
 		else {
 			eval = -search(legalmoves.boards[i], !tomove, depth+1, -alpha-1, -alpha);
-			if (eval > alpha /*&& eval < beta*/ && !PVnode){ 
-				/* the non PVnode and eval < beta conditionss hould be the same, 
-				 * as:
-				 *   - if its a non PV node, beta = alpha + 1. This means, if 
-				 *     eval > alpha, then eval >= beta, but never <.
-				 *   - if it's a PV node, than beta > alpha + 1 (almost always),
-				 *     so the eval < beta is most likely satisfied. */
-				
+			if (eval > alpha && eval < beta){ 
 				eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
 			}
 		}
 		
 		if (stopSearch) {
-			for (int i = depth; i < maxdepth; i++){
-				PV[depth][i] = PV[depth + 1][i];
-			}
+			//~ for (int i = depth; i < maxdepth; i++){
+				//~ PV[depth][i] = PV[depth + 1][i];
+			//~ }
 			rmLastRepetition();
 			return 0;
 		}
@@ -256,6 +250,7 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 			flag = exactFlag;
 			alpha = eval;
 			//~ bestindex = i;
+			
 			if (depth == 0){
 				nextp = legalmoves.boards[i].hashValue;
 			}
@@ -273,29 +268,30 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	return alpha;
 }
 
+static inline void emptyPVTable(){
+	for (int i = 0; i <= MAXSEARCHDEPTH; i++){
+		for (int j = 0; j <= MAXSEARCHDEPTH; j++){
+			PV[i][j] = nullmove;
+		}
+	}
+}
+
 move engine(bitboard board, bool tomove){
 	searchedNodes = 0;
-	move nullmove = {{-1, -1}, {-1, -1}, 0};
 	move nextm = nullmove;
+	nextp = 0;
+	
 	#ifdef DEBUG
 	if (info.timeControl) printf("debug\tthinking time %d\n", info.moveTime);
 	#endif
-	
-	for (int i = 1; i < MAXSEARCHDEPTH; i++){
-		PV[0][i] = nullmove;
-	}
 
 	stopSearch = false;
 	info.startTime = getTime_ms();
 	int eval = 0, lastEval = 0;
 	int i;
 	for (i = 1; i < absoluteMaxDepth + 1; i++){
-		for (unsigned j = 0; j < MAXSEARCHDEPTH; j++){
-			for (unsigned k = 0; k < MAXSEARCHDEPTH; k++){
-				//~ if ((k | j) == 0) continue;
-				PV[j][k] = nullmove;
-			}
-		}
+		emptyPVTable();
+		
 		maxdepth = i;
 		
 		eval = search(board, tomove, 0, NegINF, PosINF);
@@ -306,7 +302,8 @@ move engine(bitboard board, bool tomove){
 		if (PV[0][0].from.rank != -1) nextm = PV[0][0];
 		
 		if (stopSearch){
-			printf("info depth %d score cp %d pv ", i, lastEval);
+			printf("info depth %d score cp %d ", i, lastEval);
+			if (PV[0][0].from.rank != -1) printf("pv ");
 			for (int j = 0; j < i && PV[0][j].from.rank != -1; j++){
 				printmove(PV[0][j]);
 			}

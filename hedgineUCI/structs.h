@@ -165,5 +165,6 @@ typedef struct gameInfo{
 	//~ bool UCI_LimitStrength;
 }gameInfo;
 
+extern const move nullmove;
 
 #endif
