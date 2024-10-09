@@ -48,6 +48,11 @@ size_t getLineDynamic(char** str, const size_t maxSize){
 		
 	} while (c != 0);
 	
+	#ifdef DEBUG
+	//echo input to log
+	if (succesfullyRead > 0) fprintf(debugOutput, "--> %s\n", *str);
+	#endif
+	
 	return succesfullyRead;
 }
 
@@ -148,7 +153,7 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int *fmv, int *moven
 		}
 	}
 	if (wking != 1 || bking != 1){
-		fprintf(stderr, "unusual number of kings on board!\n");
+		fprintf(stderr, "illegal number of kings on board!\n");
 		return 1;
 	}
 	

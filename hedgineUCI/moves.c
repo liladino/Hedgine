@@ -29,98 +29,101 @@ void setmove(move *m, square from, square to, int promotion){
 	m->promotion = promotion;
 }
 
-/* movelist *head = createMove(m); 
- * makes a new move list
- * */
-movelist *createMove(move m) {
-	movelist *newMove = (movelist*)malloc(sizeof(movelist));
-	if (newMove == NULL) {
-		printf(TXT_RED "Memory allocation failed\n"  DEFAULT);
-		exit(1);
-	}
-	newMove->m = m;
-	newMove->next = NULL;
-	return newMove;
-}
+/* LINKED LIST OF MOVES
+ * Not used currently */
 
-/* movelist *head; move m;
- * firstmove(&head, m); 
- * push a move to the front
- * */
-void firstmove(movelist **head, move m) { 
-	movelist *newNode = createMove(m); 
-	newNode->next = *head; 
-	*head = newNode;
-}
+//~ /* movelist *head = createMove(m); 
+ //~ * makes a new move list
+ //~ * */
+//~ movelist *createMove(move m) {
+	//~ movelist *newMove = (movelist*)malloc(sizeof(movelist));
+	//~ if (newMove == NULL) {
+		//~ printf(TXT_RED "Memory allocation failed\n"  DEFAULT);
+		//~ exit(1);
+	//~ }
+	//~ newMove->m = m;
+	//~ newMove->next = NULL;
+	//~ return newMove;
+//~ }
 
-/* move m; movelist *head = createMove(m);
- * insertMove(head, m); 
- * push a move to the end
- * **NEEDS A STARTIN NODE!** */
-void insertMove(movelist *head, move m) {
-	movelist *newMove = createMove(m);
-	movelist *i = head;
-	movelist *tail = head;
-	while (i != NULL) {
-		i = i->next;
-		if (i != NULL)
-			tail = i;
-	}
-	tail->next = newMove;
-}
+//~ /* movelist *head; move m;
+ //~ * firstmove(&head, m); 
+ //~ * push a move to the front
+ //~ * */
+//~ void firstmove(movelist **head, move m) { 
+	//~ movelist *newNode = createMove(m); 
+	//~ newNode->next = *head; 
+	//~ *head = newNode;
+//~ }
 
-/* movelist *head;
- * undoMove(&head); 
- * pops the last move in the list
- * */
-void undoMove(movelist **head) {
-	if (*head == NULL)  
-		return;
-	if ((*head)->next == NULL)  // startnode is a nullmove
-		return;
+//~ /* move m; movelist *head = createMove(m);
+ //~ * insertMove(head, m); 
+ //~ * push a move to the end
+ //~ * **NEEDS A STARTIN NODE!** */
+//~ void insertMove(movelist *head, move m) {
+	//~ movelist *newMove = createMove(m);
+	//~ movelist *i = head;
+	//~ movelist *tail = head;
+	//~ while (i != NULL) {
+		//~ i = i->next;
+		//~ if (i != NULL)
+			//~ tail = i;
+	//~ }
+	//~ tail->next = newMove;
+//~ }
 
-	movelist *tail = *head;
-	movelist *previous = NULL;
+//~ /* movelist *head;
+ //~ * undoMove(&head); 
+ //~ * pops the last move in the list
+ //~ * */
+//~ void undoMove(movelist **head) {
+	//~ if (*head == NULL)  
+		//~ return;
+	//~ if ((*head)->next == NULL)  // startnode is a nullmove
+		//~ return;
+
+	//~ movelist *tail = *head;
+	//~ movelist *previous = NULL;
 	
-    while (tail->next != NULL) {
-		previous = tail;
-		tail = tail->next;
-	}
+    //~ while (tail->next != NULL) {
+		//~ previous = tail;
+		//~ tail = tail->next;
+	//~ }
 	
-	previous->next = NULL;	//az utolso elotti mutatojat beallitjuk NULL-ra
-	free(tail);				//az utolsot felszabaditjuk
-}
+	//~ previous->next = NULL;	//az utolso elotti mutatojat beallitjuk NULL-ra
+	//~ free(tail);				//az utolsot felszabaditjuk
+//~ }
 
-/* movelist *head;
- * printmoves(head); 
- * */
-void printmoves(movelist *head) {
-	movelist *current = head;
-	current = current->next; //a startnode nem lepes
-	while (current != NULL) {
-		printmove(current->m);
-		current = current->next;
-	}
-	printf("*\n");
-}
+//~ /* movelist *head;
+ //~ * printmoves(head); 
+ //~ * */
+//~ void printmoves(movelist *head) {
+	//~ movelist *current = head;
+	//~ current = current->next; //a startnode nem lepes
+	//~ while (current != NULL) {
+		//~ printmove(stdout, current->m);
+		//~ current = current->next;
+	//~ }
+	//~ printf("*\n");
+//~ }
 
-void freemoves(movelist *head) {
-	while (head != NULL) {
-		movelist *temp = head;
-		head = head->next;
-		free(temp);
-	}
-}
+//~ void freemoves(movelist *head) {
+	//~ while (head != NULL) {
+		//~ movelist *temp = head;
+		//~ head = head->next;
+		//~ free(temp);
+	//~ }
+//~ }
 
-int countmoves(movelist *head) {
-	movelist* a = head;
-	int i = -1;
-	while (head != NULL) {
-		a = a->next;
-		i++;
-	}
-	return i;
-}
+//~ int countmoves(movelist *head) {
+	//~ movelist* a = head;
+	//~ int i = -1;
+	//~ while (head != NULL) {
+		//~ a = a->next;
+		//~ i++;
+	//~ }
+	//~ return i;
+//~ }
 
 
 /* BITS
@@ -311,6 +314,7 @@ bool lastMoveWasCapture(const bitboard* const lastboard, const move m, const boo
 		return true;
 	}
 	
+	//en passant
 	targetsquare = lastboard->enpassanttarget;
 	if (targetsquare == 0) return false;
 	

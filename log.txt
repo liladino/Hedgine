@@ -1,3 +1,12 @@
+Date:	Oct 9 2024:
+	UCI:
+		some of the bugs magically disasppeared. 
+		Debug gets logged in a seperate file, so i can test it with differet 
+		GUIs too, arenaGUI is a bit lackluster.
+	Mate scores:
+		needs testing with mate in x positions, and have to rethink the mate TT
+		mate scoring, as it's values are often strange.
+		
 Date:   Oct 8 2024:
 	PV search introduces bugs. Needs further testing.
 		Namely illegal moves in the pv that gets printed out, and unreasonably 

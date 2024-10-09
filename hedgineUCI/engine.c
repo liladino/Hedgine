@@ -37,7 +37,7 @@ int benchTest(bitboard board, bool tomove, int depth, int maxd){
 		all += x;
 		#ifdef DEBUG
 		if (maxd == 1){
-			printBitBoard2d(legalmoves.boards[i]);
+			printBitBoard2d(stdout, legalmoves.boards[i]);
 			if (legalmoves.boards[i].hashValue != hashPosition(&legalmoves.boards[i], !tomove)){
 				printf(BG_WHITE TXT_RED "Conversion error" DEFAULT "\n\a");
 			}
@@ -49,7 +49,7 @@ int benchTest(bitboard board, bool tomove, int depth, int maxd){
 		}
 		#endif
 		if (maxd == benchdepth && maxd == depth){
-			printmove(boardConvertTomove(&board, &legalmoves.boards[i], tomove));
+			printmove(stdout, boardConvertTomove(&board, &legalmoves.boards[i], tomove));
 			printf(": %d\n", x);
 		}
 	}
@@ -197,7 +197,7 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	
 	int eval = NO_HASH_ENTRY;
 	
-	if (!PVnode && depth > 0 && maxdepth > 1){ //don't swearch at depth 1 
+	if (!PVnode && depth > 0 && maxdepth > 2){ //don't swearch at low depth  
 		eval = readHashEntry(board.hashValue, &alpha, &beta, depth, maxdepth, oddity);
 		if (eval != NO_HASH_ENTRY){
 			for (int i = depth; i <= maxdepth; i++){
@@ -222,7 +222,7 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 		
 	storeRepetiton(board.hashValue);
 	for (int i = 0; i < legalmoves.size; i++){
-		if (i == 0 || maxdepth < 2 || true){
+		if (i == 0 || maxdepth < 2){
 			eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
 		}
 		else {
@@ -282,13 +282,14 @@ move engine(bitboard board, bool tomove){
 	nextp = 0;
 	
 	#ifdef DEBUG
-	if (info.timeControl) printf("debug\tthinking time %d\n", info.moveTime);
+	if (info.timeControl) fprintf(debugOutput, "thinking time %d\n", info.moveTime);
 	#endif
 
 	stopSearch = false;
 	info.startTime = getTime_ms();
 	int eval = 0, lastEval = 0;
 	int i;
+	
 	for (i = 1; i < absoluteMaxDepth + 1; i++){
 		emptyPVTable();
 		
@@ -302,13 +303,10 @@ move engine(bitboard board, bool tomove){
 		if (PV[0][0].from.rank != -1) nextm = PV[0][0];
 		
 		if (stopSearch){
-			printf("info depth %d score cp %d ", i, lastEval);
-			if (PV[0][0].from.rank != -1) printf("pv ");
-			for (int j = 0; j < i && PV[0][j].from.rank != -1; j++){
-				printmove(PV[0][j]);
-			}
-			printf("\n");
-			
+			printf("info depth %d score cp %d\n", i, lastEval);
+			#ifdef DEBUG
+			fprintf(debugOutput, "info depth %d score cp %d\n", i, lastEval);
+			#endif
 			break;
 		}
 		
@@ -316,24 +314,43 @@ move engine(bitboard board, bool tomove){
 		lastEval = eval;
 		
 		printf("info depth %d", i);
+		#ifdef DEBUG
+		fprintf(debugOutput, "info depth %d", i);
+		#endif
 		
 		if (eval >= whitewon || eval <= blackwon){
-			if ((tomove == black && eval <= blackwon) || (tomove == white && eval >= whitewon))
+			if ((tomove == black && eval <= blackwon) || (tomove == white && eval >= whitewon)){
 				//engine is about to win
 				printf(" score mate %d pv ", (absint(absint(eval) - whitewon - 100) + 1) / 2);
-			else
+				#ifdef DEBUG
+				fprintf(debugOutput, " score mate %d pv ", (absint(absint(eval) - whitewon - 100) + 1) / 2);
+				#endif
+			}
+			else{
 				//we are about to win
 				printf(" score mate %d pv ", (absint(eval) - whitewon - 100 + 1) / 2);
+				#ifdef DEBUG
+				fprintf(debugOutput, " score mate %d pv ", (absint(absint(eval) - whitewon - 100) + 1) / 2);
+				#endif
+			}
 		}
-		//~ printf("\n");
 		else{
 			printf(" score cp %d pv ", eval);
+			#ifdef DEBUG
+			fprintf(debugOutput, " score cp %d pv ", eval);
+			#endif
 		}
 		
 		for (int j = 0; j < i && PV[0][j].from.rank != -1 && !stopSearch; j++){
-			printmove(PV[0][j]);
+			printmove(stdout, PV[0][j]);
+			#ifdef DEBUG
+			printmove(debugOutput, PV[0][j]);
+			#endif
 		}
 		printf("\n");
+		#ifdef DEBUG
+		fprintf(debugOutput, "\n");
+		#endif
 		
 		if (eval >= whitewon || eval <= blackwon) break; //dont think if not neccesary
 	}
@@ -365,7 +382,7 @@ move CPU(int cpulvl, bitboard bboard, bool tomove){
 	
 	if (cpulvl == 0){
 		#define millisec 1000
-		usleep(25 * millisec);//hogy ne azonnal lepjen, nem letszukseglet
+		usleep(25 * millisec); //to not move immediately
 		m = randomBot(bboard, tomove);
 	}	
 	else{

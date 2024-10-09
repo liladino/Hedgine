@@ -35,6 +35,7 @@
 typedef unsigned long long u64;
 
 #include <stdbool.h>
+#include <stdio.h>
 
 typedef struct square{
 	char file; //vonal
@@ -166,5 +167,7 @@ typedef struct gameInfo{
 }gameInfo;
 
 extern const move nullmove;
+
+extern FILE* debugOutput;
 
 #endif

@@ -64,12 +64,18 @@ void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* 
 				//the move was illegal
 				info.quit = true;
 				fprintf(stderr, /*TXT_RED*/ "Ilegal move found!\n" /*DEFAULT*/);
+				#ifdef DEBUG
+				fprintf(debugOutput, "Ilegal move found!\n");
+				#endif
 				break;
 			}
 			else if (x == 2){
 				//no legal moves left
 				info.quit = true;
 				fprintf(stderr, /*TXT_RED*/ "No legal moves in position!\n" /*DEFAULT*/);
+				#ifdef DEBUG
+				fprintf(debugOutput, "No legal moves in position!\n");
+				#endif
 				break;
 			}
 			
@@ -102,7 +108,7 @@ void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* 
 	}
 	
 	#ifdef DEBUG
-	printf("debug\ttomove: %d\tfifty move count: %d\tmove num: %d\n", *tomove, *fmv, *movenum);
+	fprintf(debugOutput, "tomove: %d\tfifty move count: %d\tmove num: %d\n", *tomove, *fmv, *movenum);
 	//~ printBitBoard2d(*board);
 	#endif
 }
@@ -170,16 +176,22 @@ void parseGo(char *command, bitboard* board, bool *tomove){
 	info.startTime = getTime_ms();
 
 	#ifdef DEBUG
-	// print debug info
-	printf("debug\ttime control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, cpulvl);
-	printBitBoard2d(*board);
+	fprintf(debugOutput, "time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, cpulvl);
+	printBitBoard2d(debugOutput, *board);
 	#endif
 	
 	move m = CPU(cpulvl, *board, *tomove);
 	printf("bestmove ");
-	printmove(m);
+	printmove(stdout, m);
 	printf("\n");
 	fflush(stdout);
+	
+	#ifdef DEBUG
+	fprintf(debugOutput, "bestmove: ");
+	printmove(debugOutput, m);
+	fprintf(debugOutput, "\n");
+	fflush(debugOutput);
+	#endif
 }
 
 

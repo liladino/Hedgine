@@ -17,8 +17,8 @@ TThashentry* allocTransTable(const int sizeInMB){
 	clearTransTable();
 	
 	#ifdef DEBUG
-	printf("Transposition Table:\t%d MB, %d entry\n", TTableSizeMB, TTableSize);
-	printf("Repetition Table:\t%lf kB, %d entry\n", (double) REPETITION_TABLE_SIZE * sizeof(u64) / 1024, REPETITION_TABLE_SIZE);
+	fprintf(debugOutput, "Transposition Table:\t%d MB, %d entry\n", TTableSizeMB, TTableSize);
+	fprintf(debugOutput, "Repetition Table:\t%lf kB, %d entry\n", (double) REPETITION_TABLE_SIZE * sizeof(u64) / 1024, REPETITION_TABLE_SIZE);
 	#endif
 	return TranspositionTable;
 }
@@ -272,13 +272,6 @@ int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const i
 
 	return NO_HASH_ENTRY;
 }
-
-
-//~ move readHashEntryMove(const u64 pos){
-	//~ //assuming readHashEntry was already called, and we tested it is indeed the pos we want to see
-	//~ TThashentry *current = &TranspositionTable[pos % TTableSize];
-	//~ return current->m;
-//~ }
 
 
 void storePosTT(const u64 pos, const int eval, const evalflag flag, const int depth, const int maxdepth){

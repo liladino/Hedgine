@@ -1,14 +1,14 @@
 #include "output.h"
 
-void printmove(move m) {
-	printf("%c%d%c%d%c ", m.from.file+'a'-2, m.from.rank-1, m.to.file+'a'-2, m.to.rank-1, (m.promotion >= 'a' && m.promotion <= 'z' ? m.promotion : ' ') );
+void printmove(FILE* ostream, move m) {
+	fprintf(ostream, "%c%d%c%d%c ", m.from.file+'a'-2, m.from.rank-1, m.to.file+'a'-2, m.to.rank-1, (m.promotion >= 'a' && m.promotion <= 'z' ? m.promotion : ' ') );
 }
 
 #ifdef DEBUG
 void printLegalmoves(movearray legalmoves, bitboard board, bool tomove){
 	printf("\nLegal moves:\n");
 	for (int i = 0; i < legalmoves.size; i++){
-		printmove(boardConvertTomove(&board, &legalmoves.boards[i], tomove));
+		printmove(stdout, boardConvertTomove(&board, &legalmoves.boards[i], tomove));
 		printHashEntry(legalmoves.boards[i].hashValue);
 		//~ printf("%lf\n", legalmoves.boards[i].eval * 0.01);
 	}
@@ -16,32 +16,31 @@ void printLegalmoves(movearray legalmoves, bitboard board, bool tomove){
 #endif
 
 
-/* kiirja a tablat egyszeru szovegkent, egyszeru karakterekkel,
- * ha a megjelenites alapbol rossz, ez valoszinuleg mukodik.*/
-void printboardLetters(char board[12][12]){
-	printf("|");
+/* prints the board to a specified output stremm with characters. */
+void printboardLetters(FILE* ostream, char board[12][12]){
+	fprintf(ostream, "|");
 	for (int j = 2; j < 9; j++){
-		printf("---+");
+		fprintf(ostream, "---+");
 	}
-		printf("---|\n");
+		fprintf(ostream, "---|\n");
 	for (int i = 9; i > 1; i--){
-		printf("|");
+		fprintf(ostream, "|");
 		for (int j = 2; j < 10; j++){
-			printf(" %c |", board[i][j]);
+			fprintf(ostream, " %c |", board[i][j]);
 		}
-		printf("\n|");
+		fprintf(ostream, "\n|");
 		for (int j = 2; j < 9; j++){
-			printf("---+");
+			fprintf(ostream, "---+");
 		}
-		printf("---|\n");
+		fprintf(ostream, "---|\n");
 	}
-	printf("\n");
+	fprintf(ostream, "\n");
 }
 
-void printBitBoard2d(bitboard bboard){
+void printBitBoard2d(FILE* ostream, bitboard bboard){
 	char board[12][12];
 	boardConvertBack(board, bboard);
-	printboardLetters(board);
+	printboardLetters(ostream, board);
 }
 
 void printBitBoard(bitboard board){

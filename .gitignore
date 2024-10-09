@@ -55,6 +55,7 @@ test
 *.fen
 *.pgn
 test.txt
+debuglog.txt
 meta/
 
 #older versions
