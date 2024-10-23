@@ -1,5 +1,5 @@
 # Hedgine
-A small chess engine
+A small UCI compatible chess engine
 
 ```
                                      /    #
