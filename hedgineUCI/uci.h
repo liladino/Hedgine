@@ -5,6 +5,7 @@
 #include "input.h"
 #include "structs.h"
 #include "engine.h"
+#include "tests.h"
 
 #ifdef DEBUG
 	#include "debugmalloc.h"

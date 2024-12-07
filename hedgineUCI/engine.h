@@ -32,8 +32,6 @@ move lvl0(bitboard board, bool tomove);
 
 move CPU(int cpulvl, bitboard bboard, bool tomove);
 
-void makeBenchTest(char board[12][12], bool tomove, int castling[4], squarenums enpass);
-
 void setMoveTime(int increment);
 
 #endif

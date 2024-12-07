@@ -1,9 +1,5 @@
 #include "engine.h"
 
-void printLogo(){
-	printf("                                     /    #\n .  .     .                       #   *.  # #   ##  .#\n |__| _  _| _ . _  _       # (  #       #.   #,     /,##,     #(\n |  |(/,(_](_]|[ )(/,  (  #   ##                             # .,\n           ._|        # #.,                                      #\n                     #   #                                              /#\n                  ./##                           ||                  *#\n                   #                            ====                     ##\n                   #                       ____  ||  ____                  #\n                  +.    &&                / __ \\ /\\ / __ \\                /#\n                 &   &&     &&           | /  \\ |  | /  \\ |               #\n     &&*       &    *&& #      &         | \\   \\ \\/ /   / |                ,.\n   &    &#+&&     .#    &       &         \\ \\__/ || \\__/ /                (,\n   &     &         &  & &        &        |______________|                #*#\n    &&&&.           /&&          &         \\____________/                #\n        &                       /.                                 (###/  #\n         &        # &           &                                   (\n           *&      &           &                        .##    #   ###\n               *&&          *&#  ,##   #    ((##( /   ##  #  #*#\n                                     (#    ###     \n");	
-}
-
 const move nullmove = {{-1, -1}, {-1, -1}, 0};
 
 static int max(int a, int b){
@@ -12,59 +8,6 @@ static int max(int a, int b){
 
 static int absint(int a){
 	return (a < 0 ? -a : a);
-}
-
-/*
- * BENCHMARK
- * */
-
-#define benchdepth 4
-int endcount;
-
-int benchTest(bitboard board, bool tomove, int depth, int maxd){	
-	movearray legalmoves;
-	
-	bitGenerateLegalmoves(&legalmoves, board, tomove, false);
-	if (legalmoves.size == 0){
-		endcount++;
-	}
-	if (depth == 0){
-		return legalmoves.size;
-	}
-	int all = 0;
-	for (int i = 0; i < legalmoves.size; i++){
-		int x = benchTest(legalmoves.boards[i], !tomove, depth-1, maxd);
-		all += x;
-		#ifdef DEBUG
-		if (maxd == 1){
-			printBitBoard2d(stdout, legalmoves.boards[i]);
-			if (legalmoves.boards[i].hashValue != hashPosition(&legalmoves.boards[i], !tomove)){
-				printf(BG_WHITE TXT_RED "Conversion error" DEFAULT "\n\a");
-			}
-			else{
-				printf(BG_WHITE TXT_GREEN "Conversion correct" DEFAULT "\n");
-			}
-			printBitPiece(legalmoves.boards[i].hashValue);
-			printBitPiece(hashPosition(&legalmoves.boards[i], !tomove));
-		}
-		#endif
-		if (maxd == benchdepth && maxd == depth){
-			printmove(stdout, boardConvertTomove(&board, &legalmoves.boards[i], tomove));
-			printf(": %d\n", x);
-		}
-	}
-	return all;
-}
-
-void makeBenchTest(char board[12][12], bool tomove, int castling[4], squarenums enpass){
-	printLogo();
-	endcount = 0;
-	bitboard bboard = boardConvert(board, castling, enpass, tomove);
-	for (int i = 1; i <= benchdepth; i++){
-		endcount = 0;
-		int allmovecount = benchTest(bboard, tomove, i, i);
-		printf("%d ply:\nAll leaves: %d\nGame ends (total): %d\n\n", i, allmovecount, endcount);
-	}
 }
 
 /*

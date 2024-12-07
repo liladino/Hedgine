@@ -1,3 +1,11 @@
+Date:	Dec 7 2024:
+	Move logic:
+		Added "Unit" tests, and discovered that the move generation has a bug.
+		NOT FIXED YET
+	UCI:
+		Bug fix: if there are multiple whitespaces after a move token, the 
+		program reads it correctly.
+
 Date:	Oct 9 2024:
 	UCI:
 		some of the bugs magically disasppeared. 

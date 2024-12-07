@@ -3,12 +3,9 @@
 gameInfo info;
 
 /* 
- * UCI
+ * UCI communication
  * forked from BBC
  * by Maksim Korzh
- * which is
- * forked from VICE
- * by Richard Allbert
  */
  
 // parse UCI "position" command
@@ -49,7 +46,8 @@ void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* 
 		storeRepetiton(board->hashValue);
 		
 		// shift pointer to the right where next token begins
-		current_char += 6;
+		current_char += 5;		
+		while (*current_char != 0 && isspace(*current_char)) current_char++;
 		
 		while(*current_char != 0){
 			// parse next move
@@ -63,7 +61,7 @@ void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* 
 			if (x == 1){
 				//the move was illegal
 				info.quit = true;
-				fprintf(stderr, /*TXT_RED*/ "Ilegal move found!\n" /*DEFAULT*/);
+				fprintf(stderr, "Ilegal move found!\n");
 				#ifdef DEBUG
 				fprintf(debugOutput, "Ilegal move found!\n");
 				#endif
@@ -72,7 +70,7 @@ void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* 
 			else if (x == 2){
 				//no legal moves left
 				info.quit = true;
-				fprintf(stderr, /*TXT_RED*/ "No legal moves in position!\n" /*DEFAULT*/);
+				fprintf(stderr, "No legal moves in position!\n" );
 				#ifdef DEBUG
 				fprintf(debugOutput, "No legal moves in position!\n");
 				#endif
@@ -99,11 +97,8 @@ void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* 
 			if (*tomove == black) (*movenum)++;
 			*tomove = !(*tomove);
 			
-			
-			while (*current_char && *current_char != ' ') current_char++;
-			
-			//skip ' '
-			current_char++;
+			while (*current_char && isalnum(*current_char)) current_char++;
+			while (*current_char && isspace(*current_char)) current_char++;
 		}		
 	}
 	
