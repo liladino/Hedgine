@@ -2,6 +2,10 @@ Date:	Dec 7 2024:
 	Move logic:
 		Added "Unit" tests, and discovered that the move generation has a bug.
 		NOT FIXED YET
+		Probably i'll redo the move generation completely.
+		The old algorithm finished the tests (except the failing) with an 
+		average of 0m12,247s. Strangely, this time is worse with O3 than O2, so
+		I used the latter.
 	UCI:
 		Bug fix: if there are multiple whitespaces after a move token, the 
 		program reads it correctly.
