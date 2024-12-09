@@ -1,3 +1,16 @@
+Date:	Dec 9 2024:
+	Move logic:
+		Started to re-write the old move generation with the pawns. I think I'll
+		try to implement magic bitboards for the bishop and rook directions. I 
+		will try to research fast agorithms for check detection too, as that 
+		function is the most called one in the program. My ideas are:
+			- somehow bring magic bitboards and check detection under one 
+			  umbrella, by searching for rooks & bishops & queens with the rays 
+			  of magic bitboards
+			- implement a 'knight map': an array of 64 u64 values, indicating 
+			  where from each square a knight can move. This can help with the
+			  knight move generation and the check detection.
+
 Date:	Dec 7 2024:
 	Move logic:
 		Added "Unit" tests, and discovered that the move generation has a bug.

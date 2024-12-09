@@ -97,12 +97,12 @@ typedef enum raydir{
 	 * soWe c3     e3 sout     f3  soEa
 	 * 
 	 * */
-	 // shift dir: <<
+	 // +  shift dir: <<
 	 noWe = 7,
 	 nort = 8,
 	 noEa = 9,
 	 east = 1,
-	 // shift dir: >>
+	 // -  shift dir: >>
 	 west = 1,
 	 soWe = 9,
 	 sout = 8,
@@ -125,9 +125,9 @@ typedef struct bitboard{
 	char castlerights; 
 	/*
 	* 0000 0101 => 
-	* also 4 bit:
-	* 				 0					1					0 					 1 (LSB) 
-	* sotet vezeroldal, sotet kiralyoldal, vilagos vezeroldal, vilagos kiralyoldal
+	* least signif 4 bit:
+	*               0               1                0               1 (LSB) 
+	* black queenside, balck kingside, white queenside, white kingside
 	*/
 	
 	u64 enpassanttarget;
