@@ -1,3 +1,19 @@
+Date:	Dec 14 2024:
+	Move logic:
+		Added pre-computed tables of bitboards for the knights, pawns and kings
+		to detect their checks more efficiently. Their logic is really simple,
+		e.g.: knight & knightAttacks[kingSquare] => we get a non zero value if 
+		there is a check.
+		
+		Tables like this can be used for move generation too e.g. for the 
+		knight:
+		  - Let's compute 8 values for each squares
+		  - If a knight stands on square s, we only need to iterate through 8 
+		    values in the array to get 8 bitmaps, where it could go from there. 
+		    Not all squares offer 8 possible squares to go, we can sort these 
+		    out by the relevant bitboard a 0 value.
+		  - If a move results in a check, we can't move this knight at all.
+
 Date:	Dec 9 2024:
 	Move logic:
 		Started to re-write the old move generation with the pawns. I think I'll
