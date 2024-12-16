@@ -1,3 +1,7 @@
+Date:	Dec 16 2024:
+	Move logic:
+		Added magic bitboards for knight move generation.
+		
 Date:	Dec 14 2024:
 	Move logic:
 		Added pre-computed tables of bitboards for the knights, pawns and kings
