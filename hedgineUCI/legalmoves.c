@@ -286,8 +286,7 @@ static void addBitKnightMoves(movearray* moves, bitboard board, bool tomove, u64
 				board.enpassanttarget = 0;
 				deletePiece(&board, knightMoves[i]);
 				if (!bitInCheck(&board, tomove)) {
-					legalmoves[*array_index] = board;
-					(*array_index)++;
+					legalmoves[(*array_index)++] = board;
 				}
 				board = copy;
 			}
@@ -295,8 +294,7 @@ static void addBitKnightMoves(movearray* moves, bitboard board, bool tomove, u64
 				board.piece[wknight + coloffset] = withoutpiece | knightMoves[i]; 
 				board.enpassanttarget = 0;
 				if (!bitInCheck(&board, tomove)) {
-					legalmoves[*array_index] = board;
-					(*array_index)++;
+					legalmoves[(*array_index)++] = board;
 				}
 				board = copy;
 			}
@@ -304,15 +302,95 @@ static void addBitKnightMoves(movearray* moves, bitboard board, bool tomove, u64
 	}
 }
 
-static void addBitKingMoves(movearray* moves, bitboard board, bool tomove, u64 piece, bool onlyCaptures, u64 enemy, u64 friendly){
-
+static void addBitKingMoves(movearray* moves, bitboard board, bool tomove, u64 piece, int i, bool onlyCaptures, u64 enemy, u64 friendly){
+	static u64 kingMoves[] = {0LLU, 0LLU, 0LLU, 0LLU, 256LLU, 0LLU, 2LLU, 512LLU, 0LLU, 1LLU, 256LLU, 0LLU, 512LLU, 0LLU, 4LLU, 1024LLU, 0LLU, 2LLU, 512LLU, 0LLU, 1024LLU, 0LLU, 8LLU, 2048LLU, 0LLU, 4LLU, 1024LLU, 0LLU, 2048LLU, 0LLU, 16LLU, 4096LLU, 0LLU, 8LLU, 2048LLU, 0LLU, 4096LLU, 0LLU, 32LLU, 8192LLU, 0LLU, 16LLU, 4096LLU, 0LLU, 8192LLU, 0LLU, 64LLU, 16384LLU, 0LLU, 32LLU, 8192LLU, 0LLU, 16384LLU, 0LLU, 128LLU, 32768LLU, 0LLU, 64LLU, 16384LLU, 0LLU, 32768LLU, 0LLU, 0LLU, 0LLU, 0LLU, 0LLU, 0LLU, 1LLU, 65536LLU, 2LLU, 512LLU, 131072LLU, 1LLU, 256LLU, 65536LLU, 2LLU, 131072LLU, 4LLU, 1024LLU, 262144LLU, 2LLU, 512LLU, 131072LLU, 4LLU, 262144LLU, 8LLU, 2048LLU, 524288LLU, 4LLU, 1024LLU, 262144LLU, 8LLU, 524288LLU, 16LLU, 4096LLU, 1048576LLU, 8LLU, 2048LLU, 524288LLU, 16LLU, 1048576LLU, 32LLU, 8192LLU, 2097152LLU, 16LLU, 4096LLU, 1048576LLU, 32LLU, 2097152LLU, 64LLU, 16384LLU, 4194304LLU, 32LLU, 8192LLU, 2097152LLU, 64LLU, 4194304LLU, 128LLU, 32768LLU, 8388608LLU, 64LLU, 16384LLU, 4194304LLU, 128LLU, 8388608LLU, 0LLU, 0LLU, 0LLU, 0LLU, 0LLU, 0LLU, 256LLU, 16777216LLU, 512LLU, 131072LLU, 33554432LLU, 256LLU, 65536LLU, 16777216LLU, 512LLU, 33554432LLU, 1024LLU, 262144LLU, 67108864LLU, 512LLU, 131072LLU, 33554432LLU, 1024LLU, 67108864LLU, 2048LLU, 524288LLU, 134217728LLU, 1024LLU, 262144LLU, 67108864LLU, 2048LLU, 134217728LLU, 4096LLU, 1048576LLU, 268435456LLU, 2048LLU, 524288LLU, 134217728LLU, 4096LLU, 268435456LLU, 8192LLU, 2097152LLU, 536870912LLU, 4096LLU, 1048576LLU, 268435456LLU, 8192LLU, 536870912LLU, 16384LLU, 4194304LLU, 1073741824LLU, 8192LLU, 2097152LLU, 536870912LLU, 16384LLU, 1073741824LLU, 32768LLU, 8388608LLU, 2147483648LLU, 16384LLU, 4194304LLU, 1073741824LLU, 32768LLU, 2147483648LLU, 0LLU, 0LLU, 0LLU, 0LLU, 0LLU, 0LLU, 65536LLU, 4294967296LLU, 131072LLU, 33554432LLU, 8589934592LLU, 65536LLU, 16777216LLU, 4294967296LLU, 131072LLU, 8589934592LLU, 262144LLU, 67108864LLU, 17179869184LLU, 131072LLU, 33554432LLU, 8589934592LLU, 262144LLU, 17179869184LLU, 524288LLU, 134217728LLU, 34359738368LLU, 262144LLU, 67108864LLU, 17179869184LLU, 524288LLU, 34359738368LLU, 1048576LLU, 268435456LLU, 68719476736LLU, 524288LLU, 134217728LLU, 34359738368LLU, 1048576LLU, 68719476736LLU, 2097152LLU, 536870912LLU, 137438953472LLU, 1048576LLU, 268435456LLU, 68719476736LLU, 2097152LLU, 137438953472LLU, 4194304LLU, 1073741824LLU, 274877906944LLU, 2097152LLU, 536870912LLU, 137438953472LLU, 4194304LLU, 274877906944LLU, 8388608LLU, 2147483648LLU, 549755813888LLU, 4194304LLU, 1073741824LLU, 274877906944LLU, 8388608LLU, 549755813888LLU, 0LLU, 0LLU, 0LLU, 0LLU, 0LLU, 0LLU, 16777216LLU, 1099511627776LLU, 33554432LLU, 8589934592LLU, 2199023255552LLU, 16777216LLU, 4294967296LLU, 1099511627776LLU, 33554432LLU, 2199023255552LLU, 67108864LLU, 17179869184LLU, 4398046511104LLU, 33554432LLU, 8589934592LLU, 2199023255552LLU, 67108864LLU, 4398046511104LLU, 134217728LLU, 34359738368LLU, 8796093022208LLU, 67108864LLU, 17179869184LLU, 4398046511104LLU, 134217728LLU, 8796093022208LLU, 268435456LLU, 68719476736LLU, 17592186044416LLU, 134217728LLU, 34359738368LLU, 8796093022208LLU, 268435456LLU, 17592186044416LLU, 536870912LLU, 137438953472LLU, 35184372088832LLU, 268435456LLU, 68719476736LLU, 17592186044416LLU, 536870912LLU, 35184372088832LLU, 1073741824LLU, 274877906944LLU, 70368744177664LLU, 536870912LLU, 137438953472LLU, 35184372088832LLU, 1073741824LLU, 70368744177664LLU, 2147483648LLU, 549755813888LLU, 140737488355328LLU, 1073741824LLU, 274877906944LLU, 70368744177664LLU, 2147483648LLU, 140737488355328LLU, 0LLU, 0LLU, 0LLU, 0LLU, 0LLU, 0LLU, 4294967296LLU, 281474976710656LLU, 8589934592LLU, 2199023255552LLU, 562949953421312LLU, 4294967296LLU, 1099511627776LLU, 281474976710656LLU, 8589934592LLU, 562949953421312LLU, 17179869184LLU, 4398046511104LLU, 1125899906842624LLU, 8589934592LLU, 2199023255552LLU, 562949953421312LLU, 17179869184LLU, 1125899906842624LLU, 34359738368LLU, 8796093022208LLU, 2251799813685248LLU, 17179869184LLU, 4398046511104LLU, 1125899906842624LLU, 34359738368LLU, 2251799813685248LLU, 68719476736LLU, 17592186044416LLU, 4503599627370496LLU, 34359738368LLU, 8796093022208LLU, 2251799813685248LLU, 68719476736LLU, 4503599627370496LLU, 137438953472LLU, 35184372088832LLU, 9007199254740992LLU, 68719476736LLU, 17592186044416LLU, 4503599627370496LLU, 137438953472LLU, 9007199254740992LLU, 274877906944LLU, 70368744177664LLU, 18014398509481984LLU, 137438953472LLU, 35184372088832LLU, 9007199254740992LLU, 274877906944LLU, 18014398509481984LLU, 549755813888LLU, 140737488355328LLU, 36028797018963968LLU, 274877906944LLU, 70368744177664LLU, 18014398509481984LLU, 549755813888LLU, 36028797018963968LLU, 0LLU, 0LLU, 0LLU, 0LLU, 0LLU, 0LLU, 1099511627776LLU, 72057594037927936LLU, 2199023255552LLU, 562949953421312LLU, 144115188075855872LLU, 1099511627776LLU, 281474976710656LLU, 72057594037927936LLU, 2199023255552LLU, 144115188075855872LLU, 4398046511104LLU, 1125899906842624LLU, 288230376151711744LLU, 2199023255552LLU, 562949953421312LLU, 144115188075855872LLU, 4398046511104LLU, 288230376151711744LLU, 8796093022208LLU, 2251799813685248LLU, 576460752303423488LLU, 4398046511104LLU, 1125899906842624LLU, 288230376151711744LLU, 8796093022208LLU, 576460752303423488LLU, 17592186044416LLU, 4503599627370496LLU, 1152921504606846976LLU, 8796093022208LLU, 2251799813685248LLU, 576460752303423488LLU, 17592186044416LLU, 1152921504606846976LLU, 35184372088832LLU, 9007199254740992LLU, 2305843009213693952LLU, 17592186044416LLU, 4503599627370496LLU, 1152921504606846976LLU, 35184372088832LLU, 2305843009213693952LLU, 70368744177664LLU, 18014398509481984LLU, 4611686018427387904LLU, 35184372088832LLU, 9007199254740992LLU, 2305843009213693952LLU, 70368744177664LLU, 4611686018427387904LLU, 140737488355328LLU, 36028797018963968LLU, 9223372036854775808LLU, 70368744177664LLU, 18014398509481984LLU, 4611686018427387904LLU, 140737488355328LLU, 9223372036854775808LLU, 0LLU, 0LLU, 0LLU, 0LLU, 0LLU, 0LLU, 281474976710656LLU, 0LLU, 562949953421312LLU, 144115188075855872LLU, 0LLU, 281474976710656LLU, 72057594037927936LLU, 0LLU, 562949953421312LLU, 0LLU, 1125899906842624LLU, 288230376151711744LLU, 0LLU, 562949953421312LLU, 144115188075855872LLU, 0LLU, 1125899906842624LLU, 0LLU, 2251799813685248LLU, 576460752303423488LLU, 0LLU, 1125899906842624LLU, 288230376151711744LLU, 0LLU, 2251799813685248LLU, 0LLU, 4503599627370496LLU, 1152921504606846976LLU, 0LLU, 2251799813685248LLU, 576460752303423488LLU, 0LLU, 4503599627370496LLU, 0LLU, 9007199254740992LLU, 2305843009213693952LLU, 0LLU, 4503599627370496LLU, 1152921504606846976LLU, 0LLU, 9007199254740992LLU, 0LLU, 18014398509481984LLU, 4611686018427387904LLU, 0LLU, 9007199254740992LLU, 2305843009213693952LLU, 0LLU, 18014398509481984LLU, 0LLU, 36028797018963968LLU, 9223372036854775808LLU, 0LLU, 18014398509481984LLU, 4611686018427387904LLU, 0LLU, 36028797018963968LLU, 0LLU, 0LLU, 0LLU, 0LLU};
+	
+	bitboard copy = board;
+	u64 withoutpiece = board.piece[wpawn] & (~piece);
+	int coloffset = tomove == white ? bking : wking;
+	#define ADDKINGMOVE() do { board.enpassanttarget = 0; if (!bitInCheck(&board, tomove)) { legalmoves[(*array_index)++] = board; } board = copy; } while(0);
+	
+	if (onlyCaptures){
+		/* these should be set when we trz to take east or west, so that the
+		 * castling can know, if it will travel through a check */ 
+		bool kingSideCastle = false, queenSideCastle = false;
+		
+		//set castle possibility shit
+		if ((tomove == white && i == 4) || (tomove == black && i == 60)){
+			if ((piece >> west) & (friendly | enemy) == 0){
+				//nothing is there, check if its in check, BUT DO NOT ADD THE MOVE
+				board.piece[wking + coloffset] = piece >> west;
+				board.enpassanttarget = 0; 
+				if (!bitInCheck(&board, tomove)) { 
+					queenSideCastle = true;
+				} 
+				board = copy;
+			}
+			if ((piece << east) & (friendly | enemy) == 0){
+				board.piece[wking + coloffset] = piece << east;
+				board.enpassanttarget = 0; 
+				if (!bitInCheck(&board, tomove)) { 
+					kingSideCastle = true;
+				} 
+				board = copy;
+			}			
+		}
+		
+		//taking
+		for (int j = 0; j < 8; j++){
+			if (kingMoves[i * 8 + j] & enemy){
+				board.piece[wking] = kingMoves[i * 8 + j]; //move the king bit
+				deletePiece(&board, kingMoves[i * 8 + j]);
+				board.castlerights &= (tomove == white ? 12 | 3); //delete castling rights
+				ADDKINGMOVE();
+			}
+		}
+				
+		//castling is not a capture, but its good to look for early on
+		if (tomove == white && i == 4){
+			if (kingSideCastle && board.castlerights & WKINGSIDE){
+				board.piece[wking] = piece << (east * 2); //move the king bit
+				board.piece[wrook] ^= (piece << east) | (piece << (east * 3)); //move the rook bit 
+				board.castlerights &= 12; //delete white castling rights
+				ADDKINGMOVE();
+			}
+			
+			if (queenSideCastle && board.castlerights & WQUEENSIDE){
+				board.piece[wking] = piece >> (west * 2); //move the king bit
+				board.piece[wrook] ^= (piece >> west) | (piece >> (west * 4)); //move the rook bit
+				board.castlerights &= 12; //delete white castling rights
+				ADDKINGMOVE();
+			}
+		}
+		if (tomove == black && i == 60){
+			if (kingSideCastle && board.castlerights & BKINGSIDE){
+				board.piece[bking] = piece << (east * 2); //move the king bit
+				board.piece[brook] ^= (piece << east) | (piece << (east * 3)); //move the rook bit
+				board.castlerights &= 3; //delete black castling rights
+				ADDKINGMOVE();
+			}
+			
+			if (queenSideCastle && board.castlerights & BQUEENSIDE){
+				board.piece[bking] = (piece >> (west * 2); //move the king bit
+				board.piece[brook] ^= (piece >> west) | (piece >> (west * 4)); //move the rook bit
+				board.castlerights &= 3; //delete black castling rights
+				ADDKINGMOVE();
+			}
+		}
+		return;	
+	}
+	for (int j = 0; j < 8; j++){
+		if ((kingMoves[i * 8 + j] & (enemy | friendly)) == 0){
+			board.piece[wking] = kingMoves[i * 8 + j]; //move the king bit
+			board.castlerights &= (tomove == white ? 12 | 3); //delete castling rights
+			ADDKINGMOVE();
+		}
+	}
 }
 
 static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u64 piece, bool onlyCaptures, u64 enemy, u64 friendly){	
 	int *array_index = &(moves->size);
 	bitboard* legalmoves = moves->boards;
-	
-	bitboard copy = board;
 	
 	u64 withoutpiece = board.piece[wpawn] & (~piece);
 	
@@ -325,16 +403,14 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 		board.piece[wpawn] = withoutpiece | moveforward; 
 		board.enpassanttarget = 0;
 		if (!bitInCheck(&board, tomove)) {
-			legalmoves[*array_index] = board;
-			(*array_index)++;
+			legalmoves[(*array_index)++] = board;
 			
 			if (piece & WPAWN_HOME){
 				//moving 2 squares
 				board.piece[wpawn] = withoutpiece | (piece << 16); 
 				board.enpassanttarget = moveforward;
 				if (!bitInCheck(&board, tomove)) {
-					legalmoves[*array_index] = board;
-					(*array_index)++;
+					legalmoves[(*array_index)++] = board;
 				}
 			}
 		}		
@@ -342,6 +418,9 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 	else if (!onlyCaptures){
 		return;
 	}
+	
+	bitboard copy = board;
+	
 	if (piece & WPAWN_PROMOTE){
 		/* Promotion is technically not taking, but it's good to consider it 
 		 * first, among with other captures */		
@@ -350,8 +429,7 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 			board.piece[wpawn] = withoutpiece;
 			board.piece[wqueen] |= moveforward; 
 			if (!bitInCheck(&board, tomove)) {
-				legalmoves[*array_index] = board;
-				(*array_index)++;
+				legalmoves[(*array_index)++] = board;
 			}
 			else{
 				/* if we are in check after a promotion, that means we will be 
@@ -362,15 +440,15 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 			
 			board.piece[wqueen] ^= moveforward; 
 			board.piece[wrook] |= moveforward; 
-			legalmoves[*array_index] = board;  (*array_index)++;
+			legalmoves[(*array_index)++] = board;  
 			
 			board.piece[wrook] ^= moveforward; 
 			board.piece[wbishop] |= moveforward; 
-			legalmoves[*array_index] = board;  (*array_index)++;
+			legalmoves[(*array_index)++] = board;  
 			
 			board.piece[wbishop] ^= moveforward; 
 			board.piece[wknight] |= moveforward; 
-			legalmoves[*array_index] = board;  (*array_index)++;
+			legalmoves[(*array_index)++] = board;  
 			
 			board = copy;
 		}
@@ -384,8 +462,7 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 			deletePiece(&board, takewest);
 			
 			if (!bitInCheck(&board, tomove)) {
-				legalmoves[*array_index] = board;
-				(*array_index)++;
+				legalmoves[(*array_index)++] = board;
 			}
 			else{
 				/* if we are in check after a promotion, that means we will be 
@@ -396,15 +473,15 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 			
 			board.piece[wqueen] ^= takewest; 
 			board.piece[wrook] |= takewest; 
-			legalmoves[*array_index] = board;  (*array_index)++;
+			legalmoves[(*array_index)++] = board;
 			
 			board.piece[wrook] ^= takewest; 
 			board.piece[wbishop] |= takewest; 
-			legalmoves[*array_index] = board;  (*array_index)++;
+			legalmoves[(*array_index)++] = board;
 			
 			board.piece[wbishop] ^= takewest; 
 			board.piece[wknight] |= takewest; 
-			legalmoves[*array_index] = board;  (*array_index)++;
+			legalmoves[(*array_index)++] = board;
 			board = copy;
 		}
 		
@@ -416,8 +493,7 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 			deletePiece(&board, takeeast);
 			
 			if (!bitInCheck(&board, tomove)) {
-				legalmoves[*array_index] = board;
-				(*array_index)++;
+				legalmoves[(*array_index)++] = board;
 			}
 			else{
 				/* if we are in check after a promotion, that means we will be 
@@ -428,15 +504,15 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 			
 			board.piece[wqueen] ^= takeeast; 
 			board.piece[wrook] |= takeeast; 
-			legalmoves[*array_index] = board;  (*array_index)++;
+			legalmoves[(*array_index)++] = board;
 			
 			board.piece[wrook] ^= takeeast; 
 			board.piece[wbishop] |= takeeast; 
-			legalmoves[*array_index] = board;  (*array_index)++;
+			legalmoves[(*array_index)++] = board;
 			
 			board.piece[wbishop] ^= takeeast; 
 			board.piece[wknight] |= takeeast; 
-			legalmoves[*array_index] = board;  (*array_index)++;
+			legalmoves[(*array_index)++] = board;
 			board = copy;
 		}
 	}
@@ -450,8 +526,7 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 		board.enpassanttarget = 0;
 		
 		if (!bitInCheck(&board, tomove)) {
-			legalmoves[*array_index] = board;
-			(*array_index)++;
+			legalmoves[(*array_index)++] = board;
 		}
 		
 		board = copy;
@@ -465,8 +540,7 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 		board.enpassanttarget = 0;
 		
 		if (!bitInCheck(&board, tomove)) {
-			legalmoves[*array_index] = board;
-			(*array_index)++;
+			legalmoves[(*array_index)++] = board;
 		}
 		
 		board = copy;
@@ -485,8 +559,7 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 			board.enpassanttarget = 0;
 			
 			if (!bitInCheck(&board, tomove)) {
-				legalmoves[*array_index] = board;
-				(*array_index)++;
+				legalmoves[(*array_index)++] = board;
 			}
 			
 			board = copy;
@@ -499,8 +572,7 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 			board.enpassanttarget = 0;
 			
 			if (!bitInCheck(&board, tomove)) {
-				legalmoves[*array_index] = board;
-				(*array_index)++;
+				legalmoves[(*array_index)++] = board;
 			}
 			
 			board = copy;
@@ -540,7 +612,7 @@ void bitGenerateLegalmoves(movearray* moves, bitboard board, bool tomove, bool o
 			if (board.piece[bpawn] & mask) {} 
 			else if (board.piece[brook] & mask) {} 
 			else if (board.piece[bbishop] & mask) {} 
-			else if (board.piece[bknight] & mask) {}  
+			else if (board.piece[bknight] & mask) {addBitKnightMoves(moves, board, tomove, mask, i, true, enemy, friendly);}   
 			else if (board.piece[bqueen] & mask) {}
 			else if (board.piece[bking] & mask) {} 
 			mask = mask << 1;
@@ -555,7 +627,7 @@ void bitGenerateLegalmoves(movearray* moves, bitboard board, bool tomove, bool o
 			if (board.piece[bpawn] & mask) {}
 			else if (board.piece[brook] & mask) {} 
 			else if (board.piece[bbishop] & mask) {} 
-			else if (board.piece[bknight] & mask) {}  
+			else if (board.piece[bknight] & mask) {addBitKnightMoves(moves, board, tomove, mask, i, false, enemy, friendly);}   
 			else if (board.piece[bqueen] & mask) {}
 			else if (board.piece[bking] & mask) {} 
 			mask = mask << 1;
@@ -570,7 +642,7 @@ void bitGenerateLegalmoves(movearray* moves, bitboard board, bool tomove, bool o
 			if (board.piece[wpawn] & mask) {addBitPawnMoveWhite(moves, board, tomove, mask, true, enemy, friendly);} 
 			else if (board.piece[wrook] & mask) {} 
 			else if (board.piece[wbishop] & mask) {} 
-			else if (board.piece[wknight] & mask) {}  
+			else if (board.piece[wknight] & mask) {addBitKnightMoves(moves, board, tomove, mask, i, true, enemy, friendly);}  
 			else if (board.piece[wqueen] & mask) {}
 			else if (board.piece[wking] & mask) {} 
 			mask = mask >> 1;
@@ -585,7 +657,7 @@ void bitGenerateLegalmoves(movearray* moves, bitboard board, bool tomove, bool o
 			if (board.piece[wpawn] & mask) {addBitPawnMoveWhite(moves, board, tomove, mask, false, enemy, friendly);}
 			else if (board.piece[wrook] & mask) {} 
 			else if (board.piece[wbishop] & mask) {} 
-			else if (board.piece[wknight] & mask) {}  
+			else if (board.piece[wknight] & mask) {addBitKnightMoves(moves, board, tomove, mask, i, false, enemy, friendly);}  
 			else if (board.piece[wqueen] & mask) {}
 			else if (board.piece[wking] & mask) {} 
 			mask = mask >> 1;
