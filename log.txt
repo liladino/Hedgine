@@ -1,3 +1,11 @@
+Date:	Dec 22 2024:
+	Move logic:
+		Added magic bitboards for king move generation, and finished the king 
+		too. After I implement the other color's pawn moves, all non sliding 
+		pieces will be implemented. Than i should write some unit tests to see
+		if i'm (100%) messed up some things, before i start the slifing pieces.
+		They will be a much greater headache i suppose.  
+		
 Date:	Dec 16 2024:
 	Move logic:
 		Added magic bitboards for knight move generation.
