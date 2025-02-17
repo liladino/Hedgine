@@ -1,9 +1,39 @@
+Date:	Feb 17 2025:
+	Wrote comments for some of the constants in structs.h, cos i generally 
+	forgot what does each do.
+	
+	Move logic:
+		I believe I implemented the white pawn, knight and king moves finally.
+		After I do the black pawns, I will write some unit tests to see what are
+		we up to now.
+
+Date:	Feb 03 2025:
+	Found some cool websites to learn:
+		https://essays.jwatzman.org/essays/chess-move-generation-with-magic-bitboards.html
+		http://pradu.us/old/Nov27_2008/Buzz/research/magic/Bitboards.pdf
+		https://analog-hors.github.io/site/magic-bitboards/
+		
+Date:	Feb 02 2025:
+	New year new me! - Well, except that I feel terrible that I still don't have 
+	enough money to never think about work again.
+	Anyway.
+	
+	Move logic:
+		Separated these huga and ugly arrays into a separate file, 
+		magicvalues.txt. This is not a real .c file, as it is directly included 
+		in legalmoves.c, but I didn't want these arrays to take up space there.
+		I also figured, that the approach i used for the knight and king move 
+		generation is fairly inefficient. Instead of having an array with 8*64
+		entries, I can just loop over the u64 which contains all their legal 
+		moves.
+	
+
 Date:	Dec 22 2024:
 	Move logic:
 		Added magic bitboards for king move generation, and finished the king 
 		too. After I implement the other color's pawn moves, all non sliding 
 		pieces will be implemented. Than i should write some unit tests to see
-		if i'm (100%) messed up some things, before i start the slifing pieces.
+		if i'm (100%) messed up some things, before i start the sliding pieces.
 		They will be a much greater headache i suppose.  
 		
 Date:	Dec 16 2024:
