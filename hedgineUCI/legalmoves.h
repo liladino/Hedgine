@@ -23,7 +23,7 @@
 //u64 enemypieces(bitboard board, bool enemy);
 
 
-//bool bitInCheck(bitboard board, bool tomove);
+bool bitInCheck(const bitboard* const board, bool tomove);
 
 void bitGenerateLegalmoves(movearray* moves, bitboard board, bool tomove, bool onlytakes);
 

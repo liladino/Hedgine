@@ -1,3 +1,7 @@
+Date:	Feb 18 2025:
+	Move logic:
+		Finished black pawn moves, now the code compiles (with some warnings).
+
 Date:	Feb 17 2025:
 	Wrote comments for some of the constants in structs.h, cos i generally 
 	forgot what does each do.
