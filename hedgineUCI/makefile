@@ -18,8 +18,12 @@ OBJS = $(SRCS:.c=.o)
 DEPS = $(OBJS:.o=.d)
 TARGET = hedgine
 
+# FOR MINGW ON WINDOWS PUT -lws2_32 AT THE END OF THE OBJECT COMPILATION
+mingwall: $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET) $^ -lws2_32 
+
 all: $(OBJS)
-	$(CC) $(CFLAGS) -o $(TARGET) $^
+	$(CC) $(CFLAGS) -o $(TARGET) $^ 
 
 debug: CFLAGS += -g -DDEBUG
 debug: $(OBJS)

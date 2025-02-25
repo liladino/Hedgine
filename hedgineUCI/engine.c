@@ -2,7 +2,7 @@
 
 const move nullmove = {{-1, -1}, {-1, -1}, 0};
 
-static int max(int a, int b){
+static int intmax(int a, int b){
 	return (a > b ? a : b);
 }
 
@@ -102,7 +102,7 @@ bool stopSearch = false;
 static int quiescenceSearch(bitboard board, bool tomove, int alpha, int beta){
 	int eval = fulleval(&board, tomove, maxdepth);
 	if (eval >= beta) return beta;
-	alpha = max(alpha, eval);
+	alpha = intmax(alpha, eval);
 	
 	movearray legalmoves;
 	bitGenerateLegalmoves(&legalmoves, board, tomove, true);
@@ -115,7 +115,7 @@ static int quiescenceSearch(bitboard board, bool tomove, int alpha, int beta){
 		if (eval >= beta){
 			return beta;
 		}
-		alpha = max(alpha, eval);
+		alpha = intmax(alpha, eval);
 	}
 	return alpha;
 }

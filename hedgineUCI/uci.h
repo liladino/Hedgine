@@ -7,6 +7,10 @@
 #include "engine.h"
 #include "tests.h"
 
+#ifdef WIN32
+#include "windows.h"
+#endif
+
 #ifdef DEBUG
 	#include "debugmalloc.h"
 #endif
