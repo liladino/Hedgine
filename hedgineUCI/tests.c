@@ -24,6 +24,29 @@ int perfTest(bitboard board, bool tomove, int depth){
  * ASSERTION TEST
  * */
 bool makePerfTestsAssert(){
+	/* TEMP SHIT */
+	{
+		bitboard bboard;
+		int temp;
+		bool tomove;
+		printf("\nPosition 1\n");
+		setboardFEN("r6k/2bp4/8/8/4Pp2/8/1p2p3/B1B4K b - - 0 1", &bboard, &tomove, &temp, &temp);
+		printBitBoard2d(stdout, bboard);
+	
+		movearray legalmoves;
+		bitGenerateLegalmoves(&legalmoves, bboard, tomove, false);
+		char c;
+		scanf("%c", &c);
+		
+		for (int i = 0; i < legalmoves.size; i++){
+			printBitBoard2d(stdout, legalmoves.boards[i]);
+			
+			scanf("%c", &c);		
+		}
+	}
+		
+	return false;
+	
 	//Source: https://www.chessprogramming.org/Perft_Results
 	
 	bitboard bboard;
@@ -111,11 +134,10 @@ bool makePerfTestsAssert(){
 /*
  * BENCHMARK
  * */
-void makePerfTest(char board[12][12], bool tomove, int castling[4], squarenums enpass){
+void makePerfTest(bitboard* board, bool tomove){
 	printLogo();
-	bitboard bboard = boardConvert(board, castling, enpass, tomove);
 	for (int i = 0; i < benchdepth; i++){
-		int allmovecount = perfTest(bboard, tomove, i);
+		int allmovecount = perfTest(*board, tomove, i);
 		printf("%d ply:\nLeaves: %d\n\n", i+1, allmovecount);
 	}
 }

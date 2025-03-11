@@ -5,6 +5,8 @@ FILE* debugOutput;
 //test run:  ./hedgine test quit
 
 int main(int argc, char* argv[]){
+	initmagicmoves();
+	
 	#ifdef DEBUG
 	long int runStartTime = getTime_ms();
 	debugOutput = fopen("debuglog.txt", "w");

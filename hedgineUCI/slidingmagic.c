@@ -31,7 +31,7 @@
  *3. This notice may not be removed or altered from any source distribution.
  */
 
-#include "magicmoves.h"
+#include "slidingmagic.h"
 
 const unsigned int magicmoves_r_shift[64]=
 {

@@ -4,6 +4,7 @@
 //#include "output.h"
 #include "structs.h"
 #include "moves.h"
+#include "slidingmagic.h"
 
 #ifdef DEBUG
 	#include "debugmalloc.h"

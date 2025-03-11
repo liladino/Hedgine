@@ -72,10 +72,10 @@ typedef struct move{
 	char promotion;
 } move;
 
-typedef struct movelist {
+/*typedef struct movelist {
 	move m;
 	struct movelist *next;
-} movelist;
+} movelist;*/
 
 typedef enum resultconst{
 	whitewon =  100000,

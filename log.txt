@@ -1,6 +1,12 @@
 Date:	Mar 11 2025:
 	Added an implementation of sliding piece magic move generation by Pradyumna
-	Kannan. 
+	Kannan. Slightly changed it, so that only relevant parts are present - less
+	flexible this way, but shorter, and no macros (gcc -E is now a friend of
+	mine). 
+	
+	Fixed some bugs with them, still a lot present (presumably).
+	
+	TODO: look in queen directions in bitInCheck 
 	
 Date:	Feb 18 2025:
 	Move logic:

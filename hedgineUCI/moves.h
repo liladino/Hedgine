@@ -20,6 +20,8 @@ move initializemove(squarenums from, squarenums to, int promotion);
 
 void setmove(move *m, square from, square to, int promotion);
 
+/* linked list things:
+
 movelist *createMove(move m);
 
 void firstmove(movelist **head, move m);
@@ -31,6 +33,7 @@ void undoMove(movelist **head);
 void printmoves(movelist *head);
 
 void freemoves(movelist *head);
+*/
 
 //bits:
 

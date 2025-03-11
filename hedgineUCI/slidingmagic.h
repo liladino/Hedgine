@@ -1,7 +1,8 @@
-#ifndef MAGICMOVES_H
-#define MAGICMOVES_H
+#ifndef SLIDINGMAGIC_H
+#define SLIDINGMAGIC_H
 
 #include "structs.h"
+#include "output.h"
 
 /**
  * MODIFIED BY liladino 2025. 03. 11.
@@ -91,34 +92,34 @@ extern const unsigned int magicmoves_r_shift[64];
 extern u64 magicmovesbdb[64][1<<9];
 extern u64 magicmovesrdb[64][1<<12];
   
-static __inline__ __attribute__((always_inline)) u64 Bmagic(const unsigned int square,const u64 occupancy)
+static __inline__ __attribute__((always_inline)) u64 Bmagic(const unsigned int _square,const u64 occupancy)
 {
-	return magicmovesbdb[square][(((occupancy)&magicmoves_b_mask[square])*magicmoves_b_magics[square])>>55];
+	return magicmovesbdb[_square][(((occupancy)&magicmoves_b_mask[_square])*magicmoves_b_magics[_square])>>55];
 }
 
-static __inline__ __attribute__((always_inline)) u64 Rmagic(const unsigned int square,const u64 occupancy)
+static __inline__ __attribute__((always_inline)) u64 Rmagic(const unsigned int _square,const u64 occupancy)
 {
-	return magicmovesrdb[square][(((occupancy)&magicmoves_r_mask[square])*magicmoves_r_magics[square])>>52];
+	return magicmovesrdb[_square][(((occupancy)&magicmoves_r_mask[_square])*magicmoves_r_magics[_square])>>52];
 }
 
-static __inline__ __attribute__((always_inline)) u64 BmagicNOMASK(const unsigned int square,const u64 occupancy)
+static __inline__ __attribute__((always_inline)) u64 BmagicNOMASK(const unsigned int _square,const u64 occupancy)
 {
-	return magicmovesbdb[square][((occupancy)*magicmoves_b_magics[square])>>55];
+	return magicmovesbdb[_square][((occupancy)*magicmoves_b_magics[_square])>>55];
 }
 
-static __inline__ __attribute__((always_inline)) u64 RmagicNOMASK(const unsigned int square, const u64 occupancy)
+static __inline__ __attribute__((always_inline)) u64 RmagicNOMASK(const unsigned int _square, const u64 occupancy)
 {
-	return magicmovesrdb[square][((occupancy)*magicmoves_r_magics[square])>>52];
+	return magicmovesrdb[_square][((occupancy)*magicmoves_r_magics[_square])>>52];
 }
 
-static __inline__ __attribute__((always_inline)) u64 Qmagic(const unsigned int square,const u64 occupancy)
+static __inline__ __attribute__((always_inline)) u64 Qmagic(const unsigned int _square,const u64 occupancy)
 {
-	return Bmagic(square,occupancy)|Rmagic(square,occupancy);
+	return Bmagic(_square,occupancy)|Rmagic(_square,occupancy);
 }
 
-static __inline__ __attribute__((always_inline)) u64 QmagicNOMASK(const unsigned int square, const u64 occupancy)
+static __inline__ __attribute__((always_inline)) u64 QmagicNOMASK(const unsigned int _square, const u64 occupancy)
 {
-	return BmagicNOMASK(square,occupancy)|RmagicNOMASK(square,occupancy);
+	return BmagicNOMASK(_square,occupancy)|RmagicNOMASK(_square,occupancy);
 }
 
 void initmagicmoves(void);
