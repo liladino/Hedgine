@@ -1,3 +1,7 @@
+Date:	Mar 11 2025:
+	Added an implementation of sliding piece magic move generation by Pradyumna
+	Kannan. 
+	
 Date:	Feb 18 2025:
 	Move logic:
 		Finished black pawn moves, now the code compiles (with some warnings).

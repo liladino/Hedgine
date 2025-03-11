@@ -57,8 +57,8 @@ typedef unsigned long long u64;
 #include <stdio.h>
 
 typedef struct square{
-	char file; //vonal
-	int rank; //sor
+	char file;
+	int rank; 
 } square;
 
 typedef struct squarenums{
