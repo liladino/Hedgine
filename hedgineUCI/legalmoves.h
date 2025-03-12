@@ -9,9 +9,6 @@
 #ifdef DEBUG
 	#include "debugmalloc.h"
 #endif
-#ifdef BENCH
-	#include "debugmalloc.h"
-#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,8 +20,14 @@
 
 //u64 enemypieces(bitboard board, bool enemy);
 
+static __inline__ __attribute__((always_inline)) u64 enemypieces(const bitboard* const board, bool enemy){
+	if (enemy == black){ //black
+		return (board->piece[bking] | board->piece[bqueen] | board->piece[bbishop] | board->piece[bknight] | board->piece[bpawn] | board->piece[brook]); 
+	}
+	return (board->piece[wking] | board->piece[wqueen] | board->piece[wbishop] | board->piece[wknight] | board->piece[wpawn] | board->piece[wrook]); 
+}
 
-bool bitInCheck(const bitboard* const board, bool tomove);
+bool bitInCheck(const bitboard* const board, bool tomove, u64 enemy, u64 friendly);
 
 void bitGenerateLegalmoves(movearray* moves, bitboard board, bool tomove, bool onlytakes);
 

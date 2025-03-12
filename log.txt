@@ -1,3 +1,7 @@
+Date:	Mar 12 2025:
+	bugs. 
+	:(
+		
 Date:	Mar 11 2025:
 	Added an implementation of sliding piece magic move generation by Pradyumna
 	Kannan. Slightly changed it, so that only relevant parts are present - less

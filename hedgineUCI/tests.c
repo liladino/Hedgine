@@ -8,10 +8,14 @@ void printLogo(){
 int perfTest(bitboard board, bool tomove, int depth){	
 	movearray legalmoves;
 	
-	bitGenerateLegalmoves(&legalmoves, board, tomove, false);
 	if (depth == 0){
+		//~ printBitBoard2d(stdout, board);
+			
+		//~ char c;
+		//~ scanf("%c", &c);		
 		return 1;
 	}
+	bitGenerateLegalmoves(&legalmoves, board, tomove, false);
 	int all = 0;
 	for (int i = 0; i < legalmoves.size; i++){
 		int x = perfTest(legalmoves.boards[i], !tomove, depth-1);
@@ -25,14 +29,19 @@ int perfTest(bitboard board, bool tomove, int depth){
  * */
 bool makePerfTestsAssert(){
 	/* TEMP SHIT */
-	{
+	if (false){
 		bitboard bboard;
 		int temp;
 		bool tomove;
-		printf("\nPosition 1\n");
-		setboardFEN("r6k/2bp4/8/8/4Pp2/8/1p2p3/B1B4K b - - 0 1", &bboard, &tomove, &temp, &temp);
+		printf("\nPosition: \n");
+		setboardFEN("5bkb/p1p1p1p1/PpPpPpPp/1P1P1P1P/8/6n1/8/4K2R w K - 1 8", &bboard, &tomove, &temp, &temp);
 		printBitBoard2d(stdout, bboard);
-	
+		
+		//~ char c;
+		//~ scanf("%c", &c);
+
+		//~ perfTest(bboard, tomove, 2);
+
 		movearray legalmoves;
 		bitGenerateLegalmoves(&legalmoves, bboard, tomove, false);
 		char c;
@@ -43,15 +52,15 @@ bool makePerfTestsAssert(){
 			
 			scanf("%c", &c);		
 		}
+		return false;
 	}
 		
-	return false;
-	
 	//Source: https://www.chessprogramming.org/Perft_Results
 	
 	bitboard bboard;
 	int temp;
 	bool tomove;
+	
 	printf("\nPosition 1\n");
 	setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", &bboard, &tomove, &temp, &temp);
 	printBitBoard2d(stdout, bboard);
@@ -61,9 +70,6 @@ bool makePerfTestsAssert(){
 		printf("%d ply:\nLeaves:\t%d\nExp:\t%d\n\n", i+1, allmovecount, startposValues[i]);
 		if (allmovecount != startposValues[i]) return false;
 	}
-	
-	//skip the test for now
-	goto test3;
 	
 	printf("\nPosition 2\n");
 	setboardFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", &bboard, &tomove, &temp, &temp);
@@ -75,7 +81,6 @@ bool makePerfTestsAssert(){
 		if (allmovecount != pos2Values[i]) return false;
 	}
 	
-	test3:
 	printf("\nPosition 3\n");
 	setboardFEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1", &bboard, &tomove, &temp, &temp);
 	printBitBoard2d(stdout, bboard);
