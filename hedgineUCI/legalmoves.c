@@ -82,9 +82,10 @@ static inline u64 pop_lsb(u64 *var) {
 	return lsb;
 }
 
-bool bitInCheck(const bitboard* const board, bool tomove, u64 enemy, u64 friendly){
+bool bitInCheck(const bitboard* const board, bool tomove){
 	//~ int coloffset = tomove == white ? bking : wking;
 	//~ u64 kingbit = (tomove == white ? board->piece[wking] : board->piece[bking]);
+		
 	int kingIndex = __builtin_ctzll((tomove == white ? board->piece[wking] : board->piece[bking]));
 	
 	u64 piecemask = 1;
@@ -102,30 +103,33 @@ bool bitInCheck(const bitboard* const board, bool tomove, u64 enemy, u64 friendl
 	}
 		
 	{
+		u64 friendly = enemypieces(board, tomove);
+		u64 enemy = enemypieces(board, !tomove);
+		
 		int coloffset = (tomove == white ? bking : wking);
 		u64 possiblemoves = Rmagic(kingIndex, enemy | friendly) & enemy;
+		
+		//~ printBitPieceAsBoard(possiblemoves);
+		
 		while (possiblemoves) { 
 			u64 currentmove = pop_lsb(&possiblemoves); 
-			if (currentmove & enemy){
-				if ((currentmove & board->piece[wqueen + coloffset]) || (currentmove & board->piece[wrook + coloffset])){
-					return true;
-				}
+			if ((currentmove & board->piece[wqueen + coloffset]) || (currentmove & board->piece[wrook + coloffset])){
+				return true;
 			}
+		
 		}
 		
 		possiblemoves = Bmagic(kingIndex, enemy | friendly) & enemy;		
 		while (possiblemoves) { 
 			u64 currentmove = pop_lsb(&possiblemoves); 
-			if (currentmove & enemy){
-				if ((currentmove & board->piece[wqueen + coloffset]) || (currentmove & board->piece[wbishop + coloffset])){
-					return true;
-				}
+			if ((currentmove & board->piece[wqueen + coloffset]) || (currentmove & board->piece[wbishop + coloffset])){
+				return true;
 			}
 		}
 	}
 
 	//king
-	if (board->piece[wking] & kingAttacks[kingIndex]){
+	if (board->piece[(tomove == white ? bking : wking)] & kingAttacks[kingIndex]){
 		/* the king attacks are symmetrical, so it's enought to check one 
 		 * side; if the orther attacks the first, the first attacks the other 
 		 * too. */ 
@@ -203,7 +207,7 @@ static void addBitKnightMoves(movearray* moves, bitboard board, bool tomove, u64
 			deletePiece(&board, currentmove);
 			board.piece[coloffset] = withoutpiece | currentmove; 
 			board.enpassanttarget = 0;
-			if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+			if (!bitInCheck(&board, tomove)) {
 				legalmoves[(*array_index)++] = board;
 			}
 			board = copy;
@@ -211,7 +215,7 @@ static void addBitKnightMoves(movearray* moves, bitboard board, bool tomove, u64
 		else if (!onlyCaptures && 0 == (enemy & currentmove) && 0 == (friendly & currentmove)){
 			board.piece[coloffset] = withoutpiece | currentmove; 
 			board.enpassanttarget = 0;
-			if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+			if (!bitInCheck(&board, tomove)) {
 				legalmoves[(*array_index)++] = board;
 			}
 			board = copy;
@@ -227,7 +231,7 @@ static void addBitKingMoves(movearray* moves, bitboard board, bool tomove, u64 p
 	bitboard* legalmoves = moves->boards;
 	int* array_index = &(moves->size);
 	
-	#define ADDKINGMOVE() do { board.enpassanttarget = 0; if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) { legalmoves[(*array_index)++] = board; } board = copy; } while(0);
+	#define ADDKINGMOVE() do { board.enpassanttarget = 0; if (!bitInCheck(&board, tomove)) { legalmoves[(*array_index)++] = board; } board = copy; } while(0);
 	
 	if (onlyCaptures){
 		/* these should be set when we trz to take east or west, so that the
@@ -235,20 +239,20 @@ static void addBitKingMoves(movearray* moves, bitboard board, bool tomove, u64 p
 		bool kingSideCastle = false, queenSideCastle = false;
 		
 		//set castle possibility shit
-		if (((tomove == white && i == 4) || (tomove == black && i == 60)) && (!bitInCheck(&board, tomove, enemy, friendly))){
-			if (((piece >> west) & (friendly | enemy)) == 0){
+		if (((tomove == white && i == 4) || (tomove == black && i == 60)) && (!bitInCheck(&board, tomove))){
+			if ((((piece >> west) | (piece >> 2 * west) | (piece >> 3 * west)) & (friendly | enemy)) == 0){
 				//nothing is there, check if its in check, BUT DO NOT ADD THE MOVE
 				board.piece[coloffset] = piece >> west;
 				board.enpassanttarget = 0; 
-				if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) { 
+				if (!bitInCheck(&board, tomove)) { 
 					queenSideCastle = true;
 				} 
 				board = copy;
 			}
-			if (((piece << east) & (friendly | enemy)) == 0){
+			if ((((piece << east) | (piece << 2 * east)) & (friendly | enemy)) == 0){
 				board.piece[coloffset] = piece << east;
 				board.enpassanttarget = 0; 
-				if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) { 
+				if (!bitInCheck(&board, tomove)) { 
 					kingSideCastle = true;
 				} 
 				board = copy;
@@ -327,21 +331,21 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 		board.piece[wpawn] = withoutpiece | moveforward; 
 		board.enpassanttarget = 0;
 		
-		if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+		if (!bitInCheck(&board, tomove)) {
 			legalmoves[(*array_index)++] = board;	
 		}
 		
 		if ((piece & WPAWN_HOME) && 0 == ((piece << nort*2) & (enemy | friendly))){
 			//moving 2 squares
 			board.piece[wpawn] = withoutpiece | (piece << 16); 
-			if ( ((PAWN_TAKE_EAST & piece) && ((piece >> west) & board.piece[bpawn]))
-			  || ((PAWN_TAKE_WEST & piece) && ((piece << east) & board.piece[bpawn])) ){
+			if ( ((PAWN_TAKE_EAST & piece) && ((piece << (noEa + nort)) & board.piece[bpawn]))
+			  || ((PAWN_TAKE_WEST & piece) && ((piece << (noWe + nort)) & board.piece[bpawn])) ){
 				board.enpassanttarget = moveforward;
 			}
 			else {
 				board.enpassanttarget = 0;
 			}
-			if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+			if (!bitInCheck(&board, tomove)) {
 				legalmoves[(*array_index)++] = board;
 			}
 		}
@@ -364,7 +368,7 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 				deletePiece(&board, currentmove);
 				board.piece[wpawn] = (withoutpiece | currentmove); //move the pawn
 				board.enpassanttarget = 0; 
-				if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+				if (!bitInCheck(&board, tomove)) {
 					legalmoves[(*array_index)++] = board;
 				}
 				board = copy;
@@ -374,7 +378,7 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 				board.piece[wpawn] = (withoutpiece | currentmove); //move the pawn
 				board.piece[bpawn] = board.piece[bpawn] & ~(currentmove >> sout); //delete enemy pawn
 				board.enpassanttarget = 0;
-				if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+				if (!bitInCheck(&board, tomove)) {
 					legalmoves[(*array_index)++] = board;
 				}
 				board = copy;
@@ -388,7 +392,7 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 				for (int i = wqueen; i <= wknight; i++){
 					board.piece[i] |= currentmove;
 					
-					if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+					if (!bitInCheck(&board, tomove)) {
 						legalmoves[(*array_index)++] = board;
 					}
 					else {
@@ -412,7 +416,7 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 			for (int i = wqueen; i <= wknight; i++){
 				board.piece[i] |= moveforward;
 				
-				if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+				if (!bitInCheck(&board, tomove)) {
 					legalmoves[(*array_index)++] = board;
 				}
 				else {
@@ -444,20 +448,21 @@ static void addBitPawnMoveBlack(movearray* moves, bitboard board, bool tomove, u
 		//moving forward 1 sqyare
 		board.piece[bpawn] = withoutpiece | moveforward; 
 		board.enpassanttarget = 0;
-		if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+		
+		if (!bitInCheck(&board, tomove)) {
 			legalmoves[(*array_index)++] = board;
 		}	
 		if ((piece & BPAWN_HOME) && 0 == ((piece >> sout*2) & (enemy | friendly))){
 			//moving 2 squares
 			board.piece[bpawn] = withoutpiece | (piece >> 16); 
-			if ( ((PAWN_TAKE_EAST & piece) && ((piece >> west) & board.piece[wpawn]))
-			  || ((PAWN_TAKE_WEST & piece) && ((piece << east) & board.piece[wpawn])) ){
+			if ( ((PAWN_TAKE_EAST & piece) && ((piece >> (soEa + sout)) & board.piece[wpawn]))
+			  || ((PAWN_TAKE_WEST & piece) && ((piece >> (soWe + sout)) & board.piece[wpawn])) ){
 				board.enpassanttarget = moveforward;
 			}
 			else {
 				board.enpassanttarget = 0;
 			}
-			if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+			if (!bitInCheck(&board, tomove)) {
 				legalmoves[(*array_index)++] = board;
 			}
 		}
@@ -480,7 +485,7 @@ static void addBitPawnMoveBlack(movearray* moves, bitboard board, bool tomove, u
 				deletePiece(&board, currentmove);
 				board.piece[bpawn] = (withoutpiece | currentmove); //move the pawn
 				board.enpassanttarget = 0;
-				if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+				if (!bitInCheck(&board, tomove)) {
 					legalmoves[(*array_index)++] = board;
 				}
 				board = copy;
@@ -490,7 +495,10 @@ static void addBitPawnMoveBlack(movearray* moves, bitboard board, bool tomove, u
 				board.piece[bpawn] = (withoutpiece | currentmove); //move the pawn
 				board.piece[wpawn] = board.piece[wpawn] & ~(currentmove << nort); //delete enemy pawn
 				board.enpassanttarget = 0;
-				if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+				
+				//~ printBitBoard2d(stdout, board);
+				
+				if (!bitInCheck(&board, tomove)) {
 					legalmoves[(*array_index)++] = board;
 				}
 				board = copy;
@@ -504,7 +512,7 @@ static void addBitPawnMoveBlack(movearray* moves, bitboard board, bool tomove, u
 				for (int i = bqueen; i <= bknight; i++){
 					board.piece[i] |= currentmove;
 					
-					if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+					if (!bitInCheck(&board, tomove)) {
 						legalmoves[(*array_index)++] = board;
 					}
 					else {
@@ -528,7 +536,7 @@ static void addBitPawnMoveBlack(movearray* moves, bitboard board, bool tomove, u
 			for (int i = bqueen; i <= bknight; i++){
 				board.piece[i] |= moveforward;
 				
-				if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+				if (!bitInCheck(&board, tomove)) {
 					legalmoves[(*array_index)++] = board;
 				}
 				else {
@@ -565,7 +573,7 @@ static void addBitBishopMoves(movearray* moves, bitboard board, bool tomove, u64
 			deletePiece(&board, currentmove);
 			board.piece[coloffset] = (withoutpiece | currentmove); 
 			board.enpassanttarget = 0;
-			if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+			if (!bitInCheck(&board, tomove)) {
 				legalmoves[(*array_index)++] = board;
 			}
 			board = copy;
@@ -579,7 +587,7 @@ static void addBitBishopMoves(movearray* moves, bitboard board, bool tomove, u64
 			
 			board.piece[coloffset] = (withoutpiece | currentmove); 
 			board.enpassanttarget = 0;
-			if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+			if (!bitInCheck(&board, tomove)) {
 				legalmoves[(*array_index)++] = board;
 			}
 			board = copy;
@@ -607,7 +615,16 @@ static void addBitRookMoves(movearray* moves, bitboard board, bool tomove, u64 p
 			deletePiece(&board, currentmove);
 			board.piece[coloffset] = (withoutpiece | currentmove); 
 			board.enpassanttarget = 0;
-			if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+			if (!bitInCheck(&board, tomove)) {
+				if (copy.piece[wrook] & piece){
+					if ((1LLU << 7) & piece) board.castlerights &= ~WKINGSIDE;
+					else if (1LLU & piece)   board.castlerights &= ~WQUEENSIDE;
+				}
+				else if (copy.piece[brook] & piece){
+					if ((1LLU << (7 + nort * 7)) & piece)  board.castlerights &= ~BKINGSIDE;
+					else if ((1LLU << (nort * 7)) & piece) board.castlerights &= ~BQUEENSIDE;
+				}
+				
 				legalmoves[(*array_index)++] = board;
 			}
 			board = copy;
@@ -621,7 +638,16 @@ static void addBitRookMoves(movearray* moves, bitboard board, bool tomove, u64 p
 			
 			board.piece[coloffset] = (withoutpiece | currentmove); 
 			board.enpassanttarget = 0;
-			if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+			if (!bitInCheck(&board, tomove)) {
+				if (copy.piece[wrook] & piece){
+					if ((1LLU << 7) & piece) board.castlerights &= ~WKINGSIDE;
+					else if (1LLU & piece)   board.castlerights &= ~WQUEENSIDE;
+				}
+				else if (copy.piece[brook] & piece){
+					if ((1LLU << (7 + nort * 7)) & piece)  board.castlerights &= ~BKINGSIDE;
+					else if ((1LLU << (nort * 7)) & piece) board.castlerights &= ~BQUEENSIDE;
+				}
+				
 				legalmoves[(*array_index)++] = board;
 			}
 			board = copy;
@@ -649,7 +675,7 @@ static void addBitQueenMoves(movearray* moves, bitboard board, bool tomove, u64 
 			deletePiece(&board, currentmove);
 			board.piece[coloffset] = (withoutpiece | currentmove); 
 			board.enpassanttarget = 0;
-			if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+			if (!bitInCheck(&board, tomove)) {
 				legalmoves[(*array_index)++] = board;
 			}
 			board = copy;
@@ -663,7 +689,7 @@ static void addBitQueenMoves(movearray* moves, bitboard board, bool tomove, u64 
 			
 			board.piece[coloffset] = (withoutpiece | currentmove); 
 			board.enpassanttarget = 0;
-			if (!bitInCheck(&board, tomove, enemy, enemypieces(&board, tomove))) {
+			if (!bitInCheck(&board, tomove)) {
 				legalmoves[(*array_index)++] = board;
 			}
 			board = copy;
@@ -756,6 +782,6 @@ resultconst gameend(bitboard board, bool tomove){
 	bitGenerateLegalmoves(&moves, board, tomove, false);
 	if (moves.size != 0) return ongoing;
 	
-	if (bitInCheck(&board, tomove, enemypieces(&board, !tomove), enemypieces(&board, tomove))) return (tomove == white ? blackwon : whitewon);
+	if (bitInCheck(&board, tomove)) return (tomove == white ? blackwon : whitewon);
 	return draw;
 }

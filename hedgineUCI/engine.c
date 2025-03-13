@@ -157,7 +157,7 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	movearray legalmoves;
 	bitGenerateLegalmoves(&legalmoves, board, tomove, false);
 	if (legalmoves.size == 0){
-		if (bitInCheck(&board, tomove, enemypieces(&board, !tomove), enemypieces(&board, tomove))) return blackwon - 100 + depth;
+		if (bitInCheck(&board, tomove)) return blackwon - 100 + depth;
 		return draw;
 	}
 	

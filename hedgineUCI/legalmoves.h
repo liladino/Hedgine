@@ -27,7 +27,7 @@ static __inline__ __attribute__((always_inline)) u64 enemypieces(const bitboard*
 	return (board->piece[wking] | board->piece[wqueen] | board->piece[wbishop] | board->piece[wknight] | board->piece[wpawn] | board->piece[wrook]); 
 }
 
-bool bitInCheck(const bitboard* const board, bool tomove, u64 enemy, u64 friendly);
+bool bitInCheck(const bitboard* const board, bool tomove);
 
 void bitGenerateLegalmoves(movearray* moves, bitboard board, bool tomove, bool onlytakes);
 
