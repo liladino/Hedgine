@@ -1,6 +1,7 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
+/* These were only relevant when the program had its own CLI. */
 #define BG_BLACK "\x1b[40m"
 #define BG_RED "\x1b[41m"
 #define BG_GREEN "\x1b[42m"
@@ -17,9 +18,27 @@
 #define DEFAULT "\x1b[37m" "\x1b[m"
 #define CLEAR "\033[2J\033[H"
 
-
+/* This is a REALLY rough estimate, an upper limit calculated with an 
+ * impossible position.
+ * 
+ * A statistical analysis by others shows, that on average, a game has at most 
+ * 40 legal moves in one move.
+ * https://chess.stackexchange.com/questions/23135/what-is-the-average-number-of-legal-moves-per-turn
+ * 
+ * I should make some statistical tests about the maximal number of legal moves 
+ * in each position, to make a better estimate, as i suspect that it could 
+ * improve performance. by a significant amount.
+ * */
 #define MAXMOVECOUNT_INPOS 218
+
+/* A pseudorandom value, that indicates, that as a return value signals, that 
+ * there is no hash match.  
+ * */
 #define NO_HASH_ENTRY 21454837
+
+/* Minimal and maximal size of the transposition table. The maximum size 
+ * depends on, whether or not the program was compiled in debug mode.
+ * */
 #define TT_MIN_SIZE_MB 1
 
 #ifndef DEBUG
@@ -38,8 +57,8 @@ typedef unsigned long long u64;
 #include <stdio.h>
 
 typedef struct square{
-	char file; //vonal
-	int rank; //sor
+	char file;
+	int rank; 
 } square;
 
 typedef struct squarenums{
@@ -53,16 +72,16 @@ typedef struct move{
 	char promotion;
 } move;
 
-typedef struct movelist {
+/*typedef struct movelist {
 	move m;
 	struct movelist *next;
-} movelist;
+} movelist;*/
 
 typedef enum resultconst{
 	whitewon =  100000,
 	blackwon = -100000,
 	draw = 0,
-	ongoing = -1,
+	ongoing = -1
 	//~ stalemate = 200000
 }resultconst;
 
@@ -97,12 +116,12 @@ typedef enum raydir{
 	 * soWe c3     e3 sout     f3  soEa
 	 * 
 	 * */
-	 // shift dir: <<
+	 // +  shift dir: <<
 	 noWe = 7,
 	 nort = 8,
 	 noEa = 9,
 	 east = 1,
-	 // shift dir: >>
+	 // -  shift dir: >>
 	 west = 1,
 	 soWe = 9,
 	 sout = 8,
@@ -125,9 +144,9 @@ typedef struct bitboard{
 	char castlerights; 
 	/*
 	* 0000 0101 => 
-	* also 4 bit:
-	* 				 0					1					0 					 1 (LSB) 
-	* sotet vezeroldal, sotet kiralyoldal, vilagos vezeroldal, vilagos kiralyoldal
+	* least signif 4 bit:
+	*               0               1                0               1 (LSB) 
+	* black queenside, balck kingside, white queenside, white kingside
 	*/
 	
 	u64 enpassanttarget;

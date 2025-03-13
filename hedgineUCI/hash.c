@@ -76,6 +76,7 @@ void hashEnPassantIO(bitboard *board, int file){
 void hashCastleO(bitboard *board, int dir){
 	char mask = 1 << dir; //K
 	if (board->castlerights & mask){
+		//hash the current castleright out, and hash the illegal castling mask in.
 		board->hashValue ^= Zobrist.castlerights[dir][1];
 		board->hashValue ^= Zobrist.castlerights[dir][0];
 	}

@@ -18,6 +18,6 @@
 
 bool makePerfTestsAssert();
 
-void makePerfTest(char board[12][12], bool tomove, int castling[4], squarenums enpass);
+void makePerfTest(bitboard* board, bool tomove);
 
 #endif

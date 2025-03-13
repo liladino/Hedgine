@@ -1,3 +1,95 @@
+Date:	Mar 13 2025:
+	BUGS FIXED!!!!!!!
+
+Date:	Mar 12 2025:
+	bugs. 
+	:(
+		
+Date:	Mar 11 2025:
+	Added an implementation of sliding piece magic move generation by Pradyumna
+	Kannan. Slightly changed it, so that only relevant parts are present - less
+	flexible this way, but shorter, and no macros (gcc -E is now a friend of
+	mine). 
+	
+	Fixed some bugs with them, still a lot present (presumably).
+	
+	TODO: look in queen directions in bitInCheck 
+	
+Date:	Feb 18 2025:
+	Move logic:
+		Finished black pawn moves, now the code compiles (with some warnings).
+
+Date:	Feb 17 2025:
+	Wrote comments for some of the constants in structs.h, cos i generally 
+	forgot what does each do.
+	
+	Move logic:
+		I believe I implemented the white pawn, knight and king moves finally.
+		After I do the black pawns, I will write some unit tests to see what are
+		we up to now.
+
+Date:	Feb 03 2025:
+	Found some cool websites to learn:
+		https://essays.jwatzman.org/essays/chess-move-generation-with-magic-bitboards.html
+		http://pradu.us/old/Nov27_2008/Buzz/research/magic/Bitboards.pdf
+		https://analog-hors.github.io/site/magic-bitboards/
+		
+Date:	Feb 02 2025:
+	New year new me! - Well, except that I feel terrible that I still don't have 
+	enough money to never think about work again.
+	Anyway.
+	
+	Move logic:
+		Separated these huga and ugly arrays into a separate file, 
+		magicvalues.txt. This is not a real .c file, as it is directly included 
+		in legalmoves.c, but I didn't want these arrays to take up space there.
+		I also figured, that the approach i used for the knight and king move 
+		generation is fairly inefficient. Instead of having an array with 8*64
+		entries, I can just loop over the u64 which contains all their legal 
+		moves.
+	
+
+Date:	Dec 22 2024:
+	Move logic:
+		Added magic bitboards for king move generation, and finished the king 
+		too. After I implement the other color's pawn moves, all non sliding 
+		pieces will be implemented. Than i should write some unit tests to see
+		if i'm (100%) messed up some things, before i start the sliding pieces.
+		They will be a much greater headache i suppose.  
+		
+Date:	Dec 16 2024:
+	Move logic:
+		Added magic bitboards for knight move generation.
+		
+Date:	Dec 14 2024:
+	Move logic:
+		Added pre-computed tables of bitboards for the knights, pawns and kings
+		to detect their checks more efficiently. Their logic is really simple,
+		e.g.: knight & knightAttacks[kingSquare] => we get a non zero value if 
+		there is a check.
+		
+		Tables like this can be used for move generation too e.g. for the 
+		knight:
+		  - Let's compute 8 values for each squares
+		  - If a knight stands on square s, we only need to iterate through 8 
+		    values in the array to get 8 bitmaps, where it could go from there. 
+		    Not all squares offer 8 possible squares to go, we can sort these 
+		    out by the relevant bitboard a 0 value.
+		  - If a move results in a check, we can't move this knight at all.
+
+Date:	Dec 9 2024:
+	Move logic:
+		Started to re-write the old move generation with the pawns. I think I'll
+		try to implement magic bitboards for the bishop and rook directions. I 
+		will try to research fast agorithms for check detection too, as that 
+		function is the most called one in the program. My ideas are:
+			- somehow bring magic bitboards and check detection under one 
+			  umbrella, by searching for rooks & bishops & queens with the rays 
+			  of magic bitboards
+			- implement a 'knight map': an array of 64 u64 values, indicating 
+			  where from each square a knight can move. This can help with the
+			  knight move generation and the check detection.
+
 Date:	Dec 7 2024:
 	Move logic:
 		Added "Unit" tests, and discovered that the move generation has a bug.
