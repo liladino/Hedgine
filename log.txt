@@ -1,3 +1,38 @@
+Date:	Mar 18 2025:
+	after some optimization, the hashing is now at an acceptable speed, 1.2 sec
+	for the tests.
+
+Date:	Mar 17 2025:
+	Did some testing and rethinking. I changed the MAXMOVECOUNT_INPOS macro to a
+	lower number in hopes of making the move generation slightly faster.
+	
+	16ö seems to be a better guess than the previous 218, but somehow 
+	dynamically guessing could be an even bigger improvement. But that's another
+	story, as it would introduce VLAs, of which I don't know enough about.
+	
+	A rather big surprise for me was the hashing: a simple 3 lines makes my 
+	program 8 TIMES SLOWER:
+
+	for (int i = 0; i < moves->size; i++){
+		moves->boards[i].hashValue = hashPosition(&(moves->boards[i]), tomove);
+	}
+	
+	For now i don't have any ideas on how to solve this, because the hashing is
+	is a crucial part in the move ordering and tree searching and repetition
+	detection.
+	
+	The most important part is the square hashing. If i could make that slightly
+	more optimal, that would mean a whole lot.
+	
+	For comparison:
+	
+	| method                   | test runtime |
+	|--------------------------|--------------|
+	| without hashing          | ~ 0.8 s      |
+	| w hash, w/o square hash  | ~ 1 s        |
+	| with full hash           | ~ 6 s        |
+	|--------------------------|--------------|
+	
 Date:	Mar 13 2025:
 	BUGS FIXED!!!!!!!
 
