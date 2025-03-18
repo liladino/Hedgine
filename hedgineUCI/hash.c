@@ -100,7 +100,7 @@ void setHashKey(){
 }
 
 u64 hashPosition(const bitboard* const board, bool tomove){
-	u64 result = 0;
+	/*u64 result = 0;
 	u64 mask = 1;
 	for (int i = 0; i < 64; i++){
 		for (int j = 0; j < 12; j++){
@@ -131,7 +131,34 @@ u64 hashPosition(const bitboard* const board, bool tomove){
 	}
 	if (tomove == black) result ^= Zobrist.tomove;
 	
-	return result;
+	return result;*/
+	
+	u64 result = 0;
+
+    for (int curr = wking; curr <= bpawn; curr++) {
+        u64 bb = board->piece[curr];
+        while (bb) {
+            int square = __builtin_ctzll(bb);
+            result ^= Zobrist.squares[square][curr];
+            bb &= bb - 1;  // Clear the LSB
+        }
+    }
+
+    if (board->enpassanttarget) {
+        int file = __builtin_ctzll(board->enpassanttarget) & 7;
+        result ^= Zobrist.enpassantfile[file];
+    }
+
+    result ^= Zobrist.castlerights[0][(board->castlerights & 1) != 0];
+    result ^= Zobrist.castlerights[1][(board->castlerights & 2) != 0];
+    result ^= Zobrist.castlerights[2][(board->castlerights & 4) != 0];
+    result ^= Zobrist.castlerights[3][(board->castlerights & 8) != 0];
+
+    if (tomove == black) {
+        result ^= Zobrist.tomove;
+    }
+
+    return result;
 }
 
 TThashentry* lookup(const u64 position){
@@ -194,7 +221,7 @@ void printCollisionStats(){
 #endif
 
 int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const int maxdepth, const int oddity){
-	//~ return NO_HASH_ENTRY;
+	return NO_HASH_ENTRY;
 	TThashentry *current = &TranspositionTable[pos % TTableSize];
 		
 	if (current->pos != pos) {
@@ -213,7 +240,7 @@ int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const i
 	#endif
 	
 	/* Pseudocode:
-	 *  if ttEntry is valid and ttEntry.depth ≥ depth then
+	    if ttEntry is valid and ttEntry.depth ≥ depth then
 		if ttEntry.flag = EXACT then
 			return ttEntry.value
 		else if ttEntry.flag = LOWERBOUND then
@@ -241,16 +268,16 @@ int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const i
 			case lastBest:
 				return tempeval;
 			case alphaFlag:
-				//~ if (tempeval < -(*beta)) (*beta) = -tempeval;
+				if (tempeval < -(*beta)) (*beta) = -tempeval;
 				break;
 			case betaFlag:
-				//~ if (tempeval > -(*alpha)) (*alpha) = -tempeval;
+				if (tempeval > -(*alpha)) (*alpha) = -tempeval;
 				break;
 		}
 		
-		//~ if (-(*alpha) < -(*beta)){
-			//~ return tempeval;
-		//~ }
+		if (-(*alpha) < -(*beta)){
+			return tempeval;
+		}
 	}
 	else {
 		switch (current->flag){
@@ -259,16 +286,16 @@ int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const i
 			case lastBest:
 				return tempeval;
 			case alphaFlag:
-				//~ if (tempeval < *alpha) (*alpha) = tempeval;
+				if (tempeval < *alpha) (*alpha) = tempeval;
 				break;
 			case betaFlag:
-				//~ if (tempeval > *beta) (*beta) = tempeval;
+				if (tempeval > *beta) (*beta) = tempeval;
 				break;
 		}
 		
-		//~ if (*alpha > *beta){
-			//~ return tempeval;
-		//~ }
+		if (*alpha > *beta){
+			return tempeval;
+		}
 	}
 
 	return NO_HASH_ENTRY;
@@ -335,8 +362,8 @@ static inline int getEval(u64 pos){
 	return -1000000;
 }
 
-/*order moves in a non-descending order based on the evals stored in the hash table*/
-/*simple insertion sort, too few elements to make something fancy*/
+/* order moves in a non-descending order based on the evals stored in the hash table */
+/* simple insertion sort, too few elements to make something fancy */
 void orderMoves(movearray* legalmoves){
 	for (int i = 1; i < legalmoves->size; i++){
 		for (int j = 0; j < legalmoves->size - i; j++){

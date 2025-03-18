@@ -18,7 +18,7 @@
 #define DEFAULT "\x1b[37m" "\x1b[m"
 #define CLEAR "\033[2J\033[H"
 
-/* This is a REALLY rough estimate, an upper limit calculated with an 
+/* 218 is a REALLY rough estimate, an upper limit calculated with an 
  * impossible position.
  * 
  * A statistical analysis by others shows, that on average, a game has at most 
@@ -28,8 +28,17 @@
  * I should make some statistical tests about the maximal number of legal moves 
  * in each position, to make a better estimate, as i suspect that it could 
  * improve performance. by a significant amount.
+ * 
+ * ********
+ * EDIT
+ * 
+ * After some tests, **145** should be enough for most positions reachable from 
+ * with standard startpieces. Depsite this, i will leave this at 160. because I
+ * noticed no significant slowdonn in the testcases with the higher, safer 
+ * number. 
+ * 
  * */
-#define MAXMOVECOUNT_INPOS 218
+#define MAXMOVECOUNT_INPOS 160
 
 /* A pseudorandom value, that indicates, that as a return value signals, that 
  * there is no hash match.  
