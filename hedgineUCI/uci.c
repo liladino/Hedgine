@@ -277,6 +277,14 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 
 // init all variables
 void initializeAll(){
+	static bool initialized = false;
+	if (!initialized){
+		initialized = true;
+	}
+	else{
+		return;
+	}
+	
 	// init random keys for hashing purposes
 	setHashKey();
 	
