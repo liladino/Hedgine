@@ -6,11 +6,11 @@ CFLAGS += -g -DDEBUG
 endif
 
 ifdef OPT
-CFLAGS += -O2
+CFLAGS += -O3
 endif
 
 ifdef BENCH
-CFLAGS += -O2 -DBENCH
+CFLAGS += -O3 -DBENCH
 endif
 
 SRCS = $(wildcard *.c)
@@ -25,8 +25,12 @@ debug: CFLAGS += -g -DDEBUG
 debug: $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $^
 
-opt: CFLAGS += -O2
+opt: CFLAGS += -O3
 opt: $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET) $^
+	
+profiling: CFLAGS += -pg
+profiling: $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $^
 
 clean:
@@ -35,9 +39,9 @@ clean:
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@ 
 
-release: CFLAGS += -O2
+release: CFLAGS += -O3
 release: $(OBJS)
-	$(CC) -Wall -Werror -pedantic -O2 -o $(TARGET) $^
+	$(CC) -Wall -Werror -pedantic -O3 -o $(TARGET) $^
 	rm -f *.o
 	
 -include $(DEPS)

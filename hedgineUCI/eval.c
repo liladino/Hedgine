@@ -131,7 +131,7 @@ static int max(int a, int b){
 	return (a > b ? a : b);
 }
 
-static int countPieces(const bitboard* const board){
+ int countPieces(const bitboard* const board){
 	u64 all = (board->piece[wqueen] | board->piece[wbishop] | board->piece[wknight] | board->piece[wrook] | board->piece[bqueen] | board->piece[bbishop] | board->piece[bknight] | board->piece[brook]);
 	u64 mask = 1;
 	int count = 0;
@@ -142,7 +142,7 @@ static int countPieces(const bitboard* const board){
 	return count;
 }
 
-static int countFriendlyPieces(const bitboard* const board, bool tomove){
+ int countFriendlyPieces(const bitboard* const board, bool tomove){
 	u64 all;
 	if (white == tomove) all = (board->piece[wqueen] | board->piece[wbishop] | board->piece[wknight] | board->piece[wpawn]);
 	else all = (board->piece[bpawn] | board->piece[bqueen] | board->piece[bbishop] | board->piece[bknight] | board->piece[brook]);
@@ -256,22 +256,107 @@ static inline int sideEval(const bitboard* const board, bool tomove){
 			}
 			else if (board->piece[wqueen + offset] & piecemask){
 				eval += 900;
-				/*if (pieces <= 14) {
-					eval += ((14 - pieces) * endgamecenter[i][j] * 0.08);
-				}*/
 			}
 			piecemask = piecemask << 1;
 		}
 	}
-	//~ if (tomove == black) eval *= -1;
+	
+	
 	
 	return eval;
 }
+
+//~ static inline int signum(int x){
+	//~ if (x > 0) return 1;
+	//~ if (x < 0) return -1;
+	//~ return 0;
+//~ }
+
+//~ static inline int min(int a, int b){
+	//~ if (a < b) return a;
+	//~ return b;
+//~ }
+
+//~ int kingDist(u64 wk, u64 bk){
+	//~ int w = __builtin_ctzll(wk);
+	//~ int b = __builtin_ctzll(bk);
+	
+	//~ return min(abs(w/8 - b/8), abs((w & 7) - (b & 7)));
+//~ }
 
 int fulleval(const bitboard* const board, bool tomove, int depth){
 	//~ printBitBoard2d(*board);
 	resultconst r = gameend(*board, tomove);
 	if (r == draw) return draw;
 	if (r != ongoing) return (blackwon - 100 + depth);
-	return (sideEval(board, white) - sideEval(board, black)) * (tomove == white ? 1 : -1);
+	
+	//~ bool opening = false, middlegame = false, endgame = false;
+	//~ int opeWeight = 0, midWeight = 0, endWeight = 0;
+	//~ int pieces = countPieces(board);
+	
+	//~ if (pieces < 6){
+		//~ endgame = true;
+		//~ endWeight = (6-pieces)/3 + 1;
+	//~ }
+	
+	//~ typedef enum pieceVal{
+		//~ val_wking = 0, val_wqueen =  900, val_wrook =  500, val_wbishop =  313, val_wknight =  310, val_wpawn =  100, 
+		//~ val_bking = 0, val_bqueen = -900, val_brook = -500, val_bbishop = -313, val_bknight = -310, val_bpawn = -100
+	//~ } pieceVal;
+	
+	// wking wqueen	wrook wbishop wknight wpawn bking bqueen brook bbishop bknight bpawn	
+	int pieceVal[12] = {0, 900, 500, 313, 310, 100, 0, -900, -500, -313, -310, -100};
+    
+    int eval = 0;
+    
+    //~ //pawn
+	//~ {
+		//~ u64 bb = board->piece[wpawn];
+        //~ while (bb) {
+			//~ int sq = __builtin_ctzll(bb);
+			//~ eval += sq / 8;
+            //~ eval += val_wpawn;
+            //~ bb &= bb - 1;  // Clear the LSB
+        //~ }
+		//~ bb = board->piece[bpawn];
+        //~ while (bb) {
+			//~ int sq = __builtin_ctzll(bb);
+			//~ eval -= 7 - sq / 8;
+            //~ eval -= val_bpawn;
+            //~ bb &= bb - 1;  // Clear the LSB
+        //~ }
+	//~ }
+    
+    //~ //king
+    //~ {
+		
+	//~ }
+    
+    for (int curr = wking; curr <= bpawn; curr++) {
+        u64 bb = board->piece[curr];
+        while (bb) {
+			int sq = __builtin_ctzll(bb);
+			if (wpawn == curr){
+				eval += sq / 8;
+			}
+			else if (bpawn == curr){
+				eval -= 7 - sq / 8;
+			}
+            eval += pieceVal[curr];
+            bb &= bb - 1;  // Clear the LSB
+        }
+    }
+
+	//~ if (endgame){
+		//~ eval += endWeight * signum(eval) * kingDist(board->piece[wking], board->piece[bking]);
+	//~ }
+	
+    //~ for (int i = 0; i < 12; i++){
+		//~ printf("%d ", counter[i]);
+	//~ }
+	//~ exit(0);
+	if (tomove == black) eval *= -1;
+	
+	return eval;
+	//~ return (sideEval(board, white) - sideEval(board, black)) * (tomove == white ? 1 : -1);
 }
