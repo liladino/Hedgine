@@ -1,60 +1,69 @@
 #include "input.h"
 
-/* gets a string, and dynamicly assignes enough memory to read the current line 
- * (or until the maximum size is reached)
- * 
- * expects the pointer to either be a dynamicly stored string
- * or  null pointer
- * 
- * returns the number of succesfully read in characters
- * */
-size_t getLineDynamic(char** str, const size_t maxSize){
-	size_t size;
-	if (*str == NULL) size = 0;
-	else size = strlen(*str);
-		
-	char c;
-	size_t succesfullyRead = 0;
-	do {
-		if (scanf("%c", &c) == EOF){
-			c = 0;
+static void growString(char** str, size_t capacity) {
+	void *newstr = realloc(*str, capacity);
+	if (newstr == NULL){
+		fprintf(stderr, TXT_RED "Memory allocation failed\n" DEFAULT);
+		exit(1);
+	}
+	*str = newstr;
+}
+
+/* Reads one physical line, skipping leading spaces/tabs only.
+   - Ensures *str is NUL-terminated.
+   - Returns length excluding NUL.
+   - Returns 0 on empty line (just '\n') after skipping spaces/tabs.
+   - Returns 0 on EOF with no characters read (and sets *str to empty string). */
+size_t readLineDynamic(char **str, size_t maxSize) {
+	if (!str || maxSize == 0) return 0;
+
+	size_t size = 0;
+	size_t cap = 32;
+
+	growString(str, cap);
+	(*str)[0] = '\0';
+
+	int c = 0;
+	
+	while ((c = getc(stdin)) != EOF) {
+		if (c == '\n') {
+			(*str)[0] = '\0';
+			return 0;
 		}
-		else{
-			if (succesfullyRead == 0 && isspace(c)) {
-				if (c == '\n') c = 0;
-				else continue; //start reading the line after whitespaces are gone
-			}
-			
-			if (c == '\n' || maxSize == size + succesfullyRead){
-				c = 0;
-			}
+		if (c != ' ' && c != '\t') {
+			break;
 		}
-		
-		char *newstr = (char*) malloc((size + succesfullyRead + 1) * sizeof(char));
-		if (newstr == NULL){
-			fprintf(stderr, TXT_RED "Memory allocation failed\n" DEFAULT);
-			exit(1);
+	}
+
+	if (c == EOF) {
+		(*str)[0] = '\0';
+		return 0;
+	}
+
+	while (c != EOF && c != '\n' && size < maxSize) {
+		if (size + 1 >= cap) {
+			cap = cap * 3 / 2 + 8;
+			growString(str, cap);
 		}
-		
-		for (size_t i = 0; i < size + succesfullyRead; i++){
-			newstr[i] = (*str)[i];
-		}
-		if (*str != NULL) free(*str);
-		*str = newstr;
-		
-		(*str)[size + succesfullyRead] = c;
-		
-		if (c != 0)	succesfullyRead++;
-		
-	} while (c != 0);
+		(*str)[size++] = (char)c;
+		c = getc(stdin);
+	}
+
+	(*str)[size] = '\0';
+
+	// consume the rest of the line
+	if (size >= maxSize) {
+		while (c != EOF && c != '\n') c = getc(stdin);
+	}
 	
 	#ifdef DEBUG
 	//echo input to log
-	if (succesfullyRead > 0) fprintf(debugOutput, "--> %s\n", *str);
+	if (size > 0) fprintf(debugOutput, "--> %s\n", *str);
 	#endif
-	
-	return succesfullyRead;
+
+	return size;
 }
+
 
 /* moves in the form of e.g. e1g1 or e7e8q
  * expects str to be at least 1 char long and ends with 0

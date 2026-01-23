@@ -221,13 +221,14 @@ void printCollisionStats(){
 #endif
 
 int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const int maxdepth, const int oddity){
-	return NO_HASH_ENTRY;
+	//~ return NO_HASH_ENTRY;
 	TThashentry *current = &TranspositionTable[pos % TTableSize];
 		
 	if (current->pos != pos) {
 		#ifdef DEBUG
 		if (current->pos != 0) Rcollision++;
 		#endif
+				
 		return NO_HASH_ENTRY;
 	}
 	

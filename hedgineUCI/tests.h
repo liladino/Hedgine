@@ -20,4 +20,6 @@ bool makePerfTestsAssert();
 
 void makePerfTest(bitboard* board, bool tomove);
 
+void testLasker();
+
 #endif

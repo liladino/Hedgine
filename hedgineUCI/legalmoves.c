@@ -356,12 +356,12 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 	
 		
 	if (onlyCaptures){
-		bitboard copy = board;
-		
 		/* Takes */
 		u64 possiblecaptures = wpawnTakes[i];
 	
 		while (possiblecaptures) { 
+			bitboard copy = board;
+			
 			u64 currentmove = pop_lsb(&possiblecaptures); 
 			if ((currentmove & enemy) && (piece & WPAWN_MOVE_FORWARD)){
 				/* Takes normally */ 
@@ -429,7 +429,6 @@ static void addBitPawnMoveWhite(movearray* moves, bitboard board, bool tomove, u
 				
 				board.piece[i] &= ~moveforward;
 			}
-			board = copy;
 		}
 	}
 }
@@ -473,12 +472,12 @@ static void addBitPawnMoveBlack(movearray* moves, bitboard board, bool tomove, u
 	
 		
 	if (onlyCaptures){
-		bitboard copy = board;
-		
 		/* Takes */
 		u64 possiblecaptures = bpawnTakes[i];
 	
 		while (possiblecaptures) { 
+			bitboard copy = board;
+		
 			u64 currentmove = pop_lsb(&possiblecaptures); 
 			if ((currentmove & enemy) && (piece & BPAWN_MOVE_FORWARD)){
 				/* Takes normally */
@@ -548,7 +547,6 @@ static void addBitPawnMoveBlack(movearray* moves, bitboard board, bool tomove, u
 				
 				board.piece[i] &= ~moveforward;
 			}
-			board = copy;
 		}
 	}
 }

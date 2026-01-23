@@ -18,14 +18,19 @@ int main(int argc, char* argv[]){
 	for (int i = 0; i < argc; i++) {
         printf("%s\n", argv[i]);
     }
-	if (argc >= 2 && strncmp(argv[1], "test", 4) == 0){
-		if (makePerfTestsAssert()){
-			printf("All tests passed.\n");
+	if (argc >= 2){
+		if (strncmp(argv[1], "test", 5) == 0){
+			if (makePerfTestsAssert()){
+				printf("All tests passed.\n");
+			}
+			else{
+				printf("Tests failed.\n");
+				goto endEverything;
+				return 0;
+			}
 		}
-		else{
-			printf("Tests failed.\n");
-			goto endEverything;
-			return 0;
+		if (strncmp(argv[1], "testLasker", 10) == 0){
+			testLasker();
 		}
 	}
 	if (argc >= 3 && strncmp(argv[2], "quit", 4) == 0){
@@ -43,10 +48,10 @@ int main(int argc, char* argv[]){
 	//main uci loop
 	UCIloop(&board, &tomove, &fmv, &movenum);
 	
+	endEverything:
 	
 	freeTransTable();
 	
-	endEverything:
 	#ifdef DEBUG
 	fprintf(debugOutput, "runtime: %ld\n", getTime_ms() - runStartTime);
 	fclose(debugOutput);

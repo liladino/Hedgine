@@ -50,6 +50,8 @@ test
 *.su
 *.idb
 *.pdb
+gmon.out
+report.txt
 
 # notes and test files
 *.fen
