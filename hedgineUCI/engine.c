@@ -126,7 +126,7 @@ unsigned int searchedNodes;
 
 int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	searchedNodes++;
-	if (searchedNodes % 2011 == 0){
+	if (searchedNodes % 2011 == 2){
 		communicate();
 	}	
 	if (stopSearch) {

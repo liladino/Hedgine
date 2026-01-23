@@ -218,7 +218,7 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 			*tomove = white;
 		}
 		
-		int temp = getLineDynamic(&input, 1000);
+		int temp = readLineDynamic(&input, 1000);
 		if (temp == 0){
 			if (input != NULL){
 				free(input);
@@ -370,7 +370,7 @@ void readInput() {
 		// Tell engine to stop calculating
 		stopSearch = true;
 
-		bytesRead = getLineDynamic(&input, 100);  
+		bytesRead = readLineDynamic(&input, 100);  
 		
 		// If input is available
 		if (bytesRead > 0) {

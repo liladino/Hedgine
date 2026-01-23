@@ -1,3 +1,8 @@
+Date:	Apr 07 2025:
+	profiling:
+		make profiling
+		gprof hedgine gmon.out > report.txt
+
 Date:	Mar 18 2025:
 	after some optimization, the hashing is now at an acceptable speed, 1.2 sec
 	for the tests.
