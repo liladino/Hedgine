@@ -1,3 +1,11 @@
+Date:	Jan 23 2026:
+	refactoring:
+		input getLineDynamic > readLineDynamic
+		better allocating policy, cleaner code.
+	
+	Plans:
+		abandon current bandaid fixed engine logic, big refactor.
+
 Date:	Apr 07 2025:
 	profiling:
 		make profiling
@@ -11,7 +19,7 @@ Date:	Mar 17 2025:
 	Did some testing and rethinking. I changed the MAXMOVECOUNT_INPOS macro to a
 	lower number in hopes of making the move generation slightly faster.
 	
-	16ö seems to be a better guess than the previous 218, but somehow 
+	160 seems to be a better guess than the previous 218, but somehow 
 	dynamically guessing could be an even bigger improvement. But that's another
 	story, as it would introduce VLAs, of which I don't know enough about.
 	
