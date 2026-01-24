@@ -1,5 +1,9 @@
 Date:	Jan 23 2026:
 	refactoring:
+		Communication logic revised, safer functions and memory management
+	
+Date:	Jan 23 2026:
+	refactoring:
 		input getLineDynamic > readLineDynamic
 		better allocating policy, cleaner code.
 	

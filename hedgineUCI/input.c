@@ -14,7 +14,7 @@ static void growString(char** str, size_t capacity) {
    - Returns length excluding NUL.
    - Returns 0 on empty line (just '\n') after skipping spaces/tabs.
    - Returns 0 on EOF with no characters read (and sets *str to empty string). */
-size_t readLineDynamic(char **str, size_t maxSize) {
+int readLineDynamic(char **str, size_t maxSize) {
 	if (!str || maxSize == 0) return 0;
 
 	size_t size = 0;
@@ -37,7 +37,7 @@ size_t readLineDynamic(char **str, size_t maxSize) {
 
 	if (c == EOF) {
 		(*str)[0] = '\0';
-		return 0;
+		return -1;
 	}
 
 	while (c != EOF && c != '\n' && size < maxSize) {

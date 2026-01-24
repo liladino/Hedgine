@@ -13,7 +13,7 @@
 #include <string.h>
 #include <ctype.h>
 
-size_t readLineDynamic(char** str, const size_t maxSize);
+int readLineDynamic(char** str, const size_t maxSize);
 
 move parseLongAlgebraicNotation(char str[]);
 

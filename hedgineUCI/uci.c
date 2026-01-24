@@ -20,7 +20,8 @@ static char* jumpToNextToken(char *str) {
 }
 
 // compare, if first token matches the second AND doesn't extend frther
-static inline bool compareToken(const char* str1, const char* str2, int n){
+static inline bool compareToken(const char* str1, const char* str2, size_t n){
+	if (!str1) return false;
 	return (strncmp(str1, str2, n) == 0 && (str1[n] == '\0' || isspace((unsigned char)str1[n])));
 }
 
@@ -32,6 +33,7 @@ static char* findToken(char* str, const char* token) {
 		if (compareToken(str, token, n)) {
 			return str;
 		}
+
 	}
 	return NULL;
 }
@@ -194,7 +196,6 @@ void parseGo(char *command, bitboard* board, bool *tomove) {
 	// Apply precedence
 	if (infinite) {
 		info.timeControl = false;
-		info.timeControl = false;
 	} else if (movetime >= 0) {
 		info.timeControl = true;
 		info.moveTime = movetime;
@@ -237,14 +238,8 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 	setbuf(stdin, NULL);
 	setbuf(stdout, NULL);
 	
-	// define user / GUI input buffer
+	// input buffer
 	char* input = NULL;
-	
-	// print engine info
-	//~ printf("id name Hedgine\n");
-	//~ printf("id author B.M.\n");
-	//~ printf("option name Hash type spin default %d min %d max %d\n", TT_DEF_SIZE_MB, TT_MIN_SIZE_MB, TT_MAX_SIZE_MB);
-	//~ printf("uciok\n");
 	
 	// main loop
 	while (!info.quit) {		
@@ -258,61 +253,68 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 			*tomove = white;
 		}
 		
-		int temp = readLineDynamic(&input, 1000);
-		if (temp == 0){
-			if (input != NULL){
-				free(input);
+		{
+			int x = readLineDynamic(&input, 2048);
+			if (x == 0){
+				continue;
 			}
-			input = NULL;
-			continue;
+			else if (x == -1) {
+				break;
+			}
 		}
-		else if (strncmp(input, "isready", 7) == 0){
+		
+		if ((compareToken(input, "isready", 7))) {
 			printf("readyok\n");
 		}
-		else if (strncmp(input, "position", 8) == 0) {
+		else if ((compareToken(input, "position", 8))) {
 			parsePosition(input, board, tomove, fmv, movenum);
-		
 			//~ clearTransTable();
-			//~ printBitBoard2d(*board);
 		}
-		else if (strncmp(input, "ucinewgame", 10) == 0) {
+		else if ((compareToken(input, "ucinewgame", 10))) {
 			//parsePosition("position startpos", board, tomove, fmv, movenum);
 			*tomove = white;
 			clearTransTable();
 		}
-		else if (strncmp(input, "go", 2) == 0){
+		else if ((compareToken(input, "go", 2))){
 			parseGo(input, board, tomove);
 		}
-		else if (strncmp(input, "quit", 4) == 0){
+		else if ((compareToken(input, "quit", 4))){
 			info.quit = true;
 		}
-		else if (strncmp(input, "uci", 3) == 0)	{
-			// print engine info
+		else if ((compareToken(input, "uci", 3))){
 			printf("id name Hedgine\n");
 			printf("id author B.M.\n");
 			printf("option name Hash type spin default %d min %d max %d\n", TT_DEF_SIZE_MB, TT_MIN_SIZE_MB, TT_MAX_SIZE_MB);
 			printf("uciok\n");
 		}
-		else if (!strncmp(input, "setoption name Hash value ", 26)) {
-			int mb;
-			sscanf(input,"%*s %*s %*s %*s %d", &mb);
-			
-			if(mb < TT_MIN_SIZE_MB) mb = TT_MIN_SIZE_MB;
-			if(mb > TT_MAX_SIZE_MB) mb = TT_MAX_SIZE_MB;
-			
-			freeTransTable();
-			if (allocTransTable( mb ) == NULL){
-				exit(1);
+		else if (compareToken(input, "setoption", 9)) {
+			char* temp = jumpToNextToken(input);
+			if (compareToken(temp, "name", 4)){
+				if (compareToken(temp = jumpToNextToken(temp), "Hash", 4)){
+					if (compareToken(temp = jumpToNextToken(temp), "value", 4)){
+						if ((temp = jumpToNextToken(temp))){
+							int mb = atoi(temp);
+							if(mb < TT_MIN_SIZE_MB) mb = TT_MIN_SIZE_MB;
+							if(mb > TT_MAX_SIZE_MB) mb = TT_MAX_SIZE_MB;
+							
+							freeTransTable();
+							if (allocTransTable( mb ) == NULL){
+								exit(1);
+							}
+							
+							printf("info set hash table size to %dMB\n", mb);
+						}
+					}
+				}
 			}
-			
-			printf("info set hash table size to %dMB\n", mb);
 		}
 		
-		if (input != NULL){
-			free(input);
-		}
-		input = NULL;
+		//~ if (input != NULL){
+			//~ free(input);
+		//~ }
+		//~ input = NULL;
 	}
+	free(input);
 }
 
 // init all variables
@@ -403,14 +405,14 @@ int inputWaiting(){
 void readInput() {
 	// GUI/user input
 	char* input = NULL;  
-	size_t bytesRead;
+	int bytesRead;
 
 	// "listen" to STDIN
 	if (inputWaiting()) {		
 		// Tell engine to stop calculating
 		stopSearch = true;
 
-		bytesRead = readLineDynamic(&input, 100);  
+		bytesRead = readLineDynamic(&input, 1024);  
 		
 		// If input is available
 		if (bytesRead > 0) {
