@@ -18,27 +18,19 @@
 #define DEFAULT "\x1b[37m" "\x1b[m"
 #define CLEAR "\033[2J\033[H"
 
-/* 218 is a REALLY rough estimate, an upper limit calculated with an 
- * impossible position.
+/* By dumb luck, I arrived at this upper bound, tho it turns out, it is actually 
+ * the lowest upper bound, as discussed here: 
+ * https://lichess.org/@/Tobs40/blog/why-a-reachable-position-can-have-at-most-218-playable-moves/a5xdxeqs
+ * (My methodes were a lot less elegant, and just assumed an illegal position)
  * 
- * A statistical analysis by others shows, that on average, a game has at most 
- * 40 legal moves in one move.
+ * Tho statistical analysis by others shows, that on average a game has at most 
+ * 40 legal moves in a single turn, 
  * https://chess.stackexchange.com/questions/23135/what-is-the-average-number-of-legal-moves-per-turn
- * 
- * I should make some statistical tests about the maximal number of legal moves 
- * in each position, to make a better estimate, as i suspect that it could 
- * improve performance. by a significant amount.
- * 
- * ********
- * EDIT
- * 
- * After some tests, **145** should be enough for most positions reachable from 
- * with standard startpieces. Depsite this, i will leave this at 160. because I
- * noticed no significant slowdonn in the testcases with the higher, safer 
- * number. 
- * 
+ * it isn't much of an improvement in speed if we lower this number - 
+ * and i didn't even took into account the reallocation cost if we would actually 
+ * have a position that's over the smaller max-count
  * */
-#define MAXMOVECOUNT_INPOS 160
+#define MAXMOVECOUNT_INPOS 218
 
 /* A pseudorandom value, that indicates, that as a return value signals, that 
  * there is no hash match.  
