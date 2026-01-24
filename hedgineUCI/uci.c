@@ -55,7 +55,7 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 		setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", board, tomove, fmv, movenum);
 	}
 	else { 
-		position = findToken(position, "fen"); 
+		position = findToken(command, "fen"); 
 		//~ position = strstr(command, "fen");
 		
 		// if no "fen" command is available within command string
