@@ -1,4 +1,4 @@
-#include "input.h"
+#include "headers/input.h"
 
 static void growString(char** str, size_t capacity) {
 	void *newstr = realloc(*str, capacity);

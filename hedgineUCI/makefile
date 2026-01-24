@@ -1,5 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Wextra -pedantic -MMD
+INC_DIR = headers
 
 ifdef DEBUG
 CFLAGS += -g -DDEBUG

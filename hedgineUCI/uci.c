@@ -1,4 +1,4 @@
-#include "uci.h"
+#include "headers/uci.h"
 
 gameInfo info;
 

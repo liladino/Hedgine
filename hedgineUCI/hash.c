@@ -1,4 +1,4 @@
-#include "hash.h"
+#include "headers/hash.h"
 
 int TTableSizeMB = 0;
 int TTableSize = 0;

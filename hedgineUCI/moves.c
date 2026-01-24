@@ -1,4 +1,4 @@
-#include "moves.h"
+#include "headers/moves.h"
 
 /*atalakit egy mezot mezoszamokka
  */

@@ -1,4 +1,4 @@
-#include "legalmoves.h"
+#include "headers/legalmoves.h"
 
 #define WKINGSIDE 1
 #define WQUEENSIDE 2

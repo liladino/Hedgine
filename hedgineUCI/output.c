@@ -1,4 +1,4 @@
-#include "output.h"
+#include "headers/output.h"
 
 void printmove(FILE* ostream, move m) {
 	fprintf(ostream, "%c%d%c%d%c ", m.from.file+'a'-2, m.from.rank-1, m.to.file+'a'-2, m.to.rank-1, (m.promotion >= 'a' && m.promotion <= 'z' ? m.promotion : ' ') );

@@ -29,7 +29,7 @@
  *3. This notice may not be removed or altered from any source distribution.
  */
 
-#include "slidingmagic.h"
+#include "headers/slidingmagic.h"
 
 const unsigned int magicmoves_r_shift[64]=
 {

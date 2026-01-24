@@ -14,7 +14,7 @@
 #define TEMPERING_MASK_C	0xefc60000
 
 #include <stdint.h>
-#include "mtwister.h"
+#include "headers/mtwister.h"
 
 inline static void m_seedRand(MTRand* rand, uint32_t seed) {
 	/* set initial seeds to mt[STATE_VECTOR_LENGTH] using the generator
