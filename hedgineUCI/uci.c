@@ -3,33 +3,37 @@
 gameInfo info;
 
 static char *skip_ws(char *str) {
-    while (*str && isspace((unsigned char)*str)) str++;
-    return *str ? str : NULL;
+	while (*str && isspace((unsigned char)*str)) str++;
+	return *str ? str : NULL;
 }
 
 static char *skip_token(char *str) {
-    while (*str && !isspace((unsigned char)*str)) str++;
-    return str;
+	while (*str && !isspace((unsigned char)*str)) str++;
+	return str;
 }
 
 /* Returns start of next token after the current one (or NULL). */
 static char* jumpToNextToken(char *str) {
-    if (!str) return NULL;
-    str = skip_token(str);
-    return skip_ws(str);
+	if (!str) return NULL;
+	str = skip_token(str);
+	return skip_ws(str);
+}
+
+// compare, if first token matches the second AND doesn't extend frther
+static inline bool compareToken(const char* str1, const char* str2, int n){
+	return (strncmp(str1, str2, n) == 0 && (str1[n] == '\0' || isspace((unsigned char)str1[n])));
 }
 
 static char* findToken(char* str, const char* token) {
-    if (!str || !token) return NULL;
-    size_t n = strlen(token);
+	if (!str || !token) return NULL;
+	size_t n = strlen(token);
 
-    for (str = skip_ws(str); str; str = jumpToNextToken(str)) {
-        if (strncmp(str, token, n) == 0 &&
-            (str[n] == '\0' || isspace((unsigned char)str[n]))) {
-            return str;
-        }
-    }
-    return NULL;
+	for (str = skip_ws(str); str; str = jumpToNextToken(str)) {
+		if (compareToken(str, token, n)) {
+			return str;
+		}
+	}
+	return NULL;
 }
 
 /* 
@@ -40,7 +44,7 @@ static char* findToken(char* str, const char* token) {
  
 // parse UCI "position" command
 //e.g position startpos moves e2e4 e7e5
-//    position fen ... moves ...
+//	position fen ... moves ...
 void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* movenum){
 	char* position = jumpToNextToken(command); // after "position "
 	if (!position) return; 
@@ -72,7 +76,7 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 	if (currentmove == NULL){
 		goto print;
 	}	
-    currentmove = jumpToNextToken(currentmove); //skip the "moves" token
+	currentmove = jumpToNextToken(currentmove); //skip the "moves" token
 	
 	while(currentmove){
 		// parse next move
@@ -139,73 +143,81 @@ void resetTimeControl(){
 }
 
 // parse UCI command "go"
-void parseGo(char *command, bitboard* board, bool *tomove){
-	// reset time control
+void parseGo(char *command, bitboard* board, bool *tomove) {
 	resetTimeControl();
-	
-	int increment = 0;
-	
-	// init argument
-	char *argument = NULL;
 
-	// infinite search
-	if ((argument = findToken(command, "infinite"))) {
+	bool infinite = false;
+	int wtime = -1, btime = -1;
+	int winc  = 0,  binc  = 0;
+	int movetime = -1;
+	int depth = 40;
+
+	// Start at first token after "go"
+	char *arg = jumpToNextToken(command);
+	for (; arg; arg = jumpToNextToken(arg)) {
+		char* v = NULL;
+		if (compareToken(arg, "infinite", 8)) {
+			infinite = true;
+		}
+		else if (compareToken(arg, "depth", 5)) {
+			v = jumpToNextToken(arg);
+			if (v) depth = atoi(v);
+			if (depth < 1 || depth > 40) depth = 2;
+		}
+		else if (compareToken(arg, "movetime", 8)) {
+			v = jumpToNextToken(arg);
+			if (v) movetime = atoi(v);
+		}
+		else if (compareToken(arg, "wtime", 5)) {
+			v = jumpToNextToken(arg);
+			if (v) wtime = atoi(v);
+		}
+		else if (compareToken(arg, "btime", 5)){
+			v = jumpToNextToken(arg);
+			if (v) btime = atoi(v);
+		}
+		else if (compareToken(arg, "winc", 4)) {
+			v = jumpToNextToken(arg);
+			if (v) winc = atoi(v);
+		}
+		else if (compareToken(arg, "binc", 4)) {
+			v = jumpToNextToken(arg);
+			if (v) binc = atoi(v);
+		}
+		
+		if (v){
+			arg = v;
+		}
+		// ignore unsupported tokens for now: movestogo, nodes, mate, etc.
+	}
+
+	// Apply precedence
+	if (infinite) {
 		info.timeControl = false;
-	}
-
-	// match UCI increments: doesn't change program behacvior at the moment
-	if ((argument = findToken(command,"binc")) && *tomove == black) {
-		if ((argument = jumpToNextToken(argument))) {
-			increment = atoi(argument);
+		info.timeControl = false;
+	} else if (movetime >= 0) {
+		info.timeControl = true;
+		info.moveTime = movetime;
+	} else {
+		// time controls
+		int inc = (*tomove == white) ? winc : binc;
+		int rem = (*tomove == white) ? wtime : btime;
+		if (rem >= 0) {
 			info.timeControl = true;
-		}
-	}
-	if ((argument = findToken(command,"winc")) && *tomove == white) {
-		if ((argument = jumpToNextToken(argument))) {
-			increment = atoi(argument);
-			info.timeControl = true;
-		}
-	}	
-	
-	if (((argument = findToken(command,"wtime")) && *tomove == white) ||
-		((argument = findToken(command,"btime")) && *tomove == black) ) {	
-			
-		if ((argument = jumpToNextToken(argument))) {
-			info.timeRemaining = atoi(argument);
-			setMoveTime(increment);
-			info.timeControl = true;
-		}
-	}	
-
-	//engine don't care at the moment
-	//~ if ((argument = findToken(command,"movestogo"))){
-		//~ info.timeControl = true;
-	//~ }
-
-	if ((argument = findToken(command, "movetime"))) { 
-		if ((argument = jumpToNextToken(argument))) {
-			info.moveTime = atoi(argument);
-			info.timeControl = true;
+			info.timeRemaining = rem;
+			setMoveTime(inc);
 		}
 	}
 
-	int cpulvl = 40;
-	if ((argument = findToken(command, "depth"))){
-		// parse search depth
-		if ((argument = jumpToNextToken(argument))) {
-			cpulvl = atoi(argument);
-		}
-	}
-	
 	// init start time
 	info.startTime = getTime_ms();
 
 	#ifdef DEBUG
-	fprintf(debugOutput, "time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, cpulvl);
+	fprintf(debugOutput, "time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, depth);
 	printBitBoard2d(debugOutput, *board);
 	#endif
 	
-	move m = CPU(cpulvl, *board, *tomove);
+	move m = CPU(depth, *board, *tomove);
 	printf("bestmove ");
 	printmove(stdout, m);
 	printf("\n");
@@ -218,8 +230,6 @@ void parseGo(char *command, bitboard* board, bool *tomove){
 	fflush(debugOutput);
 	#endif
 }
-
-
 
 // main UCI loop
 void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
