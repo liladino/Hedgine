@@ -2,6 +2,36 @@
 
 gameInfo info;
 
+static char *skip_ws(char *str) {
+    while (*str && isspace((unsigned char)*str)) str++;
+    return *str ? str : NULL;
+}
+
+static char *skip_token(char *str) {
+    while (*str && !isspace((unsigned char)*str)) str++;
+    return str;
+}
+
+/* Returns start of next token after the current one (or NULL). */
+static char* jumpToNextToken(char *str) {
+    if (!str) return NULL;
+    str = skip_token(str);
+    return skip_ws(str);
+}
+
+static char* findToken(char* str, const char* token) {
+    if (!str || !token) return NULL;
+    size_t n = strlen(token);
+
+    for (str = skip_ws(str); str; str = jumpToNextToken(str)) {
+        if (strncmp(str, token, n) == 0 &&
+            (str[n] == '\0' || isspace((unsigned char)str[n]))) {
+            return str;
+        }
+    }
+    return NULL;
+}
+
 /* 
  * UCI communication
  * forked from BBC
@@ -9,103 +39,97 @@ gameInfo info;
  */
  
 // parse UCI "position" command
-void parsePosition(char *command, bitboard* board, bool *tomove, int* fmv, int* movenum){
-	// init pointer to the current character in the command string
-	char *current_char = command+9;//shifted 9 from the position token 
+//e.g position startpos moves e2e4 e7e5
+//    position fen ... moves ...
+void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* movenum){
+	char* position = jumpToNextToken(command); // after "position "
+	if (!position) return; 
 	
-	
-	if (strncmp(command+9, "startpos", 8) == 0){
+	if (strncmp(position, "startpos", 8) == 0){
 		setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", board, tomove, fmv, movenum);
 	}
 	else { 
-		current_char = strstr(command, "fen");
+		position = findToken(position, "fen"); 
+		//~ position = strstr(command, "fen");
 		
 		// if no "fen" command is available within command string
-		if (current_char == NULL){
+		if (position == NULL){
 			// init chess board with start position, nothing was specified
 			setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", board, tomove, fmv, movenum);
 		}
 		else{
 			// shift to next token
-			current_char += 4;
+			position = jumpToNextToken(position);
 			
 			// init chess board with position from FEN string
-			readFEN(current_char, board, tomove, fmv, movenum);
-			//~ #ifdef DEBUG
-			//~ printBitBoard2d(*board);
-			//~ #endif
+			readFEN(position, board, tomove, fmv, movenum);
 		}
 	}
+	//store the start position in the repetition table too
+	storeRepetiton(board->hashValue);
 	
-	current_char = strstr(command, "moves");
+	char* currentmove = findToken(command, "moves"); //~ strstr(command, "moves");
+	if (currentmove == NULL){
+		goto print;
+	}	
+    currentmove = jumpToNextToken(currentmove); //skip the "moves" token
 	
-	
-	
-	if (current_char != NULL){
-		//store the start position in the repetition table too
+	while(currentmove){
+		// parse next move
+		move m = parseLongAlgebraicNotation(currentmove);
+		
+		// if no more moves
+		if (m.from.file == -1) break;
+		
+		bitboard last = *board; 
+		int x = isMoveLegal(board, *tomove, m);
+		if (x == 1){
+			//the move was illegal
+			info.quit = true;
+			fprintf(stderr, "Ilegal move found!\n");
+			#ifdef DEBUG
+			fprintf(debugOutput, "Ilegal move found!\n");
+			#endif
+			break;
+		}
+		else if (x == 2){
+			//no legal moves left
+			info.quit = true;
+			fprintf(stderr, "No legal moves in position!\n" );
+			#ifdef DEBUG
+			fprintf(debugOutput, "No legal moves in position!\n");
+			#endif
+			break;
+		}
+		
+		/* store in the repetition table 
+		 * 
+		 * if the move was a capture, castling, a pawn move, or the en 
+		 * passant target square changed(/got deleted), the position can't
+		 * be repeated anymore => the write index can be 0 again */
+		if (
+			last.piece[wpawn] != board->piece[wpawn] || 
+			last.piece[bpawn] != board->piece[bpawn] || 
+			last.castlerights != board->castlerights || 
+			last.enpassanttarget != board->enpassanttarget || 
+			lastMoveWasCapture(&last, m, tomove)
+				){
+			RTwriteIndex = 0;
+		}
 		storeRepetiton(board->hashValue);
 		
-		// shift pointer to the right where next token begins
-		current_char += 5;		
-		while (*current_char != 0 && isspace(*current_char)) current_char++;
+		if (*tomove == black) (*movenum)++;
+		*tomove = !(*tomove);
 		
-		while(*current_char != 0){
-			// parse next move
-			move m = parseLongAlgebraicNotation(current_char);
-			
-			// if no more moves
-			if (m.from.file == -1) break;
-			
-			bitboard last = *board; 
-			int x = isMoveLegal(board, *tomove, m);
-			if (x == 1){
-				//the move was illegal
-				info.quit = true;
-				fprintf(stderr, "Ilegal move found!\n");
-				#ifdef DEBUG
-				fprintf(debugOutput, "Ilegal move found!\n");
-				#endif
-				break;
-			}
-			else if (x == 2){
-				//no legal moves left
-				info.quit = true;
-				fprintf(stderr, "No legal moves in position!\n" );
-				#ifdef DEBUG
-				fprintf(debugOutput, "No legal moves in position!\n");
-				#endif
-				break;
-			}
-			
-			/* store in the repetition table 
-			 * 
-			 * if the move was a capture, castling, a pawn move, or the en 
-			 * passant target square changed(/got deleted), the position can't
-			 * be repeated anymore => the write index can be 0 again */
-			if (
-				last.piece[wpawn] != board->piece[wpawn] || 
-				last.piece[bpawn] != board->piece[bpawn] || 
-				last.castlerights != board->castlerights || 
-				last.enpassanttarget != board->enpassanttarget || 
-				lastMoveWasCapture(&last, m, tomove)
-					){
-				RTwriteIndex = 0;
-			}
-			storeRepetiton(board->hashValue);
-			
-			
-			if (*tomove == black) (*movenum)++;
-			*tomove = !(*tomove);
-			
-			while (*current_char && isalnum(*current_char)) current_char++;
-			while (*current_char && isspace(*current_char)) current_char++;
-		}		
+		currentmove = jumpToNextToken(currentmove);
 	}
 	
+print:
 	#ifdef DEBUG
 	fprintf(debugOutput, "tomove: %d\tfifty move count: %d\tmove num: %d\n", *tomove, *fmv, *movenum);
 	//~ printBitBoard2d(*board);
 	#endif
+	return; //to surpress warning when not in debug 
 }
 
 // reset time control variables
@@ -125,48 +149,54 @@ void parseGo(char *command, bitboard* board, bool *tomove){
 	char *argument = NULL;
 
 	// infinite search
-	if ((argument = strstr(command,"infinite"))) {
+	if ((argument = findToken(command, "infinite"))) {
 		info.timeControl = false;
 	}
 
 	// match UCI increments: doesn't change program behacvior at the moment
-	if ((argument = strstr(command,"binc")) && *tomove == black) {
-		increment = atoi(argument + 5);
-		info.timeControl = true;
+	if ((argument = findToken(command,"binc")) && *tomove == black) {
+		if ((argument = jumpToNextToken(argument))) {
+			increment = atoi(argument);
+			info.timeControl = true;
+		}
 	}
-	if ((argument = strstr(command,"winc")) && *tomove == white) {
-		increment = atoi(argument + 5);
-		info.timeControl = true;
-	}
+	if ((argument = findToken(command,"winc")) && *tomove == white) {
+		if ((argument = jumpToNextToken(argument))) {
+			increment = atoi(argument);
+			info.timeControl = true;
+		}
+	}	
 	
-	
-	if ((argument = strstr(command,"wtime")) && *tomove == white) {
-		info.timeRemaining = atoi(argument + 6);
-		setMoveTime(increment);
-		info.timeControl = true;
-	}
+	if (((argument = findToken(command,"wtime")) && *tomove == white) ||
+		((argument = findToken(command,"btime")) && *tomove == black) ) {	
+			
+		if ((argument = jumpToNextToken(argument))) {
+			info.timeRemaining = atoi(argument);
+			setMoveTime(increment);
+			info.timeControl = true;
+		}
+	}	
 
-	if ((argument = strstr(command,"btime")) && *tomove == black) {
-		info.timeRemaining = atoi(argument + 6);
-		setMoveTime(increment);
-		info.timeControl = true;
-	}
+	//engine don't care at the moment
+	//~ if ((argument = findToken(command,"movestogo"))){
+		//~ info.timeControl = true;
+	//~ }
 
-
-	if ((argument = strstr(command,"movestogo"))){
-		info.timeControl = true;
-	}
-
-	if ((argument = strstr(command,"movetime"))) { 
-		info.timeControl = true;
-		info.moveTime = atoi(argument + 9);
+	if ((argument = findToken(command, "movetime"))) { 
+		if ((argument = jumpToNextToken(argument))) {
+			info.moveTime = atoi(argument);
+			info.timeControl = true;
+		}
 	}
 
 	int cpulvl = 40;
-	if ((argument = strstr(command,"depth")))
+	if ((argument = findToken(command, "depth"))){
 		// parse search depth
-		cpulvl = atoi(argument + 6);
-
+		if ((argument = jumpToNextToken(argument))) {
+			cpulvl = atoi(argument);
+		}
+	}
+	
 	// init start time
 	info.startTime = getTime_ms();
 

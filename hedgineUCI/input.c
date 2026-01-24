@@ -106,7 +106,7 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int *fmv, int *moven
 	int castling[4];
 	squarenums enpass = {-1, -1};
 	
-	//startallas: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
+	//start pos: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
 	for (int i = 0; i < 12; i++){
 		for (int j = 0; j < 12; j++){
 			if (i < 2 || i > 9 || j < 2 || j > 9)
@@ -168,27 +168,26 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int *fmv, int *moven
 	
 	
 	//i++;
-	char* metadata = (char*)malloc( (strlen(FEN) + 1) * sizeof(char));
-	for (unsigned int x = 0; x < strlen(FEN); x++){
-		metadata[x] = 0;
-	}
+	char* metadata = calloc( (strlen(FEN) + 1), sizeof(char));
 	
-	int j = 0;
-	int spacecount = 0;
-	while(FEN[i] != 0){
-		metadata[j] = FEN[i];
-		if (metadata[j] != ' '){
-			if (spacecount == 5){ // a leghosszabb str benne KQkq, ami 4 char, ha ennel hosszabb, az sscanf hibas
-				free(metadata);
-				return 1;
+	{
+		int j = 0;
+		int tokenlength = 0;
+		while(FEN[i] != 0){
+			metadata[j] = FEN[i];
+			if (metadata[j] != ' '){
+				if (tokenlength >= 5){ // longest str is KQkq, 4 char. 
+					free(metadata);
+					return 1;
+				}
+				tokenlength++;
 			}
-			spacecount++;
+			else{
+				tokenlength = 0;
+			}
+			i++; 
+			j++;
 		}
-		else{
-			spacecount = 0;
-		}
-		i++; 
-		j++;
 	}
 	
 	char tomove_char;
@@ -274,7 +273,7 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int *fmv, int *moven
 
 void readFEN(char str[], bitboard* bboard, bool *tomove, int* fmv, int* movenum){
 	//rnbqkbnr/ppp2ppp/4p3/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3
-	char pos[64+8] = {0}; //overly cautius upper bound (64 squares + 7 slahshes + 0 at the end)
+	char pos[64+7+1] = {0}; //overly cautius upper bound (64 squares + 7 slahshes + 0 at the end)
 	char tomovestr[2] = {0};
 	char castlerights[5] = {0};
 	char enpassanttarget[3] = {0};
