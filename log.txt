@@ -1,4 +1,9 @@
-Date:	Jan 23 2026:
+Date:	Jan 26 2026:
+	Move generation optimized: ~0.65 -> ~0.53. Removed unnecesary copies and 
+	loops in the pieces, and avoided rescanning of the board when searching for 
+	quiet moves.
+	
+Date:	Jan 24 2026:
 	refactoring:
 		Communication logic revised, safer functions and memory management
 	
