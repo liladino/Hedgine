@@ -148,16 +148,32 @@ typedef struct bitboard{
 	/*
 	* 0000 0101 => 
 	* least signif 4 bit:
-	*               0               1                0               1 (LSB) 
-	* black queenside, balck kingside, white queenside, white kingside
+	*               
 	*/
 	
 	//int eval;
 } bitboard;
 
-typedef struct bitmove {
-	
-} bitmove;
+typedef struct bitMove{
+	uint8_t from;      // 0..63
+	uint8_t to;        // 0..63
+	uint8_t piece;     // 0..11
+	uint8_t promotion; // 0..11, or -1
+    uint8_t flags;      // bitmask
+} bitMove;
+
+typedef struct bitUndo {
+	uint64_t prevHash;
+	int8_t   prevEpSquareIndex;   // 0..63 or -1 = none
+	int8_t   capturedPiece;       // -1 none, else 0..11
+	uint8_t  prevCastleRights;    // 4 bits used
+	/* Last  4 bits: 0100
+	 *  0                1               0                0 (LSB) 
+	 *  black queenside, balck kingside, white queenside, white kingside
+	 * */
+	 
+	//~ uint8_t  prevHalfmove;        // optional but recommended
+} bitUndo;
 
 typedef struct movearray{
 	bitboard boards[MAXMOVECOUNT_INPOS];
@@ -166,7 +182,7 @@ typedef struct movearray{
 
 typedef enum evalflag{
 	exactFlag = 1, alphaFlag = 2, betaFlag = 3, lastBest = 4
-} evalflag;
+}evalflag;
 
 typedef struct TThashentry{
 	u64 pos; //key
@@ -175,7 +191,7 @@ typedef struct TThashentry{
 	evalflag flag;
 	int depth;
 	//move m;
-} TThashentry;
+}TThashentry;
 
 typedef struct gameInfo{
 	long int startTime;
@@ -188,7 +204,7 @@ typedef struct gameInfo{
 	//~ bool OwnBook;
 	//~ int UCI_Elo;
 	//~ bool UCI_LimitStrength;
-} gameInfo;
+}gameInfo;
 
 extern const move nullmove;
 
