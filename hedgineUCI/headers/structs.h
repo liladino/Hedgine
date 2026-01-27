@@ -1,6 +1,8 @@
 #ifndef STRUCTS_H
 #define STRUCTS_H
 
+#include <stdint.h>
+
 /* These were only relevant when the program had its own CLI. */
 #define BG_BLACK "\x1b[40m"
 #define BG_RED "\x1b[41m"
@@ -79,10 +81,10 @@ typedef struct move{
 } movelist;*/
 
 typedef enum resultconst{
-	whitewon =  100000,
-	blackwon = -100000,
-	draw = 0,
-	ongoing = -1
+	WHITEWON =  100000,
+	BLACKWON = -100000,
+	DRAW = 0,
+	ONGOING = -1
 	//~ stalemate = 200000
 }resultconst;
 
@@ -148,19 +150,35 @@ typedef struct bitboard{
 	/*
 	* 0000 0101 => 
 	* least signif 4 bit:
-	*               
+	*   0                1               0                0 (LSB) 
+	*   black queenside, balck kingside, white queenside, white kingside
 	*/
 	
 	//int eval;
 } bitboard;
 
+//~ typedef enum castleRightsFlag {
+	//~ CASTLE_WK = 1,
+	//~ CASTLE_WQ = 2,
+	//~ CASTLE_BK = 4,
+	//~ CASTLE_BQ = 8
+//~ } castleRightsFlag;
+
 typedef struct bitMove{
 	uint8_t from;      // 0..63
 	uint8_t to;        // 0..63
 	uint8_t piece;     // 0..11
-	uint8_t promotion; // 0..11, or -1
-    uint8_t flags;      // bitmask
+	int8_t promotion;  // 0..11, or -1
+    uint8_t flags;     // bitmask
 } bitMove;
+
+typedef enum bitMoveFlags{
+	CAPTURE_FLAG = 1,
+	CASTLE_FLAG = 2,
+	DOUBLE_PAWNMOVE_FLAG = 4,
+	PROMOTION_FLAG = 8,
+	EN_PASSANT_FLAG = 16
+} bitMoveFlags;
 
 typedef struct bitUndo {
 	uint64_t prevHash;
@@ -172,16 +190,19 @@ typedef struct bitUndo {
 	 *  black queenside, balck kingside, white queenside, white kingside
 	 * */
 	 
-	//~ uint8_t  prevHalfmove;        // optional but recommended
+	//~ uint8_t  prevHalfmove;
 } bitUndo;
 
 typedef struct movearray{
-	bitboard boards[MAXMOVECOUNT_INPOS];
+	bitMove array[MAXMOVECOUNT_INPOS];
 	int size;
 } movearray;
 
 typedef enum evalflag{
-	exactFlag = 1, alphaFlag = 2, betaFlag = 3, lastBest = 4
+	EXACT_EVAL_FLAG = 1, 
+	ALPHA_EVAL_FLAG = 2, 
+	BETA_EVAL_FLAG = 3, 
+	LAST_BEST_EVAL_FLAG = 4
 }evalflag;
 
 typedef struct TThashentry{

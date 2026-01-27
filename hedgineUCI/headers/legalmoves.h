@@ -29,8 +29,8 @@ static __inline__ __attribute__((always_inline)) u64 enemypieces(const bitboard*
 
 bool bitInCheck(const bitboard* const board, bool tomove);
 
-void bitGenerateLegalmoves(movearray* moves, bitboard board, bool tomove, bool onlytakes);
+void bitGenerateLegalmoves(movearray* moves, const bitboard* const board, bool tomove, bool onlytakes);
 
-resultconst gameend(bitboard board, bool tomove);
+resultconst gameend(const bitboard* const board, bool tomove);
 
 #endif
