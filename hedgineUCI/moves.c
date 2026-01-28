@@ -9,6 +9,13 @@ squarenums makesquarenum(square a){
 	return b;
 }
 
+squarenums makesquarenum2(int i){
+	squarenums b;
+	b.file = i % 8 + 2;
+	b.rank = i / 8 + 2;
+	return b;
+}
+
 /* initializes a move from the starting and ending square numbers and from the promotion charcter
  * */
 move initializemove(squarenums from, squarenums to, int promotion){
@@ -29,17 +36,35 @@ void setmove(move *m, square from, square to, int promotion){
 	m->promotion = promotion;
 }
 
-/* BITS
- * 
- * The result of a bitboard method is a bitboard too, so we can just take that instead of moves, and in the end convert it to a move
- * This way, printing out the moves doesn't make much sense - we don't save any moves, but boards;
- * however out of convinience ill call them moves, because they are technically moves 
- * */
+/*******************************************************************************
+ * BITS
+ ******************************************************************************/
  
-int isMoveInMoveArray(const bitboard* const board, const movearray* legalmoves, const bool tomove, const move m){
+int isMoveInMoveArray(const movearray* legalmoves, const move m){
 	for (int i = 0; i < legalmoves->size; i++){
-		move curr = boardConvertTomove(board, &legalmoves->boards[i], tomove);
-		if (curr.from.file == m.from.file && curr.from.rank == m.from.rank && curr.to.file == m.to.file && curr.to.rank == m.to.rank && m.promotion == curr.promotion){
+		int temp;
+		switch (legalmoves->array[i].promotion) {
+			case wqueen:
+				temp = 'Q'; break;
+			case wrook:
+				temp = 'R'; break;
+			case wknight:
+				temp = 'N'; break;
+			case wbishop:
+				temp = 'B'; break;
+			case bqueen:
+				temp = 'q'; break;
+			case brook:
+				temp = 'r'; break;
+			case bknight:
+				temp = 'n'; break;
+			case bbishop:
+				temp = 'b'; break;
+			default: 
+				temp = 0; break;
+		}
+		move curr = initializemove(makesquarenum2(legalmoves->array[i].from), makesquarenum2(legalmoves->array[i].to), temp);
+		if (curr.from.file == m.from.file && curr.from.rank == m.from.rank && curr.to.file == m.to.file && curr.to.rank == m.to.rank && curr.promotion == m.promotion){
 			return i;
 		}
 	}
@@ -48,19 +73,23 @@ int isMoveInMoveArray(const bitboard* const board, const movearray* legalmoves, 
 
 int isMoveLegal(bitboard* board, const bool tomove, const move m){
 	movearray legalmoves;
-	bitGenerateLegalmoves(&legalmoves, *board, tomove, false);
-	int x = isMoveInMoveArray(board, &legalmoves, tomove, m);
+	bitGenerateLegalmoves(&legalmoves, board, tomove, false);
+	int x = isMoveInMoveArray(&legalmoves, m);
 	
 	if (x == -1){
 		return 1;
 	}
 	
-	*board = legalmoves.boards[x];
+	/* TODO
+	 * return 2, if there are no moves after the move was made
+	 */
+	 
+	//~ *board = legalmoves.array[x];
 	
-	legalmoves.size = 0;
-	bitGenerateLegalmoves(&legalmoves, *board, !tomove, false);
+	//~ legalmoves.size = 0;
+	//~ bitGenerateLegalmoves(&legalmoves, *board, !tomove, false);
 	
-	if (legalmoves.size == 0) return 2;
+	//~ if (legalmoves.size == 0) return 2;
 	
 	return 0;
 }
@@ -231,5 +260,148 @@ bool lastMoveWasCapture(const bitboard* const lastboard, const move m, const boo
 	return false;
 }
 
+int8_t mailbox[64] = 
+	{-1, -1, -1, -1, -1, -1, -1, -1,
+	 -1, -1, -1, -1, -1, -1, -1, -1,
+	 -1, -1, -1, -1, -1, -1, -1, -1,
+	 -1, -1, -1, -1, -1, -1, -1, -1,
+	 -1, -1, -1, -1, -1, -1, -1, -1,
+	 -1, -1, -1, -1, -1, -1, -1, -1,
+	 -1, -1, -1, -1, -1, -1, -1, -1,
+	 -1, -1, -1, -1, -1, -1, -1, -1};
+	 
+	
+static inline void setcastlingrights(bitboard* board, bitMove m){		
+	if (board->castlerights == 0){
+		return;
+	}
+	/* If something moved to the corner or something moved from the corner, 
+	 * castling is no longer possible. */
+	if (m.to == 0 || m.from == 0){
+		hashCastleO(board, WQUEENSIDE);
+		board->castlerights &= ~(WQUEENSIDE);
+	}
+	else if (m.to == 7 || m.from == 7){
+		hashCastleO(board, WKINGSIDE);
+		board->castlerights &= ~(WKINGSIDE);
+	}
+	if (m.to == 56 || m.from == 56){
+		hashCastleO(board, BQUEENSIDE);
+		board->castlerights &= ~(BQUEENSIDE);
+	}
+	if (m.to == 63 || m.from){
+		hashCastleO(board, BKINGSIDE);
+		board->castlerights &= ~(BKINGSIDE);
+	}
+}
 
-
+bitUndo makeMove(bitboard* board, bitMove m){
+	#define DELETEPIECE(p, sq) board->piece[p] &= ~(1LLU << sq)
+	#define MOVEPIECE(p, sq1, sq2) board->piece[p] ^= ((1LLU << sq1) | (1LLU << sq2))
+	
+	bitUndo undo;
+	undo = (bitUndo){board->hashValue, board->enpassanttarget, mailbox[m.to], board->castlerights};
+	
+	//TODO: add hash
+	
+	if (m.flags == 0){
+		MOVEPIECE(mailbox[m.from], m.from, m.to);
+		board->enpassanttarget = 0;
+		
+		mailbox[m.to] = mailbox[m.from];
+		mailbox[m.from] = -1;
+		
+		setcastlingrights(board, m);
+	}
+	else if (m.flags == CASTLE_FLAG) {
+		//		
+		MOVEPIECE(mailbox[m.from], m.from, m.to);
+		board->enpassanttarget = 0;
+		
+		mailbox[m.to] = mailbox[m.from];
+		mailbox[m.from] = -1;
+		
+		if (m.from == 4){
+			//white
+			board->castlerights &= ~(WKINGSIDE | WQUEENSIDE);
+			if (m.to == 6){
+				mailbox[5] = wrook;
+				mailbox[7] = -1;
+				MOVEPIECE(wrook, 5, 7);
+			}
+			else {
+				mailbox[3] = wrook;
+				mailbox[0] = -1;
+				MOVEPIECE(wrook, 3, 0);
+			}
+		}
+		else {
+			board->castlerights &= ~(BKINGSIDE | BQUEENSIDE);
+			if (m.to == 62){
+				mailbox[61] = brook;
+				mailbox[63] = -1;
+				MOVEPIECE(brook, 61, 63);
+			}
+			else {
+				mailbox[59] = brook;
+				mailbox[56] = -1;
+				MOVEPIECE(brook, 59, 56);
+			}
+		}
+	}
+	else if (m.flags == PROMOTION_FLAG) {
+		// no capture, just promotion
+		DELETEPIECE(mailbox[m.from], m.from);
+		board->piece[m.promotion] |= (1LL << m.to);
+		board->enpassanttarget = 0;
+		
+		mailbox[m.to] = m.promotion;
+		
+		setcastlingrights(board, m);
+	}
+	else if (m.flags == DOUBLE_PAWNMOVE_FLAG) {
+		// no capture, just promotion
+		MOVEPIECE(mailbox[m.from], m.from, m.to);
+		board->enpassanttarget = (1LL << (m.to > 31 ? m.to+8 : m.to-8));
+		
+		mailbox[m.to] = m.promotion;
+		
+		setcastlingrights(board, m);
+	}
+	else if ((m.flags & CAPTURE_FLAG)){
+		//
+		board->enpassanttarget = 0;;
+		
+		if ((m.flags & EN_PASSANT_FLAG)){
+			uint8_t enpasssq = (m.to > 31 ? m.to+8 : m.to-8);
+			undo.capturedPiece = mailbox[enpasssq];
+			MOVEPIECE(mailbox[m.from], m.from, m.to);
+			DELETEPIECE(mailbox[enpasssq], m.to);
+			
+			mailbox[enpasssq] = -1;
+			mailbox[m.to] = mailbox[m.from];
+		}
+		else{
+			undo.capturedPiece = mailbox[m.to];
+			DELETEPIECE(mailbox[m.to], m.to);
+			
+			if ((m.flags & PROMOTION_FLAG)){
+				DELETEPIECE(mailbox[m.from], m.from);
+				board->piece[m.promotion] |= (1LL << m.to);
+				
+				mailbox[m.to] = m.promotion;
+			}
+			else {
+				MOVEPIECE(mailbox[m.from], m.from, m.to);
+				board->enpassanttarget = 0;
+				
+				mailbox[m.to] = mailbox[m.from];
+			}
+		}
+			
+		setcastlingrights(board, m);
+	}
+	
+	mailbox[m.from] = -1;
+	return undo;
+}

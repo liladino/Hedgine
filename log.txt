@@ -1,7 +1,21 @@
+Date:	Jan 27 2026:
+	makeMove function half baked
+
 Date:	Jan 26 2026:
 	Move generation optimized: ~0.65 -> ~0.53. Removed unnecesary copies and 
 	loops in the pieces, and avoided rescanning of the board when searching for 
 	quiet moves.
+	Plan: rework move generation:
+		- Not generating bitboards, a move-unmove architecture instead.
+			generating returns bitMove array. 
+			bitUndo makeMove(bitboard, bitMove) 
+			function makes the move on the bitboard, and returns an undo object
+			that can be used to return to the last state. 
+		- fast “captured piece” identification: mailbox[64] shared state:
+			every square stores, which piece is stored there, so captures have 
+			an O(1) lookup. 
+			No significant drawback: global, so not copied anywhere, moving 
+			changes it, undo returns it to a previous state.
 	
 Date:	Jan 24 2026:
 	refactoring:
