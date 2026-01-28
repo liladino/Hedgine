@@ -69,7 +69,7 @@ int readLineDynamic(char **str, size_t maxSize) {
  * expects str to be at least 1 char long and ends with 0
  * */
 move parseLongAlgebraicNotation(char str[]){
-	move nullmove = {{-1, -1}, {-1, -1}, 0};
+	//~ move nullmove = {{-1, -1}, {-1, -1}, 0};
 	move current = {{-1, -1}, {-1, -1}, 0};
 	
 	if (str[0] > 'h' || str[0] < 'a') return nullmove;

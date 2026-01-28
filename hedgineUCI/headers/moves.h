@@ -20,24 +20,7 @@ move initializemove(squarenums from, squarenums to, int promotion);
 
 void setmove(move *m, square from, square to, int promotion);
 
-/* linked list things:
-
-movelist *createMove(move m);
-
-void firstmove(movelist **head, move m);
-
-void insertMove(movelist *head, move m);
-
-void undoMove(movelist **head);
-
-void printmoves(movelist *head);
-
-void freemoves(movelist *head);
-*/
-
 //bits:
-
-int isMoveInMoveArray(const bitboard* board, const movearray* legalmoves, const bool tomove, const move m);
 
 int isMoveLegal(bitboard* board, const bool tomove, const move m);
 
@@ -47,7 +30,11 @@ void addPieceOnBoard(char board2d[12][12], u64 piece, char piecesymbol);
 
 void boardConvertBack(char board2d[12][12], bitboard board);
 
-move boardConvertTomove(const bitboard* const board1, const bitboard* const board2, bool tomove);
+bool compareBitMoveMove(const move m, const bitMove bm);
+
+move convertBitMoveToMove(const bitMove m);
+
+//~ move boardConvertTomove(const bitboard* const board1, const bitboard* const board2, bool tomove);
 
 bool lastMoveWasCapture(const bitboard* const lastboard, const move m, const bool tomove);
 

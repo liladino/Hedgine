@@ -136,7 +136,7 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	if (depth > 0 && isRepetition(board.hashValue)) return 0;
 	
 	const int oddity = depth % 2;
-	evalflag flag = alphaFlag;
+	evalflag flag = ALPHA_EVAL_FLAG;
 	
 	bool PVnode = (beta - alpha > 1);
 	
@@ -159,8 +159,8 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	movearray legalmoves;
 	bitGenerateLegalmoves(&legalmoves, board, tomove, false);
 	if (legalmoves.size == 0){
-		if (bitInCheck(&board, tomove)) return blackwon - 100 + depth;
-		return draw;
+		if (bitInCheck(&board, tomove)) return BLACKWON - 100 + depth;
+		return DRAW;
 	}
 	
 	orderMoves(&legalmoves);
@@ -186,13 +186,13 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 		}
 		
 		if (eval >= beta){
-			if (oddity) storePosTT(board.hashValue, -beta, betaFlag, depth, maxdepth);
-			else storePosTT(board.hashValue, beta, betaFlag, depth, maxdepth);
+			if (oddity) storePosTT(board.hashValue, -beta, BETA_EVAL_FLAG, depth, maxdepth);
+			else storePosTT(board.hashValue, beta, BETA_EVAL_FLAG, depth, maxdepth);
 			rmLastRepetition();
 			return beta;
 		}
 		if (alpha < eval){ 
-			flag = exactFlag;
+			flag = EXACT_EVAL_FLAG;
 			alpha = eval;
 			//~ bestindex = i;
 			
@@ -243,7 +243,7 @@ move engine(bitboard board, bool tomove){
 		eval = search(board, tomove, 0, NegINF, PosINF);
 		
 		//store the best move with a special flag to make sure next search starts with it
-		storePosTT(nextp, eval, lastBest, 0, maxdepth);
+		storePosTT(nextp, eval, LAST_BEST_EVAL_FLAG, 0, maxdepth);
 		
 		if (PV[0][0].from.rank != -1) nextm = PV[0][0];
 		
@@ -263,19 +263,19 @@ move engine(bitboard board, bool tomove){
 		fprintf(debugOutput, "info depth %d", i);
 		#endif
 		
-		if (eval >= whitewon || eval <= blackwon){
-			if ((tomove == black && eval <= blackwon) || (tomove == white && eval >= whitewon)){
+		if (eval >= WHITEWON || eval <= BLACKWON){
+			if ((tomove == black && eval <= BLACKWON) || (tomove == white && eval >= WHITEWON)){
 				//engine is about to win
-				printf(" score mate %d pv ", (absint(absint(eval) - whitewon - 100) + 1) / 2);
+				printf(" score mate %d pv ", (absint(absint(eval) - WHITEWON - 100) + 1) / 2);
 				#ifdef DEBUG
-				fprintf(debugOutput, " score mate %d pv ", (absint(absint(eval) - whitewon - 100) + 1) / 2);
+				fprintf(debugOutput, " score mate %d pv ", (absint(absint(eval) - WHITEWON - 100) + 1) / 2);
 				#endif
 			}
 			else{
 				//we are about to win
-				printf(" score mate %d pv ", (absint(eval) - whitewon - 100 + 1) / 2);
+				printf(" score mate %d pv ", (absint(eval) - WHITEWON - 100 + 1) / 2);
 				#ifdef DEBUG
-				fprintf(debugOutput, " score mate %d pv ", (absint(absint(eval) - whitewon - 100) + 1) / 2);
+				fprintf(debugOutput, " score mate %d pv ", (absint(absint(eval) - WHITEWON - 100) + 1) / 2);
 				#endif
 			}
 		}
@@ -297,7 +297,7 @@ move engine(bitboard board, bool tomove){
 		fprintf(debugOutput, "\n");
 		#endif
 		
-		if (eval >= whitewon || eval <= blackwon) break; //dont think if not neccesary
+		if (eval >= WHITEWON || eval <= BLACKWON) break; //dont think if not neccesary
 	}
 	
 	//~ rmBestMoveFlag(nextp);

@@ -1,10 +1,5 @@
 #include "headers/legalmoves.h"
 
-#define WKINGSIDE 1
-#define WQUEENSIDE 2
-#define BKINGSIDE 4
-#define BQUEENSIDE 8
-
 /* PAWN MOVE MASKS
  * 
  * WHITE perspective
@@ -123,57 +118,6 @@ bool bitInCheck(const bitboard* const board, bool tomove){
 	return false;
 }
 
-//obsolete with the mailbox
-static inline void deletePiece(bitboard *board, const u64 movemask){
-	//if a rook gets taken, remove the castlingrights for it
-	if (board->piece[wrook] & movemask){
-		if ((1LLU << 7) & movemask) board->castlerights &= ~WKINGSIDE;
-		else {if (1LLU & movemask) board->castlerights &= ~WQUEENSIDE;}
-	}
-	else if (board->piece[brook] & movemask){
-		if ((1LLU << (7 + nort * 7)) & movemask) board->castlerights &= ~BKINGSIDE;
-		else {if ((1LLU << (nort * 7)) & movemask) board->castlerights &= ~BQUEENSIDE;}
-	}
-	
-	u64 inverse = (~movemask);
-	
-	board->piece[1] &= inverse;
-	board->piece[2] &= inverse;
-	board->piece[3] &= inverse;
-	board->piece[4] &= inverse;
-	board->piece[5] &= inverse;
-	
-	board->piece[7] &= inverse;
-	board->piece[8] &= inverse;
-	board->piece[9] &= inverse;
-	board->piece[10] &= inverse;
-	board->piece[11] &= inverse;
-}
-
-static inline void setcastlingrights(bitboard *board, bool tomove, u64 piece){
-	/* check if we moved the rook from the corner, and if so, delete the 
-	 * castling rights for that side. */
-	if (tomove == white){
-		if (piece & 1LL){
-			//hashCastleO(board, 1);
-			board->castlerights &= ~(WQUEENSIDE);
-		}
-		else if (piece & (1LLU << 7)){
-			//hashCastleO(board, 0);
-			board->castlerights &= ~(WKINGSIDE);
-		}
-	}
-	else {
-		if (piece & (1LLU << (7 * nort))){
-			//hashCastleO(board, 3);
-			board->castlerights &= ~(BQUEENSIDE);
-		}
-		if (piece & (1LLU << (7 + 7 * nort))){
-			//hashCastleO(board, 2);
-			board->castlerights &= ~(BKINGSIDE);
-		}
-	}
-}
 
 static void addMoves(movearray* moves, int i, bool onlyCaptures, u64 enemy, u64 friendly, uint8_t piece, u64 possiblemoves){
 	bitMove* legalmoves = moves->array;
@@ -215,25 +159,6 @@ static void addBitBishopMoves(movearray* moves, bool tomove, int i, bool onlyCap
 	
 	addMoves(moves, i, onlyCaptures, enemy, friendly, piece, possiblemoves);
 }
-
-/* Castling rights removal with rook: (must implement it elsewhere)
-	#define SQUARE_A1 (1LLU)
-	#define SQUARE_H1 (1LLU << 7)
-	#define SQUARE_A8 (1LLU << (nort * 7))
-	#define SQUARE_H8 (1LLU << (7 + nort * 7))
-	if (!bitInCheck(&board, tomove)) {
-		if (copy.piece[wrook] & piece){
-			if ((1LLU << 7) & piece) board.castlerights &= ~WKINGSIDE;
-			else if (1LLU & piece)   board.castlerights &= ~WQUEENSIDE;
-		}
-		else if (copy.piece[brook] & piece){
-			if ((1LLU << (7 + nort * 7)) & piece)  board.castlerights &= ~BKINGSIDE;
-			else if ((1LLU << (nort * 7)) & piece) board.castlerights &= ~BQUEENSIDE;
-		}
-		
-		legalmoves[(*array_index)++] = board;
-	}
-	*/
 	
 static void addBitRookMoves(movearray* moves, bool tomove, int i, bool onlyCaptures, u64 enemy, u64 friendly){
 	u64 possiblemoves = Rmagic(i, enemy | friendly); 

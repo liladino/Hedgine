@@ -35,7 +35,7 @@ void storePosTT(const u64 pos, const int eval, const evalflag flag, const int de
 
 void hashPieceIO(bitboard *board, int sq, int piece);
 
-void hashTomoveIO(bitboard *board);
+void hashTomove(bitboard *board);
 
 void hashEnPassantIO(bitboard *board, int file);
 

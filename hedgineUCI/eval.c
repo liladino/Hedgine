@@ -287,8 +287,8 @@ static inline int sideEval(const bitboard* const board, bool tomove){
 int fulleval(const bitboard* const board, bool tomove, int depth){
 	//~ printBitBoard2d(*board);
 	resultconst r = gameend(*board, tomove);
-	if (r == draw) return draw;
-	if (r != ongoing) return (blackwon - 100 + depth);
+	if (r == DRAW) return DRAW;
+	if (r != ONGOING) return (BLACKWON - 100 + depth);
 	
 	//~ bool opening = false, middlegame = false, endgame = false;
 	//~ int opeWeight = 0, midWeight = 0, endWeight = 0;

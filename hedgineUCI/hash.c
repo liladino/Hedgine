@@ -4,6 +4,22 @@ int TTableSizeMB = 0;
 int TTableSize = 0;
 TThashentry* TranspositionTable = NULL;
 
+typedef struct key{
+	u64 squares[64][12]; //12 pieces
+	u64 castlerights[4][2]; /*4 corners indicating the 4 castling directions, and 2 numbers for the right or lack of it.
+	* [3] = q
+	* [2] = k
+	* [1] = Q
+	* [0] = K
+	* [][0] = cant castle
+	* [][1] = can castle
+	*/
+	u64 enpassantfile[8]; //a = [0], h = [7]
+	u64 tomove; //take in, if black to move
+}key;
+
+key Zobrist;
+
 TThashentry* allocTransTable(const int sizeInMB){
 	TTableSizeMB = sizeInMB;
 	TTableSize = TTableSizeMB * 1024 * 1024 / sizeof(TThashentry);	
@@ -31,34 +47,17 @@ void freeTransTable(){
 	TTableSize = TTableSizeMB = 0;
 }
 
-typedef struct key{
-	u64 squares[64][12]; //12 pieces
-	u64 castlerights[4][2]; /*4 corners indicating the 4 castling directions, and 2 numbers for the right or lack of it.
-	* [3] = q
-	* [2] = k
-	* [1] = Q
-	* [0] = K
-	* [][0] = cant castle
-	* [][1] = can castle
-	*/
-	u64 enpassantfile[8]; //a = [0], h = [7]
-	u64 tomove; //take in, if black to move
-}key;
-
-key Zobrist;
-
 void hashPieceIO(bitboard *board, int sq, int piece){
 	board->hashValue ^= Zobrist.squares[sq][piece];
 }
 
-void hashTomoveIO(bitboard *board){
+void hashTomove(bitboard *board){
 	board->hashValue ^= Zobrist.tomove;
 }
 
 void hashEnPassantIO(bitboard *board, int file){
 	if (board->enpassanttarget == 0){
 		if (file == 8) return;
-		//board->hashValue ^= Zobrist.enpassantfile[8];
 		board->hashValue ^= Zobrist.enpassantfile[file];
 		return;
 	} 
@@ -66,15 +65,14 @@ void hashEnPassantIO(bitboard *board, int file){
 	for (int i = 0; i < 8; i++){
 		if (mask & board->enpassanttarget){
 			board->hashValue ^= Zobrist.enpassantfile[i];
-			if (file != 8) board->hashValue ^= Zobrist.enpassantfile[file];
+			if (file != 8) { board->hashValue ^= Zobrist.enpassantfile[file]; }
 			return;
 		}
 		mask = mask << 1;
 	}
 }
 
-void hashCastleO(bitboard *board, int dir){
-	char mask = 1 << dir; //K
+void hashCastleO(bitboard *board, uint8_t mask){
 	if (board->castlerights & mask){
 		//hash the current castleright out, and hash the illegal castling mask in.
 		board->hashValue ^= Zobrist.castlerights[dir][1];
@@ -100,39 +98,6 @@ void setHashKey(){
 }
 
 u64 hashPosition(const bitboard* const board, bool tomove){
-	/*u64 result = 0;
-	u64 mask = 1;
-	for (int i = 0; i < 64; i++){
-		for (int j = 0; j < 12; j++){
-			if (board->piece[j] & mask){
-				result ^= Zobrist.squares[i][j];
-				break;
-			}
-		}
-		mask = mask << 1;
-	}
-	if (board->enpassanttarget){
-		mask = 0x0101010101010101LL; //a file
-		for (int i = 0; i < 8; i++){
-			if (mask & board->enpassanttarget){
-				result ^= Zobrist.enpassantfile[i];
-				break;
-			}
-			mask = mask << 1;
-		}
-	}
-	//else result ^= Zobrist.enpassantfile[8];
-	mask = 1; //K
-	for (int i = 0; i < 4; i++){
-		if (board->castlerights & mask) result ^= Zobrist.castlerights[i][1];
-		else result ^= Zobrist.castlerights[i][0];
-		
-		mask = mask << 1;
-	}
-	if (tomove == black) result ^= Zobrist.tomove;
-	
-	return result;*/
-	
 	u64 result = 0;
 
     for (int curr = wking; curr <= bpawn; curr++) {
@@ -254,24 +219,24 @@ int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const i
 	 * */
 	
 	int tempeval = current->eval; 
-	if (tempeval >= whitewon){
+	if (tempeval >= WHITEWON){
 		tempeval = tempeval - depth  - 1;
 	}
-	else if (tempeval <= blackwon){
+	else if (tempeval <= BLACKWON){
 		tempeval += depth  + 1;
 	}
 	
 	if (oddity){	
 		tempeval *= -1;
 		switch (current->flag){
-			case exactFlag:
+			case EXACT_EVAL_FLAG:
 				return tempeval;
-			case lastBest:
+			case LAST_BEST_EVAL_FLAG:
 				return tempeval;
-			case alphaFlag:
+			case ALPHA_EVAL_FLAG:
 				if (tempeval < -(*beta)) (*beta) = -tempeval;
 				break;
-			case betaFlag:
+			case BETA_EVAL_FLAG:
 				if (tempeval > -(*alpha)) (*alpha) = -tempeval;
 				break;
 		}
@@ -282,14 +247,14 @@ int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const i
 	}
 	else {
 		switch (current->flag){
-			case exactFlag:
+			case EXACT_EVAL_FLAG:
 				return tempeval;
-			case lastBest:
+			case LAST_BEST_EVAL_FLAG:
 				return tempeval;
-			case alphaFlag:
+			case ALPHA_EVAL_FLAG:
 				if (tempeval < *alpha) (*alpha) = tempeval;
 				break;
-			case betaFlag:
+			case BETA_EVAL_FLAG:
 				if (tempeval > *beta) (*beta) = tempeval;
 				break;
 		}
@@ -330,7 +295,7 @@ void printHashEntry(u64 pos){
 		printf("No record/overweitten\n");
 		return;
 	}
-	printf("%lf %s depth: %d ", current->eval * 0.01/* * (tomove == white ? 1: -1)*/, current->flag == exactFlag ? " exactFlag" : current->flag == lastBest ? " lastBest" : " otherFlag", current->depth);
+	printf("%lf %s depth: %d ", current->eval * 0.01/* * (tomove == white ? 1: -1)*/, current->flag == EXACT_EVAL_FLAG ? " EXACT_EVAL_FLAG" : current->flag == LAST_BEST_EVAL_FLAG ? " LAST_BEST_EVAL_FLAG" : " otherFlag", current->depth);
 	printBitPiece(pos);
 }
 
@@ -339,7 +304,7 @@ void printHashEntry(u64 pos){
 	//~ if (current == NULL) {
 		//~ return;
 	//~ }
-	//~ current->flag = exactFlag;
+	//~ current->flag = EXACT_EVAL_FLAG;
 //~ }
 
 static inline void swap(bitboard* a, bitboard* b) { 
@@ -353,12 +318,12 @@ static inline void swap(bitboard* a, bitboard* b) {
 static inline int getEval(u64 pos){
 	TThashentry *current = &TranspositionTable[pos % TTableSize];
 	if (current->pos == pos){
-		if (current->flag == lastBest) {
+		if (current->flag == LAST_BEST_EVAL_FLAG) {
 			//remove the flag maybe?
-			current->flag = exactFlag;
+			current->flag = EXACT_EVAL_FLAG;
 			return 1000000 + current->depth;
 		}
-		if (current->flag == exactFlag || current->flag == alphaFlag) return current->eval;
+		if (current->flag == EXACT_EVAL_FLAG || current->flag == ALPHA_EVAL_FLAG) return current->eval;
 	}
 	return -1000000;
 }
@@ -389,7 +354,7 @@ int RTwriteIndex = 0;
  * are kept. If the search is cancelled, we will get new line of moves, so
  * it dowsn't matter if we lost track of the write index. 
  * 
- * The position is considered a draw after the FIRST repetition, so the engine
+ * The position is considered a DRAW after the FIRST repetition, so the engine
  * avoids previous positions like fire, if it think's it's better. */
 
 bool isRepetition(const u64 pos){

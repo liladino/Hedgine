@@ -49,37 +49,66 @@ int perfTest(bitboard board, bool tomove, int depth){
 	return all;
 }
 
+bool bitBoardCompare(const bitboard* const b1, const bitboard* const b2){
+	for (int i = 0; i < 12; i++){
+		if (b1->piece[i] != b2->piece[i]) { return false; }
+	}
+	if (b1->enpassanttarget != b2->enpassanttarget) { return false; }
+	if (b1->hashValue != b2->hashValue)             { return false; }
+	if (b1->castlerights != b2->castlerights)       { return false; }
+	return true;
+}
+
+bool moveTest(){
+	bitboard board;
+	bool tomove;
+	int temp;
+	setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", &board, &tomove, &temp, &temp);
+	printBitBoard2d(stdout, board);
+	
+	char* moves[] = {"h2h4", "d7d5", "h4h5", "c8g4", "h5h6", "b8c6", "h6g7",
+		"d8d6", "g7h8n", "e8c8", "h1h2", "d5d4", "e2e4", "d4e3", "f2e3", "g4d1", "e1f2"};
+	
+	for (int i = 0; i < sizeof(moves); i++){
+		bitboard copy = board;
+		move m = convertMoveToBitMove(board, tomove, moves[i]);
+		bitUndo u = makeMove(&copy, m);
+		if (hashPosition(copy, !tomove) != copy.hashValue){
+			goto hashfail;
+		}
+		
+		undoMove(copy, m, u);
+		if (!bitBoardCompare(board, copy){
+			goto fail;
+		}
+	
+		makeMove(&copy, m);
+		prtintf("%s\n", moves[i]);
+		printBitBoard2d(stdout, board);
+		printBitPieceAsBoard(board.enpassanttarget);
+		printBitPiece((u64)board.castlerights);
+		
+		tomove = !tomove;
+	}
+	
+	printf("makeMove & undoMove tests passed");
+	return true; 
+	
+	fail:
+	printf("makeMove & undoMove tests failed");
+	return false;
+	
+	hashfail:
+	printf("makeMove & undoMove tests failed: hashing");
+	return false;
+}
+
 /*
  * ASSERTION TEST
  * */
 bool makePerfTestsAssert(){
-	/* TEMP SHIT */
-	if (false){
-		bitboard bboard;
-		int temp;
-		bool tomove;
-		printf("\nPosition: \n");
-		setboardFEN("r3k2r/p6p/4N3/1P4P1/1p4p1/4n3/P6P/1R2K2R b Kkq - 0 1", &bboard, &tomove, &temp, &temp);
-		printBitBoard2d(stdout, bboard);
-		
-		//~ char c;
-		//~ scanf("%c", &c);
-
-		printf("\n%d\n", perfTest(bboard, tomove, 2));
-
-		//~ movearray legalmoves;
-		//~ bitGenerateLegalmoves(&legalmoves, bboard, tomove, false);
-		//~ char c;
-		//~ scanf("%c", &c);
-		
-		//~ for (int i = 0; i < legalmoves.size; i++){
-			//~ printBitBoard2d(stdout, legalmoves.boards[i]);
-			
-			//~ scanf("%c", &c);		
-		//~ }
-		return false;
-	}
-		
+	if (!moveTest()) { return; }
+	
 	//Source: https://www.chessprogramming.org/Perft_Results
 	
 	bitboard bboard;

@@ -157,12 +157,12 @@ typedef struct bitboard{
 	//int eval;
 } bitboard;
 
-//~ typedef enum castleRightsFlag {
-	//~ CASTLE_WK = 1,
-	//~ CASTLE_WQ = 2,
-	//~ CASTLE_BK = 4,
-	//~ CASTLE_BQ = 8
-//~ } castleRightsFlag;
+typedef enum castleRightsFlag {
+	WKINGSIDE = 1,
+	WQUEENSIDE = 2,
+	BKINGSIDE = 4,
+	BQUEENSIDE = 8
+} castleRightsFlag;
 
 typedef struct bitMove{
 	uint8_t from;      // 0..63
@@ -175,15 +175,15 @@ typedef struct bitMove{
 typedef enum bitMoveFlags{
 	CAPTURE_FLAG = 1,
 	CASTLE_FLAG = 2,
-	DOUBLE_PAWNMOVE_FLAG = 4,
+	EN_PASSANT_FLAG = 4,
 	PROMOTION_FLAG = 8,
-	EN_PASSANT_FLAG = 16
+	DOUBLE_PAWNMOVE_FLAG = 16
 } bitMoveFlags;
 
 typedef struct bitUndo {
 	uint64_t prevHash;
 	int8_t   prevEpSquareIndex;   // 0..63 or -1 = none
-	int8_t   capturedPiece;       // -1 none, else 0..11
+	int8_t   capturedPiece;       // -1 none, else 0 .. 11
 	uint8_t  prevCastleRights;    // 4 bits used
 	/* Last  4 bits: 0100
 	 *  0                1               0                0 (LSB) 
