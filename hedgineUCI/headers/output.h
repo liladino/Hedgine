@@ -15,6 +15,8 @@ void printBitBoard(bitboard board);
 
 void printBitPiece(u64 piece);
 
+void printBitsOfNumber(u64 number, int numberOfBits);
+
 void printBitPieceAsBoard(u64 piece);
 
 void printmove(FILE* ostream, move m);

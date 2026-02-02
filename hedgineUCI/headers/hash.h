@@ -39,7 +39,7 @@ void hashTomove(bitboard *board);
 
 void hashEnPassantIO(bitboard *board, int file);
 
-void hashCastleO(bitboard *board, int dir);
+void hashCastleO(bitboard *board, uint8_t mask);
 
 void printBestLine(u64 pos, bool tomove);
 

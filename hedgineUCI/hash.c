@@ -74,6 +74,7 @@ void hashEnPassantIO(bitboard *board, int file){
 
 void hashCastleO(bitboard *board, uint8_t mask){
 	if (board->castlerights & mask){
+		int dir = __builtin_ctz(mask);
 		//hash the current castleright out, and hash the illegal castling mask in.
 		board->hashValue ^= Zobrist.castlerights[dir][1];
 		board->hashValue ^= Zobrist.castlerights[dir][0];
@@ -333,7 +334,7 @@ static inline int getEval(u64 pos){
 void orderMoves(movearray* legalmoves){
 	for (int i = 1; i < legalmoves->size; i++){
 		for (int j = 0; j < legalmoves->size - i; j++){
-			if (getEval(legalmoves->boards[j].hashValue) < getEval(legalmoves->boards[j+1].hashValue)) swap(&legalmoves->boards[j], &legalmoves->boards[j+1]);
+			//~ if (getEval(legalmoves->array[j].hashValue) < getEval(legalmoves->boards[j+1].hashValue)) swap(&legalmoves->boards[j], &legalmoves->boards[j+1]);
 		}
 	}
 }

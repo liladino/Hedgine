@@ -42,7 +42,7 @@ void setmove(move *m, square from, square to, int promotion){
 
 move convertBitMoveToMove(const bitMove m){
 	int temp;
-	switch (bm.promotion) {
+	switch (m.promotion) {
 		case wqueen:
 			temp = 'q'; break;
 		case wrook:
@@ -65,25 +65,25 @@ move convertBitMoveToMove(const bitMove m){
 	return initializemove(makesquarenum2(m.from), makesquarenum2(m.to), temp);
 } 
 
-bool compareBitMoveMove(const move m, const bitMove bm){
+bool compareBitMoveToMove(const bitMove bm, const move m){
 	move curr = convertBitMoveToMove(bm);
-	return curr.from.file == m.from.file && curr.from.rank == m.from.rank && curr.to.file == m.to.file && curr.to.rank == m.to.rank && curr.promotion == m.promotion);
+	return (curr.from.file == m.from.file && curr.from.rank == m.from.rank && curr.to.file == m.to.file && curr.to.rank == m.to.rank && curr.promotion == m.promotion);
 }
  
 bitMove convertMoveToBitMove(const bitboard* const board, bool tomove, const move m) {
 	movearray moves;
 	bitGenerateLegalmoves(&moves, board, tomove, false);
 	for (int i = 0; i < moves.size; i++){
-		if (compareBitMoveMove(legalmoves.array[i], m){
-			return legalmoves.array[i];
+		if (compareBitMoveToMove(moves.array[i], m)){
+			return moves.array[i];
 		}
 	}
-	legalmoves.array[0];
+	return moves.array[0];
 }
  
 int isMoveInMoveArray(const movearray* legalmoves, const move m){
 	for (int i = 0; i < legalmoves->size; i++){
-		if (compareBitMoveMove(m, legalmoves->array[i])){
+		if (compareBitMoveToMove(legalmoves->array[i], m)){
 			return i;
 		}
 	}
@@ -103,7 +103,7 @@ int isMoveLegal(bitboard* board, const bool tomove, const move m){
 	bitUndo u = makeMove(board, bm);
 	
 	legalmoves.size = 0;
-	bitGenerateLegalmoves(&legalmoves, *board, !tomove, false);
+	bitGenerateLegalmoves(&legalmoves, board, !tomove, false);
 	undoMove(board, bm, u);
 	
 	if (legalmoves.size == 0){
@@ -288,7 +288,37 @@ int8_t mailbox[64] =
 	 -1, -1, -1, -1, -1, -1, -1, -1,
 	 -1, -1, -1, -1, -1, -1, -1, -1,
 	 -1, -1, -1, -1, -1, -1, -1, -1};
-	 
+	
+void setMailBox(const bitboard* const board){
+	u64 pieces = enemypieces(board, 1) | enemypieces(board, 0);
+	u64 mask = 1; int i = 0;
+	for (; i < 64; i++, mask <<= 1){
+		if ((pieces & mask)){
+			for (int j = 0; j < 12; j++){
+				if ((board->piece[j] & mask)){ 
+					mailbox[i] = j; 
+				}
+			}
+		} 
+		else {
+			mailbox[i] = -1;
+		}
+	}
+}
+
+void printMailBox(){
+	printf("Mailbox:\n");
+	u64 mask = 1; int i = 0; bitboard b;
+	memset(&b, 0, sizeof(b));
+	
+	for (; i < 64; i++, mask <<= 1){
+		if (mailbox[i] != -1){
+			b.piece[mailbox[i]] |= mask;
+		}
+	}
+	
+	printBitBoard2d(stdout, b);
+}
 	
 static inline void setcastlingrights(bitboard* board, bitMove m){		
 	if (board->castlerights == 0){
@@ -308,9 +338,22 @@ static inline void setcastlingrights(bitboard* board, bitMove m){
 		hashCastleO(board, BQUEENSIDE);
 		board->castlerights &= ~(BQUEENSIDE);
 	}
-	if (m.to == 63 || m.from){
+	if (m.to == 63 || m.from == 63){
 		hashCastleO(board, BKINGSIDE);
 		board->castlerights &= ~(BKINGSIDE);
+	}
+	
+	if (m.from == 4 && mailbox[m.from] == wking){
+		hashCastleO(board, WKINGSIDE);
+		hashCastleO(board, WQUEENSIDE);
+		board->castlerights &= ~(WKINGSIDE);
+		board->castlerights &= ~(WQUEENSIDE);
+	}
+	else if (m.from == 62 && mailbox[m.from] == bking){
+		hashCastleO(board, WKINGSIDE);
+		hashCastleO(board, WQUEENSIDE);
+		board->castlerights &= ~(WKINGSIDE);
+		board->castlerights &= ~(WQUEENSIDE);
 	}
 }
 
@@ -319,7 +362,7 @@ static inline void setcastlingrights(bitboard* board, bitMove m){
 
 bitUndo makeMove(bitboard* board, bitMove m){	
 	bitUndo undo;
-	undo = (bitUndo){board->hashValue, board->enpassanttarget, mailbox[m.to], board->castlerights};
+	undo = (bitUndo){board->hashValue, (board->enpassanttarget == 0 ? -1 : __builtin_ctzll(board->enpassanttarget)), mailbox[m.to], board->castlerights};
 	
 	//TODO: add hash
 	
@@ -349,8 +392,8 @@ bitUndo makeMove(bitboard* board, bitMove m){
 		if (m.from == 4){
 			//white
 			board->castlerights &= ~(WKINGSIDE | WQUEENSIDE);
-			hashCastleO(board, WKINGSIDE));
-			hashCastleO(board, WQUEENSIDE));
+			hashCastleO(board, WKINGSIDE);
+			hashCastleO(board, WQUEENSIDE);
 			if (m.to == 6){
 				mailbox[5] = wrook;
 				mailbox[7] = -1;
@@ -364,8 +407,8 @@ bitUndo makeMove(bitboard* board, bitMove m){
 		}
 		else {
 			board->castlerights &= ~(BKINGSIDE | BQUEENSIDE);
-			hashCastleO(board, BKINGSIDE));
-			hashCastleO(board, BQUEENSIDE));
+			hashCastleO(board, BKINGSIDE);
+			hashCastleO(board, BQUEENSIDE);
 			if (m.to == 62){
 				mailbox[61] = brook;
 				mailbox[63] = -1;
@@ -428,7 +471,7 @@ bitUndo makeMove(bitboard* board, bitMove m){
 				
 				hashPieceIO(board, m.from, mailbox[m.from]);
 				hashPieceIO(board, m.to, mailbox[m.to]);
-				hashPieceIO(board, m.to, promotion);
+				hashPieceIO(board, m.to, m.promotion);
 		
 				mailbox[m.to] = m.promotion;
 			}
@@ -454,14 +497,25 @@ bitUndo makeMove(bitboard* board, bitMove m){
 
 
 void undoMove(bitboard* board, const bitMove m, const bitUndo u){
+	bool blackMove = mailbox[m.to] >= bking;
+
 	board->hashValue = u.prevHash;
 	board->castlerights = u.prevCastleRights;
 	if (u.prevEpSquareIndex == -1) { board->enpassanttarget = 0; }
 	else { board->enpassanttarget = 1LLU << u.prevEpSquareIndex; }
 	
-	MOVEPIECE(mailbox[m.to], m.to, m.from);
-	mailbox[m.to] = -1;
+	if (m.flags & PROMOTION_FLAG) {
+		DELETEPIECE(m.promotion, m.to);
+		board->piece[blackMove ? bpawn : wpawn] |= 1LLU << m.from;
+		
+		mailbox[m.from] = blackMove ? bpawn : wpawn;
+	}
+	else {
+		MOVEPIECE(mailbox[m.to], m.to, m.from);
+		mailbox[m.from] = mailbox[m.to];
+	}
 	
+	mailbox[m.to] = -1;		
 	
 	if (m.flags & CASTLE_FLAG) {
 		if (m.from == 4){
@@ -490,20 +544,14 @@ void undoMove(bitboard* board, const bitMove m, const bitUndo u){
 		}
 	}
 	
-	if (m.flags & PROMOTION_FLAG) {
-		DELETEPIECE(mailbox[m.from], m.to); //the first MOVEPIECE put the pawn onto the last rank
-		DELETEPIECE(u.promotion, m.to);
-		mailbox[m.to] = -1;
-	}
-	
 	if (u.capturedPiece != -1) {
 		if (m.flags & EN_PASSANT_FLAG){
 			uint8_t enpasssq = (m.to > 31 ? m.to+8 : m.to-8);
 			mailbox[enpasssq] = u.capturedPiece;
-			board->piece[capturedPiece] |= 1LLU << enpasssq;
+			board->piece[u.capturedPiece] |= 1LLU << enpasssq;
 		}
 		else {
-			board->piece[capturedPiece] |= 1LLU << m.to;
+			board->piece[u.capturedPiece] |= 1LLU << m.to;
 			mailbox[m.to] = u.capturedPiece;
 		}
 	}

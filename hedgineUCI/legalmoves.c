@@ -329,11 +329,11 @@ static void addBitPawnMoveWhite(movearray* moves, const bitboard* const board, u
 				legalmoves[(*array_index)++] = (bitMove){i, __builtin_ctzll(currentmove), piece, -1, CAPTURE_FLAG};
 			}
 			else if (board->enpassanttarget == currentmove){
-				legalmoves[(*array_index)++] = (bitMove){i, __builtin_ctzll(currentmove), piece, -1, CAPTURE_FLAG & EN_PASSANT_FLAG};
+				legalmoves[(*array_index)++] = (bitMove){i, __builtin_ctzll(currentmove), piece, -1, CAPTURE_FLAG | EN_PASSANT_FLAG};
 			}
 			else if ((currentmove & enemy) && (piecemask & WPAWN_PROMOTE)) {				
 				for (int prom = wqueen; prom <= wknight; prom++){
-					legalmoves[(*array_index)++] = (bitMove){i, __builtin_ctzll(currentmove), piece, prom, CAPTURE_FLAG & PROMOTION_FLAG};
+					legalmoves[(*array_index)++] = (bitMove){i, __builtin_ctzll(currentmove), piece, prom, CAPTURE_FLAG | PROMOTION_FLAG};
 				}
 			}
 		}
@@ -377,11 +377,11 @@ static void addBitPawnMoveBlack(movearray* moves, const bitboard* const board, u
 				legalmoves[(*array_index)++] = (bitMove){i, __builtin_ctzll(currentmove), piece, -1, CAPTURE_FLAG};
 			}
 			else if (board->enpassanttarget == currentmove){
-				legalmoves[(*array_index)++] = (bitMove){i, __builtin_ctzll(currentmove), piece, -1, CAPTURE_FLAG & EN_PASSANT_FLAG};
+				legalmoves[(*array_index)++] = (bitMove){i, __builtin_ctzll(currentmove), piece, -1, CAPTURE_FLAG | EN_PASSANT_FLAG};
 			}
 			else if ((currentmove & enemy) && (piecemask & BPAWN_PROMOTE)) {				
 				for (int prom = bqueen; prom <= bknight; prom++){
-					legalmoves[(*array_index)++] = (bitMove){i, __builtin_ctzll(currentmove), piece, prom, CAPTURE_FLAG & PROMOTION_FLAG};
+					legalmoves[(*array_index)++] = (bitMove){i, __builtin_ctzll(currentmove), piece, prom, CAPTURE_FLAG | PROMOTION_FLAG};
 				}
 			}
 		}

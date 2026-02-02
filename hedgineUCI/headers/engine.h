@@ -26,7 +26,7 @@
 #define MAXSEARCHDEPTH 40
 
 extern bool stopSearch;
-extern move PV[MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
+//~ extern bitMove PV[MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
 
 move lvl0(bitboard board, bool tomove);
 

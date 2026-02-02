@@ -30,12 +30,22 @@ void addPieceOnBoard(char board2d[12][12], u64 piece, char piecesymbol);
 
 void boardConvertBack(char board2d[12][12], bitboard board);
 
-bool compareBitMoveMove(const move m, const bitMove bm);
+bool compareBitMoveToMove(const bitMove bm, const move m);
 
 move convertBitMoveToMove(const bitMove m);
+
+bitMove convertMoveToBitMove(const bitboard* const board, bool tomove, const move m);
 
 //~ move boardConvertTomove(const bitboard* const board1, const bitboard* const board2, bool tomove);
 
 bool lastMoveWasCapture(const bitboard* const lastboard, const move m, const bool tomove);
+
+void setMailBox(const bitboard* const board);
+
+void printMailBox();
+
+bitUndo makeMove(bitboard* board, bitMove m);
+
+void undoMove(bitboard* board, const bitMove m, const bitUndo u);
 
 #endif

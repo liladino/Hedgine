@@ -286,7 +286,7 @@ static inline int sideEval(const bitboard* const board, bool tomove){
 
 int fulleval(const bitboard* const board, bool tomove, int depth){
 	//~ printBitBoard2d(*board);
-	resultconst r = gameend(*board, tomove);
+	resultconst r = gameend(board, tomove);
 	if (r == DRAW) return DRAW;
 	if (r != ONGOING) return (BLACKWON - 100 + depth);
 	

@@ -1,10 +1,11 @@
 #include "headers/engine.h"
 
 const move nullmove = {{-1, -1}, {-1, -1}, 0};
+const bitMove nullBitMove = {0, 0, 0, 0, 0};
 
-static int intmax(int a, int b){
-	return (a > b ? a : b);
-}
+//~ static int intmax(int a, int b){
+	//~ return (a > b ? a : b);
+//~ }
 
 static int absint(int a){
 	return (a < 0 ? -a : a);
@@ -85,15 +86,13 @@ move randomBot(bitboard board, bool tomove){
 	time_t t;
 	srand((unsigned) time (&t));
 	movearray legalmoves;
-	bitGenerateLegalmoves(&legalmoves, board, tomove, false);
+	bitGenerateLegalmoves(&legalmoves, &board, tomove, false);
 	
-	int i = (rand() % legalmoves.size);
-	move m = boardConvertTomove(&board, &legalmoves.boards[i], tomove);
-	
-	return m;
+	int i = (rand() % legalmoves.size); 
+	return convertBitMoveToMove(legalmoves.array[i]);
 }
 
-move PV     [MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
+bitMove PV [MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
 
 u64 nextp; //next position
 int maxdepth;
@@ -101,29 +100,30 @@ int absoluteMaxDepth = MAXSEARCHDEPTH;
 
 bool stopSearch = false;
 
-static int quiescenceSearch(bitboard board, bool tomove, int alpha, int beta){
-	int eval = fulleval(&board, tomove, maxdepth);
-	if (eval >= beta) return beta;
-	alpha = intmax(alpha, eval);
+//~ static int quiescenceSearch(bitboard board, bool tomove, int alpha, int beta){
+	//~ int eval = fulleval(&board, tomove, maxdepth);
+	//~ if (eval >= beta) return beta;
+	//~ alpha = intmax(alpha, eval);
 	
-	movearray legalmoves;
-	bitGenerateLegalmoves(&legalmoves, board, tomove, true);
-	if (legalmoves.size == 0){
-		return eval;
-	}
+	//~ movearray legalmoves;
+	//~ bitGenerateLegalmoves(&legalmoves, board, tomove, true);
+	//~ if (legalmoves.size == 0){
+		//~ return eval;
+	//~ }
 	
-	for (int i = 0; i < legalmoves.size; i++){
-		int eval = -quiescenceSearch(legalmoves.boards[i], !tomove, -beta, -alpha);
-		if (eval >= beta){
-			return beta;
-		}
-		alpha = intmax(alpha, eval);
-	}
-	return alpha;
-}
+	//~ for (int i = 0; i < legalmoves.size; i++){
+		//~ int eval = -quiescenceSearch(legalmoves.boards[i], !tomove, -beta, -alpha);
+		//~ if (eval >= beta){
+			//~ return beta;
+		//~ }
+		//~ alpha = intmax(alpha, eval);
+	//~ }
+	//~ return alpha;
+//~ }
 
 unsigned int searchedNodes;
 
+/*
 int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	searchedNodes++;
 	if (searchedNodes % 2011 == 2){
@@ -211,12 +211,12 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 	if (oddity) storePosTT(board.hashValue, -alpha, flag, depth, maxdepth);
 	else storePosTT(board.hashValue, alpha, flag, depth, maxdepth);
 	return alpha;
-}
+}*/
 
 static inline void emptyPVTable(){
 	for (int i = 0; i <= MAXSEARCHDEPTH; i++){
 		for (int j = 0; j <= MAXSEARCHDEPTH; j++){
-			PV[i][j] = nullmove;
+			PV[i][j] = nullBitMove;
 		}
 	}
 }
@@ -227,6 +227,7 @@ move engine(bitboard board, bool tomove){
 	nextp = 0;
 	
 	#ifdef DEBUG
+	printBitBoard2d(stdout, board);
 	if (info.timeControl) fprintf(debugOutput, "thinking time %d\n", info.moveTime);
 	#endif
 
@@ -240,12 +241,12 @@ move engine(bitboard board, bool tomove){
 		
 		maxdepth = i;
 		
-		eval = search(board, tomove, 0, NegINF, PosINF);
+		eval = 0;//search(board, tomove, 0, NegINF, PosINF);
 		
 		//store the best move with a special flag to make sure next search starts with it
 		storePosTT(nextp, eval, LAST_BEST_EVAL_FLAG, 0, maxdepth);
 		
-		if (PV[0][0].from.rank != -1) nextm = PV[0][0];
+		if (PV[0][0].from != PV[0][0].to) nextm = convertBitMoveToMove(PV[0][0]);
 		
 		if (stopSearch){
 			printf("info depth %d score cp %d\n", i, lastEval);
@@ -286,10 +287,10 @@ move engine(bitboard board, bool tomove){
 			#endif
 		}
 		
-		for (int j = 0; j < i && PV[0][j].from.rank != -1 && !stopSearch; j++){
-			printmove(stdout, PV[0][j]);
+		for (int j = 0; j < i && PV[0][j].from != PV[0][j].to && !stopSearch; j++){
+			printmove(stdout, convertBitMoveToMove(PV[0][j]));
 			#ifdef DEBUG
-			printmove(debugOutput, PV[0][j]);
+			printmove(debugOutput, convertBitMoveToMove(PV[0][j]));
 			#endif
 		}
 		printf("\n");
@@ -318,12 +319,11 @@ move CPU(int cpulvl, bitboard bboard, bool tomove){
 	squarenums start = {-1, -1};
 	move m = initializemove(start, start, 0);
 	//~ bitboard bboard = boardConvert(board, castling, enpass, tomove);
-
-	//Engine depth should be determined by the maximum depth it can reach or the thinking time
-	//i'm thinking max depth is slightly more reasonable
 	
 	if (cpulvl < 0) cpulvl = 0;
 	if (cpulvl > 39) cpulvl = 39;
+	
+	cpulvl = 0;
 	
 	if (cpulvl == 0){
 		#define millisec 1000

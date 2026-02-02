@@ -8,8 +8,10 @@ void printmove(FILE* ostream, move m) {
 void printLegalmoves(movearray legalmoves, bitboard board, bool tomove){
 	printf("\nLegal moves:\n");
 	for (int i = 0; i < legalmoves.size; i++){
-		printmove(stdout, boardConvertTomove(&board, &legalmoves.boards[i], tomove));
-		printHashEntry(legalmoves.boards[i].hashValue);
+		printmove(stdout, convertBitMoveToMove(legalmoves.array[i]));
+		bitUndo u = makeMove(&board, legalmoves.array[i]);
+		printHashEntry(board.hashValue);
+		undoMove(&board, legalmoves.array[i], u);
 		//~ printf("%lf\n", legalmoves.boards[i].eval * 0.01);
 	}
 }
@@ -87,6 +89,17 @@ void printBitPiece(u64 piece){
 	a = a << 63;
 	for (int i = 63; i >= 0; i--){
 		printf("%lld", (piece & a) >> i);
+		a = a >> 1;
+		if (i % 8 == 0) printf(" ");
+	}
+	printf("\n");
+}
+
+void printBitsOfNumber(u64 number, int numberOfBits){
+	u64 a = 1;
+	a = a << (numberOfBits-1);
+	for (int i = numberOfBits-1; i >= 0; i--){
+		printf("%lld", (number & a) >> i);
 		a = a >> 1;
 		if (i % 8 == 0) printf(" ");
 	}
