@@ -1,7 +1,9 @@
 Date:	Feb 02 2026:
 	the program builds again, tho tests not perfect, as hash still needs to be
 	impemented.
-	Move making debug still in need.
+	Move making debug still in need. Probably some sort of en passant problem:
+	the issue doesn't seem to depend on the side anymore, and is present in 
+	position 3, which is an endgame.
 	
 	the speed gain is promising: ~0.53 -> ~0.4 for all tests.
 	
