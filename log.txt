@@ -1,6 +1,9 @@
 Date:	Feb 02 2026:
 	the program builds again, tho tests not perfect, as hash still needs to be
 	impemented.
+	Move making debug still in need.
+	
+	the speed gain is promising: ~0.53 -> ~0.4 for all tests.
 	
 Date:	Jan 28 2026:
 	makeMove and undoMove functions, wrote tests for them.

@@ -350,10 +350,10 @@ static inline void setcastlingrights(bitboard* board, bitMove m){
 		board->castlerights &= ~(WQUEENSIDE);
 	}
 	else if (m.from == 62 && mailbox[m.from] == bking){
-		hashCastleO(board, WKINGSIDE);
-		hashCastleO(board, WQUEENSIDE);
-		board->castlerights &= ~(WKINGSIDE);
-		board->castlerights &= ~(WQUEENSIDE);
+		hashCastleO(board, BKINGSIDE);
+		hashCastleO(board, BQUEENSIDE);
+		board->castlerights &= ~(BKINGSIDE);
+		board->castlerights &= ~(BQUEENSIDE);
 	}
 }
 

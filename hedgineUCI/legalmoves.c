@@ -78,9 +78,8 @@ static inline u64 pop_lsb(u64 *var) {
 }
 
 bool bitInCheck(const bitboard* const board, bool tomove){
-	//~ int coloffset = tomove == white ? bking : wking;
-	//~ u64 kingbit = (tomove == white ? board->piece[wking] : board->piece[bking]);
-		
+	//~ printBitBoard2d(stdout, *board);
+	
 	int kingIndex = __builtin_ctzll((tomove == white ? board->piece[wking] : board->piece[bking]));
 	
 	if (tomove == white){
@@ -91,7 +90,7 @@ bool bitInCheck(const bitboard* const board, bool tomove){
 		if (board->piece[wpawn] & bpawnTakes[kingIndex]) return true;
 		if (board->piece[wknight] & knightMoves[kingIndex]) return true;
 	}
-		
+
 	{
 		u64 friendly = enemypieces(board, tomove);
 		u64 enemy = enemypieces(board, !tomove);
@@ -183,120 +182,30 @@ static void addBitKingMoves(movearray* moves, const bitboard* const board, bool 
 	
 	addMoves(moves, i, onlyCaptures, enemy, friendly, piece, possiblemoves);
 	
+	u64 allpieces = enemy | friendly;
+	u64 mask = 1LLU << i;
 	if (onlyCaptures){
 		//add castling too, like if it was a capture 
 		if (tomove == white && i == 4) {
-			if ((board->castlerights & WKINGSIDE)) {
+			if ((board->castlerights & WKINGSIDE) && ((allpieces & (mask << 1)) == 0) && ((allpieces & (mask << 2)) == 0)) {
 				legalmoves[(*array_index)++] = (bitMove){i, 6, piece, -1, CASTLE_FLAG};
 			}
 			
-			if ((board->castlerights & WQUEENSIDE)) {
+			if ((board->castlerights & WQUEENSIDE) && ((allpieces & (mask >> 1)) == 0) && ((allpieces & (mask >> 2)) == 0) && ((allpieces & (mask >> 3)) == 0)) {
 				legalmoves[(*array_index)++] = (bitMove){i, 2, piece, -1, CASTLE_FLAG};
 			}
 		}
 		else if (tomove == black && i == 60) {
-			if ((board->castlerights & BKINGSIDE)) {
+			if ((board->castlerights & BKINGSIDE) && ((allpieces & (mask << 1)) == 0) && ((allpieces & (mask << 2)) == 0)) {
 				legalmoves[(*array_index)++] = (bitMove){i, 62, piece, -1, CASTLE_FLAG};
 			}
 			
-			if ((board->castlerights & BQUEENSIDE)) {
+			if ((board->castlerights & BQUEENSIDE) && ((allpieces & (mask >> 1)) == 0) && ((allpieces & (mask >> 2)) == 0) && ((allpieces & (mask >> 3)) == 0)) {
 				legalmoves[(*array_index)++] = (bitMove){i, 58, piece, -1, CASTLE_FLAG};
 			}
 		}
 	}
 }
-
-//~ (movearray* moves, const bitboard* const board, bool tomove, u64 piece, int i, bool onlyCaptures, u64 enemy, u64 friendly){
-	//~ bitboard copy = board;
-	//~ int coloffset = wking + (tomove != white ? bking : wking);
-	
-	//~ bitboard* legalmoves = moves->boards;
-	//~ int* array_index = &(moves->size);
-	
-	//~ #define ADDKINGMOVE() do { board.enpassanttarget = 0; if (!bitInCheck(&board, tomove)) { legalmoves[(*array_index)++] = board; } board = copy; } while(0);
-	
-	//~ if (onlyCaptures){
-		//~ /* these should be set when we trz to take east or west, so that the
-		 //~ * castling can know, if it will travel through a check */ 
-		//~ bool kingSideCastle = false, queenSideCastle = false;
-		
-		//~ //set castle possibility shit
-		//~ if (((tomove == white && i == 4) || (tomove == black && i == 60)) && (!bitInCheck(&board, tomove))){
-			//~ if ((((piece >> west) | (piece >> 2 * west) | (piece >> 3 * west)) & (friendly | enemy)) == 0){
-				//~ //nothing is there, check if its in check, BUT DO NOT ADD THE MOVE
-				//~ board.piece[coloffset] = piece >> west;
-				//~ board.enpassanttarget = 0; 
-				//~ if (!bitInCheck(&board, tomove)) { 
-					//~ queenSideCastle = true;
-				//~ } 
-				//~ board = copy;
-			//~ }
-			//~ if ((((piece << east) | (piece << 2 * east)) & (friendly | enemy)) == 0){
-				//~ board.piece[coloffset] = piece << east;
-				//~ board.enpassanttarget = 0; 
-				//~ if (!bitInCheck(&board, tomove)) { 
-					//~ kingSideCastle = true;
-				//~ } 
-				//~ board = copy;
-			//~ }			
-		//~ }
-		
-		//~ //taking
-		//~ u64 possiblemoves = kingAttacks[i] & enemy;
-	
-		//~ while (possiblemoves) { 
-			//~ u64 currentmove = pop_lsb(&possiblemoves); 
-			
-			//~ board.piece[coloffset] = currentmove; //move the king bit
-			//~ board.castlerights &= (tomove == white ? 12 : 3); //delete castling rights
-			//~ deletePiece(&board, currentmove);
-			//~ ADDKINGMOVE();
-		//~ }
-		
-		//~ //castling is not a capture, but its good to look for early on
-		//~ if (tomove == white && i == 4){
-			//~ if (kingSideCastle && board.castlerights & WKINGSIDE){
-				//~ board.piece[wking] = piece << (east * 2); //move the king bit
-				//~ board.piece[wrook] ^= (piece << east) | (piece << (east * 3)); //move the rook bit 
-				//~ board.castlerights &= 12; //delete white castling rights
-				//~ ADDKINGMOVE();
-			//~ }
-			
-			//~ if (queenSideCastle && board.castlerights & WQUEENSIDE){
-				//~ board.piece[wking] = piece >> (west * 2); //move the king bit
-				//~ board.piece[wrook] ^= (piece >> west) | (piece >> (west * 4)); //move the rook bit
-				//~ board.castlerights &= 12; //delete white castling rights
-				//~ ADDKINGMOVE();
-			//~ }
-		//~ }
-		//~ if (tomove == black && i == 60){
-			//~ if (kingSideCastle && board.castlerights & BKINGSIDE){
-				//~ board.piece[bking] = piece << (east * 2); //move the king bit
-				//~ board.piece[brook] ^= (piece << east) | (piece << (east * 3)); //move the rook bit
-				//~ board.castlerights &= 3; //delete black castling rights
-				//~ ADDKINGMOVE();
-			//~ }
-			
-			//~ if (queenSideCastle && board.castlerights & BQUEENSIDE){
-				//~ board.piece[bking] = (piece >> (west * 2)); //move the king bit
-				//~ board.piece[brook] ^= (piece >> west) | (piece >> (west * 4)); //move the rook bit
-				//~ board.castlerights &= 3; //delete black castling rights
-				//~ ADDKINGMOVE();
-			//~ }
-		//~ }
-	//~ }
-	//~ else{
-		//~ u64 possiblemoves = kingAttacks[i] & ~(enemy | friendly);
-	
-		//~ while (possiblemoves) { 
-			//~ u64 currentmove = pop_lsb(&possiblemoves); 
-			
-			//~ board.piece[coloffset] = currentmove; //move the king bit
-			//~ board.castlerights &= (tomove == white ? 12 : 3); //delete castling rights
-			//~ ADDKINGMOVE();
-		//~ }
-	//~ }
-//~ }
 
 static void addBitPawnMoveWhite(movearray* moves, const bitboard* const board, u64 piecemask, int i, bool onlyCaptures, u64 enemy, u64 friendly){	
 	int *array_index = &(moves->size);
