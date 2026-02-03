@@ -30,7 +30,7 @@ debug: CFLAGS += -g -DDEBUG
 debug: $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $^
 
-opt: CFLAGS += -O3 -Wconversion
+opt: CFLAGS += -O3
 opt: $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $^
 	

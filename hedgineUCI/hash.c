@@ -1,7 +1,7 @@
 #include "headers/hash.h"
 
-int TTableSizeMB = 0;
-int TTableSize = 0;
+u64 TTableSizeMB = 0;
+u64 TTableSize = 0;
 TThashentry* TranspositionTable = NULL;
 
 typedef struct key{
@@ -20,9 +20,9 @@ typedef struct key{
 
 key Zobrist;
 
-TThashentry* allocTransTable(const int sizeInMB){
+TThashentry* allocTransTable(const unsigned int sizeInMB){
 	TTableSizeMB = sizeInMB;
-	TTableSize = TTableSizeMB * 1024 * 1024 / sizeof(TThashentry);	
+	TTableSize = TTableSizeMB * 1024llu * 1024llu / sizeof(TThashentry);	
 	if (sizeInMB == 0){
 		TTableSize++;
 	}
@@ -136,7 +136,7 @@ TThashentry* lookup(const u64 position){
 }
 
 void printTransTable(){
-	for (int i = 0; i < TTableSize; i++){
+	for (size_t i = 0; i < TTableSize; i++){
 		if (TranspositionTable[i].pos != 0){
 			printf("place: %lld\n", TranspositionTable[i].pos % (TTableSize));
 		/*	printf("hash: ");
@@ -149,7 +149,7 @@ void printTransTable(){
 }
 
 void clearTransTable(){
-	for (int i = 0; i < TTableSize; i++){
+	for (size_t i = 0; i < TTableSize; i++){
 		TranspositionTable[i].pos = 0;
 	}
 }

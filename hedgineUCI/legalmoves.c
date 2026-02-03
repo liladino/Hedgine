@@ -128,7 +128,7 @@ static void addMoves(movearray* moves, int i, bool onlyCaptures, u64 enemy, u64 
 		while (possiblecaptures) { 
 			u64 currentmove = pop_lsb(&possiblecaptures); 
 			
-			bitMove m = (bitMove){i, __builtin_ctzll(currentmove), piece, -1, CAPTURE_FLAG};
+			bitMove m = (bitMove){(size_t)i, __builtin_ctzll(currentmove), piece, -1, CAPTURE_FLAG};
 			legalmoves[(*array_index)++] = m;			
 		}
 	}
@@ -138,7 +138,7 @@ static void addMoves(movearray* moves, int i, bool onlyCaptures, u64 enemy, u64 
 		while (possiblemoves) { 
 			u64 currentmove = pop_lsb(&possiblemoves); 
 			
-			bitMove m = (bitMove){i, __builtin_ctzll(currentmove), piece, -1, 0};
+			bitMove m = (bitMove){(size_t)i, __builtin_ctzll(currentmove), piece, -1, 0};
 			legalmoves[(*array_index)++] = m;
 		}
 	}
@@ -384,4 +384,22 @@ resultconst gameend(const bitboard* const board, bool tomove){
 	
 	if (bitInCheck(board, tomove)) return (tomove == white ? BLACKWON : WHITEWON);
 	return DRAW;
+}
+
+bool isCastlingLegal(bitboard* board, bool tomove, const bitMove* const mv){
+	if ((mv->flags & CASTLE_FLAG)){
+		if (bitInCheck(board, tomove)) { return false; }
+		
+		//check the pasing square if it's a check
+		bitMove m = *mv;
+		m.to = (m.from + m.to) / 2;
+		m.flags = 0;
+		
+		bitUndo u = makeMove(board, m);
+		bool con = bitInCheck(board, tomove);
+		undoMove(board, m, u);
+		
+		if (con) { return false; }
+	}
+	return true;
 }

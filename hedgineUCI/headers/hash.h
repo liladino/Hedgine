@@ -17,7 +17,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-TThashentry* allocTransTable(const int sizeInMB);
+TThashentry* allocTransTable(const unsigned int sizeInMB);
 
 void setHashKey();
 

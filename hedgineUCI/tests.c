@@ -105,20 +105,10 @@ int perfTest(bitboard* board, bool tomove, int depth){
 	bitGenerateLegalmoves(&legalmoves, board, tomove, false);
 	int all = 0;
 	for (int i = 0; i < legalmoves.size; i++){
-		if ((legalmoves.array[i].flags & CASTLE_FLAG)){
-			if (bitInCheck(board, tomove)) { continue; }
-			
-			//check the pasing square if it's a check
-			bitMove m = legalmoves.array[i];
-			m.to = (legalmoves.array[i].from + legalmoves.array[i].to) / 2;
-			m.flags = 0;
-			
-			bitUndo u = makeMove(board, m);
-			bool con = bitInCheck(board, tomove);
-			undoMove(board, m, u);
-			
-			if (con) { continue; }
+		if (!isCastlingLegal(board, tomove, &legalmoves.array[i])){
+			continue;
 		}
+		
 		//~ bitMove temp = legalmoves.array[i];
 		bitUndo u = makeMove(board, legalmoves.array[i]);
 		
