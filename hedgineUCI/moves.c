@@ -449,10 +449,10 @@ bitUndo makeMove(bitboard* board, bitMove m){
 		hashEnPassantIO(board, 8);
 		
 		if ((m.flags & EN_PASSANT_FLAG)){
-			uint8_t enpasssq = (m.to > 31 ? m.to+8 : m.to-8);
+			uint8_t enpasssq = (m.to > 31 ? m.to-8 : m.to+8);
 			undo.capturedPiece = mailbox[enpasssq];
 			MOVEPIECE(mailbox[m.from], m.from, m.to);
-			DELETEPIECE(mailbox[enpasssq], m.to);
+			DELETEPIECE(mailbox[enpasssq], enpasssq);
 			
 			hashPieceIO(board, m.from, mailbox[m.from]);
 			hashPieceIO(board, m.to, mailbox[m.from]);
@@ -546,7 +546,7 @@ void undoMove(bitboard* board, const bitMove m, const bitUndo u){
 	
 	if (u.capturedPiece != -1) {
 		if (m.flags & EN_PASSANT_FLAG){
-			uint8_t enpasssq = (m.to > 31 ? m.to+8 : m.to-8);
+			uint8_t enpasssq = (m.to > 31 ? m.to-8 : m.to+8);
 			mailbox[enpasssq] = u.capturedPiece;
 			board->piece[u.capturedPiece] |= 1LLU << enpasssq;
 		}

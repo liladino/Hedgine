@@ -1,3 +1,6 @@
+Date:	Feb 03 2026:
+	Hell yeah, it's working. Now i just need to do the hashing.
+	
 Date:	Feb 02 2026:
 	the program builds again, tho tests not perfect, as hash still needs to be
 	impemented.

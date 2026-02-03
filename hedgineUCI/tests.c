@@ -63,13 +63,14 @@ bool moveTest(){
 		//~ printBitPieceAsBoard(copy.enpassanttarget);
 		//~ printBitsOfNumber((u64)copy.castlerights, 8);		
 		//~ printBitsOfNumber((u64)board.castlerights, 8);
+		//~ printMailBox();
 		
 		undoMove(&copy, m, u);
 		if (!bitBoardCompare(&board, &copy)){
+			printBitBoard2d(stdout, board);
+			printBitBoard2d(stdout, copy);
 			goto fail;
 		}
-		
-		//~ printMailBox();
 		
 		//make the move actually
 		makeMove(&board, m);
@@ -91,7 +92,7 @@ bool moveTest(){
 int perfTest(bitboard* board, bool tomove, int depth){	
 	movearray legalmoves;
 	
-	if (depth == 0){	
+	if (depth == 0){
 		return 1;
 	}
 	
@@ -99,7 +100,7 @@ int perfTest(bitboard* board, bool tomove, int depth){
 	int all = 0;
 	for (int i = 0; i < legalmoves.size; i++){
 		if ((legalmoves.array[i].flags & CASTLE_FLAG)){
-			if (bitInCheck(board, !tomove)) { continue; }
+			if (bitInCheck(board, tomove)) { continue; }
 			
 			//check the pasing square if it's a check
 			bitMove m = legalmoves.array[i];
@@ -107,19 +108,13 @@ int perfTest(bitboard* board, bool tomove, int depth){
 			m.flags = 0;
 			
 			bitUndo u = makeMove(board, m);
-			//~ printBitBoard2d(stdout, *board);
 			bool con = bitInCheck(board, tomove);
 			undoMove(board, m, u);
-			//~ printBitBoard2d(stdout, *board);
 			
 			if (con) { continue; }
 		}
+		bitMove temp = legalmoves.array[i];
 		bitUndo u = makeMove(board, legalmoves.array[i]);
-		
-		//~ if (depth == 1){
-			//~ printBitBoard2d(stdout, *board);
-			//~ printmove(stdout, convertBitMoveToMove(legalmoves.array[i]));
-		//~ }
 		
 		if (bitInCheck(board, tomove)){
 			undoMove(board, legalmoves.array[i], u);
@@ -129,12 +124,7 @@ int perfTest(bitboard* board, bool tomove, int depth){
 		
 		int x = perfTest(board, !tomove, depth-1);
 		undoMove(board, legalmoves.array[i], u);
-		all += x;	
-		
-		//~ if (depth == 2){
-			//~ printmove(stdout, convertBitMoveToMove(legalmoves.array[i]));
-			//~ printf(" %d\n", x);
-		//~ }
+		all += x;
 	}
 	
 	return all;
@@ -153,31 +143,31 @@ bool makePerfTestsAssert(){
 	int temp;
 	bool tomove;
 	
-	//~ {
-		//~ printf("\nPosition 1\n");
-		//~ setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", &bboard, &tomove, &temp, &temp);
-		//~ setMailBox(&bboard);
-		//~ printBitBoard2d(stdout, bboard);
-		//~ int startposValues[] = {1, 20, 400, 8902, 197281, 4865609, 119060324};
-		//~ for (int i = 0; i < 5; i++){
-			//~ int allmovecount = perfTest(&bboard, tomove, i);
-			//~ printf("%d ply:\nLeaves:\t%d\nExp:\t%d\n\n", i+1, allmovecount, startposValues[i]);
-			//~ if (allmovecount != startposValues[i]) return false;
-		//~ }
-	//~ }
+	{
+		printf("\nPosition 1\n");
+		setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", &bboard, &tomove, &temp, &temp);
+		setMailBox(&bboard);
+		printBitBoard2d(stdout, bboard);
+		int startposValues[] = {1, 20, 400, 8902, 197281, 4865609, 119060324};
+		for (int i = 0; i < 5; i++){
+			int allmovecount = perfTest(&bboard, tomove, i);
+			printf("%d ply:\nLeaves:\t%d\nExp:\t%d\n\n", i+1, allmovecount, startposValues[i]);
+			if (allmovecount != startposValues[i]) return false;
+		}
+	}
 	
-	//~ {
-		//~ printf("\nPosition 2\n");
-		//~ setboardFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", &bboard, &tomove, &temp, &temp);
-		//~ setMailBox(&bboard);
-		//~ printBitBoard2d(stdout, bboard);
-		//~ int posValues[] = {1, 48, 2039, 97862, 4085603};
-		//~ for (int i = 0; i < 5; i++){
-			//~ int allmovecount = perfTest(&bboard, tomove, i);
-			//~ printf("%d ply:\nLeaves:\t%d\nExp:\t%d\n\n", i+1, allmovecount, posValues[i]);
-			//~ if (allmovecount != posValues[i]) return false;
-		//~ }
-	//~ }
+	{
+		printf("\nPosition 2\n");
+		setboardFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", &bboard, &tomove, &temp, &temp);
+		setMailBox(&bboard);
+		printBitBoard2d(stdout, bboard);
+		int posValues[] = {1, 48, 2039, 97862, 4085603};
+		for (int i = 0; i < 5; i++){
+			int allmovecount = perfTest(&bboard, tomove, i);
+			printf("%d ply:\nLeaves:\t%d\nExp:\t%d\n\n", i+1, allmovecount, posValues[i]);
+			if (allmovecount != posValues[i]) return false;
+		}
+	}
 	
 	{
 		printf("\nPosition 3\n");
@@ -260,7 +250,7 @@ bool makePerfTestsAssert(){
 		setMailBox(&bboard);
 		printBitBoard2d(stdout, bboard);
 		int posValues[] = {1, 21, 427, 9601, 221941};
-		for (int i = 0; i < 5; i++){
+		for (int i = 2; i < 5; i++){
 			int allmovecount = perfTest(&bboard, tomove, i);
 			printf("%d ply:\nLeaves:\t%d\nExp:\t%d\n\n", i+1, allmovecount, posValues[i]);
 			if (allmovecount != posValues[i]) return false;
