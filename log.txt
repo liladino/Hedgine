@@ -1,6 +1,9 @@
 Date:	Feb 03 2026:
 	Hell yeah, it's working. Now i just need to do the hashing.
 	
+	Update: hashing works too. Deleted the Mersenne twister, as I found
+	out that it's not great for Zobrist.
+	
 Date:	Feb 02 2026:
 	the program builds again, tho tests not perfect, as hash still needs to be
 	impemented.

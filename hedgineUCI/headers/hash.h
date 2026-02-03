@@ -5,7 +5,7 @@
 #include "moves.h"
 #include "output.h"
 #include "legalmoves.h"
-#include "mtwister.h"
+#include "zobrrand.h"
 
 #ifdef DEBUG
 	#include "debugmalloc.h"

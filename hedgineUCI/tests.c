@@ -35,7 +35,7 @@ bool bitBoardCompare(const bitboard* const b1, const bitboard* const b2){
 	return true;
 }
 
-bool moveTest(){
+bool makeMoveTest(){
 	bitboard board;
 	bool tomove;
 	int temp;
@@ -43,27 +43,22 @@ bool moveTest(){
 	printBitBoard2d(stdout, board);
 	board.hashValue = hashPosition(&board, tomove);
 	
-	char* moves[] = {"h2h4", "d7d5", "h4h5", "c8g4", "h5h6", "b8c6", "h6g7", "d8d6", "g7h8n", "e8c8", "h1h2", "d5d4", "e2e4", "d4e3", "f2e3", "g4d1", "e1f2"}; //17
+	char* moves[] = {"h2h4", "d7d5", "h4h5", "c8g4", "h5h6", "b8c6", "h6g7", "d8d6", "g7h8n", "e8c8", "h1h2", "d5d4", "e2e4", "d4e3", "f2e3", "g4d1", "e1f2",
+		"h7h5", "h2h3", "h5h4", "h3f3", "h4h3", "f3f4", "h3h2", "f4f3", "h2h1r"}; //26
 	setMailBox(&board);
 	
 	//~ printMailBox();
 		
-	for (size_t i = 0; i < 17; i++){
+	for (size_t i = 0; i < 26; i++){
 		printf("%s\n", moves[i]);
-		
+				
 		bitboard copy = board;
 		bitMove m = convertMoveToBitMove(&copy, tomove, parseLongAlgebraicNotation(moves[i]));
 		bitUndo u = makeMove(&copy, m);
 		
-		//~ if (hashPosition(&copy, !tomove) != copy.hashValue){
-			//~ goto hashfail;
-		//~ }
-		
-		//~ printBitBoard2d(stdout, copy);
-		//~ printBitPieceAsBoard(copy.enpassanttarget);
-		//~ printBitsOfNumber((u64)copy.castlerights, 8);		
-		//~ printBitsOfNumber((u64)board.castlerights, 8);
-		//~ printMailBox();
+		if (hashPosition(&copy, !tomove) != copy.hashValue){
+			goto hashfail;
+		}
 		
 		undoMove(&copy, m, u);
 		if (!bitBoardCompare(&board, &copy)){
@@ -75,7 +70,13 @@ bool moveTest(){
 		//make the move actually
 		makeMove(&board, m);
 		tomove = !tomove;
+		
+		//~ printBitsOfNumber((u64)board.castlerights, 8);
 	}
+	printBitBoard2d(stdout, board);
+	printBitPieceAsBoard(board.enpassanttarget);
+	printBitsOfNumber((u64)board.castlerights, 8);
+	printMailBox();
 	
 	printf("makeMove & undoMove tests passed\n");
 	return true; 
@@ -91,6 +92,11 @@ bool moveTest(){
 
 int perfTest(bitboard* board, bool tomove, int depth){	
 	movearray legalmoves;
+	
+	//~ if (hashPosition(board, tomove) != board->hashValue){
+		//~ printf("Hashing failed!");
+		//~ return 0;
+	//~ }
 	
 	if (depth == 0){
 		return 1;
@@ -113,7 +119,7 @@ int perfTest(bitboard* board, bool tomove, int depth){
 			
 			if (con) { continue; }
 		}
-		bitMove temp = legalmoves.array[i];
+		//~ bitMove temp = legalmoves.array[i];
 		bitUndo u = makeMove(board, legalmoves.array[i]);
 		
 		if (bitInCheck(board, tomove)){
@@ -135,7 +141,7 @@ int perfTest(bitboard* board, bool tomove, int depth){
  * */
 bool makePerfTestsAssert(){
 	initializeAll();
-	if (!moveTest()) { return false; }
+	if (!makeMoveTest()) { return false; }
 	
 	//Source: https://www.chessprogramming.org/Perft_Results
 	

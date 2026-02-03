@@ -22,7 +22,7 @@ void printBitPieceAsBoard(u64 piece);
 void printmove(FILE* ostream, move m);
 
 #ifdef DEBUG
-void printLegalmoves(movearray legalmoves, bitboard board, bool tomove);
+void printLegalmoves(movearray legalmoves, bitboard board);
 #endif
 
 

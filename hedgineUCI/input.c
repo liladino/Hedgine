@@ -200,10 +200,10 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int *fmv, int *moven
 	}
 	
 	if (tomove_char == 'w'){
-		*tomove = 0;
+		*tomove = white;
 	}
 	else if (tomove_char == 'b'){
-		*tomove = 1;
+		*tomove = black;
 	}
 	else{
 		free(metadata);	
@@ -266,6 +266,8 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int *fmv, int *moven
 	free(metadata);
 	
 	(*bboard) = boardConvert(board, castling, enpass, tomove);
+	
+	bboard->hashValue = hashPosition(bboard, *tomove);
 	
 	return 0;
 }

@@ -5,7 +5,7 @@ void printmove(FILE* ostream, move m) {
 }
 
 #ifdef DEBUG
-void printLegalmoves(movearray legalmoves, bitboard board, bool tomove){
+void printLegalmoves(movearray legalmoves, bitboard board){
 	printf("\nLegal moves:\n");
 	for (int i = 0; i < legalmoves.size; i++){
 		printmove(stdout, convertBitMoveToMove(legalmoves.array[i]));
