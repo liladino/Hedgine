@@ -33,8 +33,8 @@ TThashentry* allocTransTable(const unsigned int sizeInMB){
 	clearTransTable();
 	
 	#ifdef DEBUG
-	fprintf(debugOutput, "Transposition Table:\t%d MB, %d entry\n", TTableSizeMB, TTableSize);
-	fprintf(debugOutput, "Repetition Table:\t%lf kB, %d entry\n", (double) REPETITION_TABLE_SIZE * sizeof(u64) / 1024, REPETITION_TABLE_SIZE);
+	fprintf(debugOutput, "Transposition Table:\t%lld MB, %lld entry\n", TTableSizeMB, TTableSize);
+	fprintf(debugOutput, "Repetition Table:\t%lf kB, %lld entry\n", (double) REPETITION_TABLE_SIZE * sizeof(u64) / 1024, REPETITION_TABLE_SIZE);
 	#endif
 	return TranspositionTable;
 }
