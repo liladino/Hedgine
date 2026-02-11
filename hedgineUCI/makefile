@@ -6,10 +6,6 @@ ifdef DEBUG
 CFLAGS += -g -DDEBUG
 endif
 
-ifdef OPT
-CFLAGS += -O3
-endif
-
 ifdef BENCH
 CFLAGS += -O3 -DBENCH
 endif
@@ -28,6 +24,22 @@ all: $(OBJS)
 
 debug: CFLAGS += -g -DDEBUG
 debug: $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET) $^
+
+opt0: CFLAGS += -O0
+opt0: $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET) $^
+
+opt1: CFLAGS += -O1
+opt1: $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET) $^
+
+opt2: CFLAGS += -O2
+opt2: $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET) $^
+
+opt3: CFLAGS += -O3
+opt3: $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $^
 
 opt: CFLAGS += -O3

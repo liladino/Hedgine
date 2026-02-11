@@ -1,5 +1,6 @@
 /**
- * MODIFIED BY liladino 2025. 03. 11.
+ * MODIFIED BY B.M. 2025. 03. 11.
+ * deleted most unused parts, removed DEFINEs.
  * 
  *magicmoves.c
  *
