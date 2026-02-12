@@ -32,7 +32,7 @@ int readHashEntry(u64 hashValue, int remainingDepth, int depth, int alpha, int b
 
 //~ move readHashEntryMove(const u64 pos);
 
-void storePosTT(const u64 pos, const int eval, const evalflag flag, const int depth, const int maxdepth);
+void storePosTT(const u64 hashValue, int eval, evalflag flag, int depthRemaining, int depthSearched, const bitMove* const m);
 
 void hashPieceIO(bitboard *board, int sq, int piece);
 
@@ -56,7 +56,7 @@ void clearTransTable();
 
 //~ void rmBestMoveFlag(u64 pos);
 
-extern int RTwriteIndex;
+extern int g_RTwriteIndex;
 
 void storeRepetiton(const u64 pos); 
 

@@ -1,5 +1,10 @@
 #include "headers/hash.h"
 
+/*
+ * The transposition table logic is partly based on Sebastian Lague's 
+ * implementation.
+ * */
+
 u64 TTableSizeMB = 0;
 u64 TTableSize = 0;
 TThashentry* TranspositionTable = NULL;
@@ -158,17 +163,16 @@ void clearTransTable(){
 u64 s_Rcollision = 0;
 u64 s_Reads = 0;
 u64 s_Wcollision = 0;
-u64 s_Wmatch = 0;
+u64 s_Writes = 0;
 
 void printCollisionStats(){
 	//~ printTransTable();
 	printf("TTable reading:\n");
 	printf("Collisions: %llu\n", s_Rcollision);
-	printf("Collision ratio: %lf\n\n", (double)s_Rcollision / s_Reads);
-	//~ printf("Writing:\n");
-	//~ printf("Collisions: %llu\n", s_Wcollision);
-	//~ printf("Matches: %llu\n", s_Wmatch);
-	//~ printf("Ratio to all: %lf\n\n", (double)s_Wmatch / (s_Wmatch + s_Wcollision + 1));
+	printf("Collision ratio: %lf\n\n", (double)s_Rcollision / (s_Reads + 1));
+	printf("Writing:\n");
+	printf("Collisions: %llu\n", s_Wcollision);
+	printf("Collision ratio: %lf\n\n", (double)s_Wcollision / (s_Writes + 1));
 	
 	u64 count = 0;
 	for (size_t i = 0; i < TTableSize; i++){
@@ -181,79 +185,11 @@ void printCollisionStats(){
 	printf("All: %lld\n", TTableSize);
 	printf("Ratio to all: %lf\n", (double)count / TTableSize);
 	
-	s_Rcollision = s_Rmatch = 0;
-	s_Wcollision = s_Wmatch = 0;
+	//~ s_Rcollision = s_Reads = 0;
+	//~ s_Wcollision = s_Writes = 0;
 }
+
 #endif
-
-		/*public int LookupEvaluation(int depth, int plyFromRoot, int alpha, int beta)
-		{
-			if (!enabled)
-			{
-				return LookupFailed;
-			}
-			Entry entry = entries[Index];
-
-			if (entry.key == board.CurrentGameState.zobristKey)
-			{
-				// Only use stored evaluation if it has been searched to at least the same depth as would be searched now
-				if (entry.depth >= depth)
-				{
-					int correctedScore = CorrectRetrievedMateScore(entry.value, plyFromRoot);
-					// We have stored the exact evaluation for this position, so return it
-					if (entry.nodeType == Exact)
-					{
-						return correctedScore;
-					}
-					// We have stored the upper bound of the eval for this position. If it's less than alpha then we don't need to
-					// search the moves in this position as they won't interest us; otherwise we will have to search to find the exact value
-					if (entry.nodeType == UpperBound && correctedScore <= alpha)
-					{
-						return correctedScore;
-					}
-					// We have stored the lower bound of the eval for this position. Only return if it causes a beta cut-off.
-					if (entry.nodeType == LowerBound && correctedScore >= beta)
-					{
-						return correctedScore;
-					}
-				}
-			}
-			return LookupFailed;
-		}
-
-		public void StoreEvaluation(int depth, int numPlySearched, int eval, int evalType, Move move)
-		{
-			if (!enabled)
-			{
-				return;
-			}
-			ulong index = Index;
-
-			//if (depth >= entries[Index].depth) {
-			Entry entry = new Entry(board.CurrentGameState.zobristKey, CorrectMateScoreForStorage(eval, numPlySearched), (byte)depth, (byte)evalType, move);
-			entries[Index] = entry;
-			//}
-		}
-
-		int CorrectMateScoreForStorage(int score, int numPlySearched)
-		{
-			if (Searcher.IsMateScore(score))
-			{
-				int sign = System.Math.Sign(score);
-				return (score * sign + numPlySearched) * sign;
-			}
-			return score;
-		}
-
-		int CorrectRetrievedMateScore(int score, int numPlySearched)
-		{
-			if (Searcher.IsMateScore(score))
-			{
-				int sign = System.Math.Sign(score);
-				return (score * sign - numPlySearched) * sign;
-			}
-			return score;
-		}*/
 
 static inline int i_abs(int a){
 	return (a < 0 ? -a : a);
@@ -262,6 +198,13 @@ static inline int i_abs(int a){
 int correctMateScore(int score, int numPlySearched) {
 	if (isMateScore(score)) {
 		return (i_abs(score) - numPlySearched) * (score < 0 ? -1 : 1);
+	}
+	return score;
+}
+
+int correctMateScoreForStorage(int score, int numPlySearched) {
+	if (isMateScore(score)) {
+		return (i_abs(score) + numPlySearched) * (score < 0 ? -1 : 1);
 	}
 	return score;
 }
@@ -274,7 +217,7 @@ int readHashEntry(u64 hashValue, int remainingDepth, int depth, int alpha, int b
 
 	if (entry->pos != hashValue) {
 		#ifdef DEBUG
-		if (current->pos != 0) s_Rcollision++;
+		if (0 != entry->pos) s_Rcollision++;
 		#endif
 		return NO_HASH_ENTRY;
 	}
@@ -319,25 +262,22 @@ int readHashEntry(u64 hashValue, int remainingDepth, int depth, int alpha, int b
 	return NO_HASH_ENTRY;
 }
 
-void storePosTT(const u64 pos, const int eval, const evalflag flag, const int depth, const int maxdepth){
-	u64 current = pos % TTableSize;
+void storePosTT(const u64 hashValue, int eval, evalflag flag, int depthRemaining, int depthSearched, const bitMove* const m) {
+	if (!HASHING_ENABLED) {
+		return;
+	}
+	u64 current = hashValue % TTableSize;
+	
 	#ifdef DEBUG
-	if (TranspositionTable[current].pos == 0) s_Wmatch++;
-	else s_Wcollision++;
+	if (TranspositionTable[current].pos != 0) s_Wcollision++;
+	s_Writes++;
 	#endif
 	
-	TranspositionTable[current].pos = pos; //key 
-	TranspositionTable[current].eval = eval;
+	TranspositionTable[current].pos = hashValue; //key 
+	TranspositionTable[current].eval = correctMateScoreForStorage(eval, depthSearched);
 	TranspositionTable[current].flag = flag;
-	TranspositionTable[current].depth = maxdepth - depth;
-	//~ TranspositionTable[current].m = m;
-	//~ TranspositionTable[current].next = next;
-	
-	
-	//~ printf("tablesize: %ld\n", TTableSize);
-	//~ printf("currenthash: \n");
-	//~ printBitPieceAsBoard(pos);
-	//~ printTransTable();
+	TranspositionTable[current].depth = depthRemaining;
+	TranspositionTable[current].m = *m;
 }
 
 void printHashEntry(u64 pos){
@@ -394,8 +334,8 @@ void orderMoves(movearray* legalmoves){
  * REPETITION TABLE
  * */
 
-u64 RepetitionTable[REPETITION_TABLE_SIZE];
-int RTwriteIndex = 0;
+u64 s_RepetitionTable[REPETITION_TABLE_SIZE];
+int g_RTwriteIndex = 0;
 
 /* The last capture, castling or pawn move marks the last position that could be
  * a repetition. When reading the moves from the input, we can reset the write 
@@ -408,24 +348,24 @@ int RTwriteIndex = 0;
  * The position is considered a DRAW after the FIRST repetition, so the engine
  * avoids previous positions like fire, if it think's it's better. */
 
+// TODO: don't search all the way back to 0 index, only up to the last capture 
 bool isRepetition(const u64 pos){
-	for (int i = (RTwriteIndex > REPETITION_TABLE_SIZE ? REPETITION_TABLE_SIZE : RTwriteIndex); i >= 0; i--){
-		if (RepetitionTable[i] == pos)	return true;
+	for (int i = (g_RTwriteIndex > REPETITION_TABLE_SIZE ? REPETITION_TABLE_SIZE : g_RTwriteIndex); i >= 0; i--){
+		if (s_RepetitionTable[i] == pos)	return true;
 	}
 	
 	return false;
 }
 
 void storeRepetiton(const u64 pos){
-	RTwriteIndex++;
+	g_RTwriteIndex++;
 	
-	if (RTwriteIndex < REPETITION_TABLE_SIZE){
+	if (g_RTwriteIndex < REPETITION_TABLE_SIZE){
 		//store the position if there's room for it	
-		RepetitionTable[RTwriteIndex] = pos;
+		s_RepetitionTable[g_RTwriteIndex] = pos;
 	}
 } 
 
-
 void rmLastRepetition(){
-	if (RTwriteIndex > 0) RTwriteIndex--;
+	if (g_RTwriteIndex > 0) g_RTwriteIndex--;
 }

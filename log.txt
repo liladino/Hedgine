@@ -6,6 +6,8 @@ Date:	Feb 12 2026:
 	TT must be reexamined VERY carefully, because I changed the reading logic
 	(as I was very much not satisfied with what I've cooked up before).
 	
+	Done a half baked job, testing needs to be done.
+	
 	Reconsidered my naming conventions:
 		s_var => static (file scoped global) variable
 		g_var => (multi file) global variable

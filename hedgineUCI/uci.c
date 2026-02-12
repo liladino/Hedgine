@@ -120,7 +120,7 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 			last.enpassanttarget != board->enpassanttarget || 
 			lastMoveWasCapture(&last, m, tomove)
 				){
-			RTwriteIndex = 0;
+			g_RTwriteIndex = 0;
 		}
 		storeRepetiton(board->hashValue);
 		

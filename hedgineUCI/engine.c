@@ -7,14 +7,14 @@ const move    NULLMOVE = {{-1, -1}, {-1, -1}, 0};
 const bitMove NULLBITMOVE = {0, 0, 0, 0, 0};
 #define PosINF   2147480000  //less than 2^31 to avoid possible overflow
 #define NegINF  -2147480000
-#define MATE_NOW 2147400000
+#define MATE_NOW WHITEWON
 #define MAXSEARCHDEPTH 40
 
 /*
  * STATICS & GLOBALS
  * */
 static bitMove      s_PVtable [MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
-static u64          s_nextp; //next position
+static bitMove      s_nextmove;
 static int          s_maxdepth;
 static int          s_absoluteMaxDepth = MAXSEARCHDEPTH;
 static unsigned int s_searchedNodes;
@@ -64,40 +64,53 @@ move randomBot(bitboard board, bool tomove){
 	return convertBitMoveToMove(legalmoves.array[i]);
 }
 
-//~ static int quiescenceSearch(bitboard board, bool tomove, int alpha, int beta){
-	//~ int eval = fulleval(&board, tomove, s_maxdepth);
-	//~ if (eval >= beta) return beta;
-	//~ alpha = intmax(alpha, eval);
+static int quiescenceSearch(bool tomove, int alpha, int beta){
+	s_searchedNodes++;
+	if (2026 == s_searchedNodes % 2027) { communicate(); }
+	if (g_stopSearch) { return 0; }
 	
-	//~ movearray legalmoves;
-	//~ bitGenerateLegalmoves(&legalmoves, board, tomove, true);
-	//~ if (legalmoves.size == 0){
-		//~ return eval;
-	//~ }
+	int eval = fulleval(&s_searchBoard, tomove, s_maxdepth);
+	if (eval >= beta) return beta;
+	alpha = i_max(alpha, eval);
 	
-	//~ for (int i = 0; i < legalmoves.size; i++){
-		//~ int eval = -quiescenceSearch(legalmoves.boards[i], !tomove, -beta, -alpha);
-		//~ if (eval >= beta){
-			//~ return beta;
-		//~ }
-		//~ alpha = intmax(alpha, eval);
-	//~ }
-	//~ return alpha;
-//~ }
+	movearray legalmoves;
+	bitGenerateLegalmoves(&legalmoves, &s_searchBoard, tomove, true);
+	if (legalmoves.size == 0){
+		return eval;
+	}
+	
+	for (int i = 0; i < legalmoves.size; i++) {
+		//check if legal at all
+		if (!isCastlingLegal(&s_searchBoard, tomove, &legalmoves.array[i])){
+			continue;
+		}
+		bitUndo u = makeMove(&s_searchBoard, legalmoves.array[i]);
+		if (bitInCheck(&s_searchBoard, tomove)){
+			undoMove(&s_searchBoard, legalmoves.array[i], u);
+			continue;
+		}
+		//search
+		int eval = -quiescenceSearch(!tomove, -beta, -alpha);
+		undoMove(&s_searchBoard, legalmoves.array[i], u);
+		
+		if (eval >= beta){
+			return beta;
+		}
+		alpha = i_max(alpha, eval);
+	}
+	return alpha;
+}
 
 /* depth: from the root node, 0: nothing searched yet
  * remainingDepth: decreasing to 0
  * 
  * Credits partially to Sebastian Lague
  * */
-int search(int remainingDepth, int depth, int alpha, int beta){
+int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 	s_searchedNodes++;
-	if (2026 == s_searchedNodes % 2027) {
-		communicate();
-	}
-	if (g_stopSearch) {
-		return 0;
-	}
+	if (2026 == s_searchedNodes % 2027) { communicate(); }
+	if (g_stopSearch) { return 0; }
+	
 	if (0 < depth) {
 		if (isRepetition(s_searchBoard.hashValue)) return 0;
 		
@@ -117,7 +130,115 @@ int search(int remainingDepth, int depth, int alpha, int beta){
 		return eval;
 	}
 	
-	return 0;
+	if (0 == remainingDepth) {
+		return quiescenceSearch(tomove, alpha, beta);
+	}
+
+	movearray legalmoves;
+	bitGenerateLegalmoves(&legalmoves, &s_searchBoard, tomove, false);
+	if (0 == legalmoves.size){
+		if (bitInCheck(&s_searchBoard, tomove)) {
+			return -(MATE_NOW - depth);
+		}
+		else {
+			return 0;
+		}
+	}
+	
+	/*
+	 * Order moves
+	 * */
+	
+	//not done yet
+	
+	/*
+	 * Store repetition
+	 * */
+	storeRepetiton(s_searchBoard.hashValue);
+	
+	//~ int evaluationBound = TranspositionTable.UpperBound;
+	//~ Move bestMoveInThisPosition = Move.NullMove;
+	evalflag moveFlag = UPPER_BOUND_FLAG;
+	bitMove* bestMove = &legalmoves.array[0];
+
+	for (int i = 0; i < legalmoves.size; i++) { 
+		bitMove* currentMove = &legalmoves.array[i];
+		
+		//check if legal at all
+		if (!isCastlingLegal(&s_searchBoard, tomove, currentMove)){
+			continue;
+		}
+		bitUndo u = makeMove(&s_searchBoard, *currentMove);
+		if (bitInCheck(&s_searchBoard, tomove)){
+			undoMove(&s_searchBoard, *currentMove, u);
+			continue;
+		}
+		
+		/*
+		 * Extension?
+		 * */
+		
+		//~ TODO
+		
+		/*
+		 * Reduce?
+		 * (not interesting moves, e.g. late in ordering)
+		 * */
+		 
+		//~ TODO
+		
+		/*
+		 * Search
+		 * */
+		int eval = search(!tomove, remainingDepth-1, depth+1, -beta, -alpha);
+		undoMove(&s_searchBoard, *currentMove, u);
+		
+		/*
+		 * Pruning
+		 * */
+		if (eval >= beta) {
+			storePosTT(s_searchBoard.hashValue, beta, LOWER_BOUND_FLAG, remainingDepth, depth, currentMove);
+						
+			//~ transpositionTable.StoreEvaluation(plyRemaining, plyFromRoot, beta, TranspositionTable.LowerBound, moves[i]);
+
+			/*
+			 * Killer move history
+			 * */
+			//~ if (!(currentMove->flags & CAPTURE_FLAG)) {
+				//~ if (plyFromRoot < MoveOrdering.maxKillerMovePly) {
+					//~ moveOrderer.killerMoves[plyFromRoot].Add(move);
+				//~ }
+				//~ int historyScore = plyRemaining * plyRemaining;
+				//~ moveOrderer.History[board.MoveColourIndex, moves[i].StartSquare, moves[i].TargetSquare] += historyScore;
+			//~ }
+			
+			
+			rmLastRepetition();
+
+			return beta;
+		}
+		 
+		/*
+		 * New best move foud
+		 * */
+		if (eval > alpha) {
+			moveFlag = EXACT_EVAL_FLAG;
+			//~ bestMoveInThisPosition = moves[i]; -> for TT
+
+			alpha = eval;
+			if (0 == depth) {
+				s_nextmove = *currentMove;
+				//~ bestEvalThisIteration = eval;
+			}
+		}
+	}
+		
+	rmLastRepetition();
+	storePosTT(s_searchBoard.hashValue, alpha, moveFlag, remainingDepth, depth, bestMove);	
+	
+	//~ transpositionTable.StoreEvaluation(plyRemaining, plyFromRoot, alpha, evaluationBound, bestMoveInThisPosition);
+
+	return alpha;
 }
 
 /*
@@ -194,7 +315,7 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 			//~ bestindex = i;
 			
 			if (depth == 0){
-				s_nextp = legalmoves.boards[i].hashValue;
+				s_nextpos = legalmoves.boards[i].hashValue;
 			}
 			s_PVtable[depth+1][depth] = boardConvertTomove(&board, &legalmoves.boards[i], tomove);
 		}
@@ -221,7 +342,7 @@ static inline void emptyPVTable(){
 move iterativeDeepening(bitboard board, bool tomove){
 	s_searchedNodes = 0;
 	move nextm = NULLMOVE;
-	s_nextp = 0;
+	u64 nextpos = 0;
 	
 	#ifdef DEBUG
 	printBitBoard2d(stdout, board);
@@ -236,12 +357,15 @@ move iterativeDeepening(bitboard board, bool tomove){
 		emptyPVTable();
 		s_maxdepth = i;
 		s_searchBoard = board;
-		eval = search(i, 0, NegINF, PosINF);
+		eval = search(tomove, i, 0, NegINF, PosINF);
 				
-		//store the best move with a special flag to make sure next search starts with it
-		storePosTT(s_nextp, eval, LAST_BEST_EVAL_FLAG, 0, s_maxdepth);
-		
 		if (s_PVtable[0][0].from != s_PVtable[0][0].to) nextm = convertBitMoveToMove(s_PVtable[0][0]);
+		
+		bitUndo u = makeMove(&s_searchBoard, s_nextmove);
+		nextpos = s_searchBoard.hashValue;
+		undoMove(&s_searchBoard, s_nextmove, u);
+		
+		storePosTT(nextpos, eval, LAST_BEST_EVAL_FLAG, 0, s_maxdepth, &s_nextmove);
 		
 		if (g_stopSearch){
 			printf("info depth %d score cp %d\n", i, lastEval);
@@ -296,7 +420,7 @@ move iterativeDeepening(bitboard board, bool tomove){
 		if (eval >= WHITEWON || eval <= BLACKWON) break; //dont think if not neccesary
 	}
 	
-	//~ rmBestMoveFlag(s_nextp);
+	//~ rmBestMoveFlag(s_nextpos);
 	
 	//~ #ifdef DEBUG
 	//~ printCollisionStats();

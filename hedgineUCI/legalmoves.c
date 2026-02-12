@@ -380,6 +380,11 @@ resultconst gameend(const bitboard* const board, bool tomove){
 	return DRAW;
 }
 
+/*returns true if:
+ *   the move is not castling
+ *    OR
+ *   is castling and it is legal 
+ * */
 bool isCastlingLegal(bitboard* board, bool tomove, const bitMove* const mv){
 	if ((mv->flags & CASTLE_FLAG)){
 		if (bitInCheck(board, tomove)) { return false; }
