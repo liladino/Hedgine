@@ -33,4 +33,6 @@ void parseGo(char *command, bitboard* board, bool *tomove);
 
 void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum);
 
+void setMoveTime(int increment);
+
 #endif

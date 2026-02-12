@@ -2,6 +2,8 @@
 #define STRUCTS_H
 
 #include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
 
 /* These were only relevant when the program had its own CLI. */
 #define BG_BLACK "\x1b[40m"
@@ -52,12 +54,11 @@
 	#define TT_MAX_SIZE_MB 2
 #endif
 
+#define HASHING_ENABLED 1
 #define REPETITION_TABLE_SIZE 1024
 
 typedef unsigned long long u64;
 
-#include <stdbool.h>
-#include <stdio.h>
 
 typedef struct square{
 	char file;
@@ -200,8 +201,8 @@ typedef struct movearray{
 
 typedef enum evalflag{
 	EXACT_EVAL_FLAG = 1, 
-	ALPHA_EVAL_FLAG = 2, 
-	BETA_EVAL_FLAG = 3, 
+	LOWER_BOUND_FLAG = 2, 
+	UPPER_BOUND_FLAG = 3, 
 	LAST_BEST_EVAL_FLAG = 4
 }evalflag;
 
@@ -227,7 +228,8 @@ typedef struct gameInfo{
 	//~ bool UCI_LimitStrength;
 }gameInfo;
 
-extern const move nullmove;
+extern const move NULLMOVE;
+extern const bitMove NULLBITMOVE;
 
 extern FILE* debugOutput;
 

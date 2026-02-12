@@ -2,7 +2,7 @@
  * MODIFIED BY B.M. 2025. 03. 11.
  * deleted most unused parts, removed DEFINEs.
  * 
- *magicmoves.c
+ *slidingmagic.c
  *
  *Source file for magic move bitboard generation.
  *

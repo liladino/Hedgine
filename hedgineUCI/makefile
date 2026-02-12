@@ -51,7 +51,7 @@ profiling: $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $^
 
 clean:
-	rm -f *.o *.d
+	rm -f *.o *.d *.out
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@ 

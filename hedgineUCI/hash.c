@@ -34,7 +34,7 @@ TThashentry* allocTransTable(const unsigned int sizeInMB){
 	
 	#ifdef DEBUG
 	fprintf(debugOutput, "Transposition Table:\t%lld MB, %lld entry\n", TTableSizeMB, TTableSize);
-	fprintf(debugOutput, "Repetition Table:\t%lf kB, %lld entry\n", (double) REPETITION_TABLE_SIZE * sizeof(u64) / 1024, REPETITION_TABLE_SIZE);
+	fprintf(debugOutput, "Repetition Table:\t%lf kB, %d entry\n", (double) REPETITION_TABLE_SIZE * sizeof(u64) / 1024, REPETITION_TABLE_SIZE);
 	#endif
 	return TranspositionTable;
 }
@@ -155,125 +155,175 @@ void clearTransTable(){
 }
 
 #ifdef DEBUG
-u64 Rcollision = 0;
-u64 Rmatch = 0;
-u64 Wcollision = 0;
-u64 Wmatch = 0;
+u64 s_Rcollision = 0;
+u64 s_Reads = 0;
+u64 s_Wcollision = 0;
+u64 s_Wmatch = 0;
+
 void printCollisionStats(){
-	//printTransTable();
+	//~ printTransTable();
 	printf("TTable reading:\n");
-	printf("Collisions: %llu\n", Rcollision);
-	printf("Matches: %llu\n", Rmatch);
-	printf("Ratio to all: %lf\n\n", (double)Rmatch / (Rmatch + Rcollision + 1));
+	printf("Collisions: %llu\n", s_Rcollision);
+	printf("Collision ratio: %lf\n\n", (double)s_Rcollision / s_Reads);
 	//~ printf("Writing:\n");
-	//~ printf("Collisions: %llu\n", Wcollision);
-	//~ printf("Matches: %llu\n", Wmatch);
-	//~ printf("Ratio to all: %lf\n\n", (double)Wmatch / (Wmatch + Wcollision + 1));
+	//~ printf("Collisions: %llu\n", s_Wcollision);
+	//~ printf("Matches: %llu\n", s_Wmatch);
+	//~ printf("Ratio to all: %lf\n\n", (double)s_Wmatch / (s_Wmatch + s_Wcollision + 1));
 	
 	u64 count = 0;
-	for (int i = 0; i < TTableSize; i++){
+	for (size_t i = 0; i < TTableSize; i++){
 		if (TranspositionTable[i].pos != 0){
 			count++;
 		}
 	}
 	printf("\nTTable: \n");
 	printf("Filled: %llu\n", count);
-	printf("All: %d\n", TTableSize);
+	printf("All: %lld\n", TTableSize);
 	printf("Ratio to all: %lf\n", (double)count / TTableSize);
 	
-	Rcollision = Rmatch = 0;
-	Wcollision = Wmatch = 0;
+	s_Rcollision = s_Rmatch = 0;
+	s_Wcollision = s_Wmatch = 0;
 }
 #endif
 
-int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const int maxdepth, const int oddity){
-	//~ return NO_HASH_ENTRY;
-	TThashentry *current = &TranspositionTable[pos % TTableSize];
+		/*public int LookupEvaluation(int depth, int plyFromRoot, int alpha, int beta)
+		{
+			if (!enabled)
+			{
+				return LookupFailed;
+			}
+			Entry entry = entries[Index];
+
+			if (entry.key == board.CurrentGameState.zobristKey)
+			{
+				// Only use stored evaluation if it has been searched to at least the same depth as would be searched now
+				if (entry.depth >= depth)
+				{
+					int correctedScore = CorrectRetrievedMateScore(entry.value, plyFromRoot);
+					// We have stored the exact evaluation for this position, so return it
+					if (entry.nodeType == Exact)
+					{
+						return correctedScore;
+					}
+					// We have stored the upper bound of the eval for this position. If it's less than alpha then we don't need to
+					// search the moves in this position as they won't interest us; otherwise we will have to search to find the exact value
+					if (entry.nodeType == UpperBound && correctedScore <= alpha)
+					{
+						return correctedScore;
+					}
+					// We have stored the lower bound of the eval for this position. Only return if it causes a beta cut-off.
+					if (entry.nodeType == LowerBound && correctedScore >= beta)
+					{
+						return correctedScore;
+					}
+				}
+			}
+			return LookupFailed;
+		}
+
+		public void StoreEvaluation(int depth, int numPlySearched, int eval, int evalType, Move move)
+		{
+			if (!enabled)
+			{
+				return;
+			}
+			ulong index = Index;
+
+			//if (depth >= entries[Index].depth) {
+			Entry entry = new Entry(board.CurrentGameState.zobristKey, CorrectMateScoreForStorage(eval, numPlySearched), (byte)depth, (byte)evalType, move);
+			entries[Index] = entry;
+			//}
+		}
+
+		int CorrectMateScoreForStorage(int score, int numPlySearched)
+		{
+			if (Searcher.IsMateScore(score))
+			{
+				int sign = System.Math.Sign(score);
+				return (score * sign + numPlySearched) * sign;
+			}
+			return score;
+		}
+
+		int CorrectRetrievedMateScore(int score, int numPlySearched)
+		{
+			if (Searcher.IsMateScore(score))
+			{
+				int sign = System.Math.Sign(score);
+				return (score * sign - numPlySearched) * sign;
+			}
+			return score;
+		}*/
+
+static inline int i_abs(int a){
+	return (a < 0 ? -a : a);
+}
+
+int correctMateScore(int score, int numPlySearched) {
+	if (isMateScore(score)) {
+		return (i_abs(score) - numPlySearched) * (score < 0 ? -1 : 1);
+	}
+	return score;
+}
 		
-	if (current->pos != pos) {
-		#ifdef DEBUG
-		if (current->pos != 0) Rcollision++;
-		#endif
-				
+int readHashEntry(u64 hashValue, int remainingDepth, int depth, int alpha, int beta){
+	if (!HASHING_ENABLED) {
 		return NO_HASH_ENTRY;
 	}
-	
-	if (current->depth <= maxdepth - depth){
+	const TThashentry *entry = &TranspositionTable[hashValue % TTableSize];
+
+	if (entry->pos != hashValue) {
+		#ifdef DEBUG
+		if (current->pos != 0) s_Rcollision++;
+		#endif
+		return NO_HASH_ENTRY;
+	}
+	#ifdef DEBUG
+	s_Reads++;
+	#endif
+	if (entry->depth < remainingDepth){
 		return NO_HASH_ENTRY;	
 	}
 	
-	#ifdef DEBUG
-	Rmatch++;
-	#endif
+	int correctedScore = correctMateScore(entry->eval, depth);
 	
-	/* Pseudocode:
-	    if ttEntry is valid and ttEntry.depth ≥ depth then
-		if ttEntry.flag = EXACT then
-			return ttEntry.value
-		else if ttEntry.flag = LOWERBOUND then
-			α := max(α, ttEntry.value)
-		else if ttEntry.flag = UPPERBOUND then
-			β := min(β, ttEntry.value)
-
-		if α ≥ β then
-			return ttEntry.value
+	// exact value known
+	if (entry->flag == EXACT_EVAL_FLAG) {
+		return correctedScore;
+	}
+	
+	// Upper bound known
+	
+	/* TODO:
+	 * test here, whether it's worth to write:
+	 * 
+	 * correctedScore > alpha:
+	 *   beta = correctedScore 
 	 * */
-	
-	int tempeval = current->eval; 
-	if (tempeval >= WHITEWON){
-		tempeval = tempeval - depth  - 1;
-	}
-	else if (tempeval <= BLACKWON){
-		tempeval += depth  + 1;
+	if (entry->flag == UPPER_BOUND_FLAG && correctedScore <= alpha) {
+		return correctedScore;
 	}
 	
-	if (oddity){	
-		tempeval *= -1;
-		switch (current->flag){
-			case EXACT_EVAL_FLAG:
-				return tempeval;
-			case LAST_BEST_EVAL_FLAG:
-				return tempeval;
-			case ALPHA_EVAL_FLAG:
-				if (tempeval < -(*beta)) (*beta) = -tempeval;
-				break;
-			case BETA_EVAL_FLAG:
-				if (tempeval > -(*alpha)) (*alpha) = -tempeval;
-				break;
-		}
-		
-		if (-(*alpha) < -(*beta)){
-			return tempeval;
-		}
-	}
-	else {
-		switch (current->flag){
-			case EXACT_EVAL_FLAG:
-				return tempeval;
-			case LAST_BEST_EVAL_FLAG:
-				return tempeval;
-			case ALPHA_EVAL_FLAG:
-				if (tempeval < *alpha) (*alpha) = tempeval;
-				break;
-			case BETA_EVAL_FLAG:
-				if (tempeval > *beta) (*beta) = tempeval;
-				break;
-		}
-		
-		if (*alpha > *beta){
-			return tempeval;
-		}
+	// We have stored the lower bound of the eval for this position. Only return if it causes a beta cut-off.
+	
+	/* TODO:
+	 * test here, whether it's worth to write:
+	 * 
+	 * correctedScore < beta:
+	 *   alpha = correctedScore 
+	 * */
+	if (entry->flag == LOWER_BOUND_FLAG && correctedScore >= beta) {
+		return correctedScore;
 	}
 
 	return NO_HASH_ENTRY;
 }
 
-
 void storePosTT(const u64 pos, const int eval, const evalflag flag, const int depth, const int maxdepth){
 	u64 current = pos % TTableSize;
 	#ifdef DEBUG
-	if (TranspositionTable[current].pos == 0) Wmatch++;
-	else Wcollision++;
+	if (TranspositionTable[current].pos == 0) s_Wmatch++;
+	else s_Wcollision++;
 	#endif
 	
 	TranspositionTable[current].pos = pos; //key 
@@ -324,7 +374,7 @@ static inline int getEval(u64 pos){
 			current->flag = EXACT_EVAL_FLAG;
 			return 1000000 + current->depth;
 		}
-		if (current->flag == EXACT_EVAL_FLAG || current->flag == ALPHA_EVAL_FLAG) return current->eval;
+		if (current->flag == EXACT_EVAL_FLAG || current->flag == LOWER_BOUND_FLAG) return current->eval;
 	}
 	return -1000000;
 }

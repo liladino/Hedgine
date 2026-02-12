@@ -1,3 +1,22 @@
+Date:	Feb 12 2026:
+	Started reworking the search. It is so far mostly "translating" code to fit 
+	my existing code, but still tiring work. Also I have a PV table that the 
+	approach I read lack, so to print out the PV variation I will need to rework
+	it later. 
+	TT must be reexamined VERY carefully, because I changed the reading logic
+	(as I was very much not satisfied with what I've cooked up before).
+	
+	Reconsidered my naming conventions:
+		s_var => static (file scoped global) variable
+		g_var => (multi file) global variable
+		ALL_CAPS_VAR => (global) constants
+	
+Date:	Feb 11 2026:
+	Added a tester script, and put the results in a csv. Results as expected:
+	the bigger the O level, the better. At O3 my tests average at 0.393s.
+	This is 35% better than the old approach, and 65% better than what I wrote
+	originally (old approach but without optimization).
+	
 Date:	Feb 03 2026:
 	Hell yeah, it's working. Now i just need to do the hashing.
 	

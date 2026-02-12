@@ -6,6 +6,7 @@
 #include "output.h"
 #include "legalmoves.h"
 #include "zobrrand.h"
+#include "engine.h"
 
 #ifdef DEBUG
 	#include "debugmalloc.h"
@@ -27,7 +28,7 @@ TThashentry* lookup(u64 position);
 
 void freeTransTable();
 
-int readHashEntry(const u64 pos, int* alpha, int* beta, const int depth, const int maxdepth, const int oddity);
+int readHashEntry(u64 hashValue, int remainingDepth, int depth, int alpha, int beta);
 
 //~ move readHashEntryMove(const u64 pos);
 

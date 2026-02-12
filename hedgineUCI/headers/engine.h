@@ -20,18 +20,13 @@
 #include <limits.h>
 #include <signal.h>
 
-#define SECOND 1000
-#define PosINF 2147483640
-#define NegINF -2147483640
-#define MAXSEARCHDEPTH 40
-
-extern bool stopSearch;
+extern bool g_stopSearch;
 //~ extern bitMove PV[MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
 
-move lvl0(bitboard board, bool tomove);
+//~ move lvl0(bitboard board, bool tomove);
+
+bool isMateScore(int score);
 
 move CPU(int cpulvl, bitboard bboard, bool tomove);
-
-void setMoveTime(int increment);
 
 #endif

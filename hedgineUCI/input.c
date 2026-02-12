@@ -69,28 +69,28 @@ int readLineDynamic(char **str, size_t maxSize) {
  * expects str to be at least 1 char long and ends with 0
  * */
 move parseLongAlgebraicNotation(char str[]){
-	//~ move nullmove = {{-1, -1}, {-1, -1}, 0};
+	//~ move NULLMOVE = {{-1, -1}, {-1, -1}, 0};
 	move current = {{-1, -1}, {-1, -1}, 0};
 	
-	if (str[0] > 'h' || str[0] < 'a') return nullmove;
+	if (str[0] > 'h' || str[0] < 'a') return NULLMOVE;
 	square from;
 	from.file = str[0];
 	
-	if (str[1] > '8' || str[1] < '1') return nullmove;
+	if (str[1] > '8' || str[1] < '1') return NULLMOVE;
 	from.rank = str[1] - '0';
 	
-	if (str[2] > 'h' || str[2] < 'a') return nullmove;
+	if (str[2] > 'h' || str[2] < 'a') return NULLMOVE;
 	square to;
 	to.file = str[2];
 	
-	if (str[3] > '8' || str[3] < '1') return nullmove;
+	if (str[3] > '8' || str[3] < '1') return NULLMOVE;
 	to.rank = str[3] - '0';
 	
 	if (str[4] >= 'A' && str[4] <= 'Z') str[4] += 'a' - 'A'; 
 	
 	char prom = 0;
 	if (str[4] >= 'a' && str[4] <= 'z'){
-		if (str[4] != 'b' && str[4] != 'n' && str[4] != 'r' && str[4] != 'q') return nullmove;
+		if (str[4] != 'b' && str[4] != 'n' && str[4] != 'r' && str[4] != 'q') return NULLMOVE;
 		prom = str[4];
 	} 
 	

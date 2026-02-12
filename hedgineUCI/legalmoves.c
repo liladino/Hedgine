@@ -366,12 +366,6 @@ void bitGenerateLegalmoves(movearray* moves, const bitboard* const board, bool t
 	}
 	
 	//~ printf("--%d--\n--%d--\n", sizeof(bitboard), sizeof(movearray));
-	
-	/* after these loops are done, we should iterate over the new legal 
-	 * moves, and generate a hash for each */
-	//~ for (int i = 0; i < moves->size; i++){
-		//~ moves->boards[i].hashValue = hashPosition(&(moves->boards[i]), tomove);
-	//~ }
 }
 
 resultconst gameend(const bitboard* const board, bool tomove){

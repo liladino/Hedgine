@@ -410,22 +410,22 @@ void readInput() {
 	// "listen" to STDIN
 	if (inputWaiting()) {		
 		// Tell engine to stop calculating
-		stopSearch = true;
+		g_stopSearch = true;
 
 		bytesRead = readLineDynamic(&input, 1024);  
 		
 		// If input is available
 		if (bytesRead > 0) {
 			if (strncmp(input, "quit", 4) == 0) {
-				stopSearch = true;
+				g_stopSearch = true;
 				info.quit = true;
 			}
 			else if (strncmp(input, "stop", 4) == 0) {
-				stopSearch = true;
+				g_stopSearch = true;
 				//~ info.quit = true;
 			}
 			else if (strncmp(input, "ucinewgame", 10) == 0) {
-				stopSearch = true;
+				g_stopSearch = true;
 				info.newgame = true;
 				//~ info.quit = true;
 			}
@@ -434,3 +434,59 @@ void readInput() {
 	if (input != NULL) free(input);
 }
 	
+
+void setMoveTime(int increment){
+	#define SECOND 1000
+	info.moveTime = increment - 100;
+	if (info.moveTime < 0) info.moveTime = 0;
+	
+	if (info.timeRemaining <= 0.5 * SECOND){ //half a sec left
+		info.moveTime += 50;
+		return;
+	}
+	if (info.timeRemaining <= SECOND){ //1 sec left
+		info.moveTime += 100;
+		return;
+	}
+	if (info.timeRemaining <= 2 * SECOND){ //2 sec left
+		info.moveTime += info.timeRemaining / 5; //gets down from .4 sec to .1 sec
+		return;
+	}
+	if (info.timeRemaining <= 10 * SECOND){ //10 sec left
+		info.moveTime += 500 + (info.timeRemaining - 2000) / 16; //1 sec and gets down to half sec
+		return;
+	}
+	if (info.timeRemaining <= 30 * SECOND){ //30 sec left
+		info.moveTime += 1.5 * SECOND; //1.5 sec
+		return;
+	}
+	if (info.timeRemaining <= 60 * SECOND){ //1 min left
+		info.moveTime += 2.1 * SECOND; //2.1 sec
+		return;
+	}
+	if (info.timeRemaining <= 2 * 60 * SECOND){ //2 min left
+		info.moveTime += 3.72 * SECOND; //3.7 sec
+		return;
+	}
+	if (info.timeRemaining <= 3 * 60 * SECOND){ //3 min left
+		info.moveTime += 5.45 * SECOND; //5.5 sec
+		return;
+	}
+	if (info.timeRemaining <= 5 * 60 * SECOND){ //5 min left
+		info.moveTime += 7.91 * SECOND; 
+		return;
+	}
+	if (info.timeRemaining <= 10 * 60 * SECOND){ //10 min left
+		info.moveTime += 9.9 * SECOND; 
+		return;
+	}
+	if (info.timeRemaining <= 20 * 60 * SECOND){ //20 min left
+		info.moveTime += 15 * SECOND; 
+		return;
+	}
+	if (info.timeRemaining <= 45 * 60 * SECOND){ //45 min left
+		info.moveTime += 30 * SECOND; 
+		return;
+	}
+	info.moveTime += 40 * SECOND; 	
+}

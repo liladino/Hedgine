@@ -133,7 +133,7 @@ bool makePerfTestsAssert(){
 	initializeAll();
 	if (!makeMoveTest()) { return false; }
 	
-	//Source: https://www.chessprogramming.org/Perft_Results
+	//Source: https://www.chessprogramming.org/Perft_Results and stockfish
 	
 	bitboard bboard;
 	int temp;

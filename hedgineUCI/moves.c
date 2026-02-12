@@ -367,15 +367,11 @@ bitUndo makeMove(bitboard* board, bitMove m){
 	bitUndo undo;
 	undo = (bitUndo){board->hashValue, (board->enpassanttarget == 0 ? -1 : __builtin_ctzll(board->enpassanttarget)), mailbox[m.to], board->castlerights};
 	
-	//TODO: add hash
 	const int piece = mailbox[m.from];
 	
 	if (m.flags == 0){
 		MOVEPIECE_HASH(piece, m.from, m.to);
 		DELETE_EN_PASSANT_HASH();
-		
-		//~ hashPieceIO(board, m.from, mailbox[m.from]);
-		//~ hashPieceIO(board, m.to, mailbox[m.from]);
 		
 		mailbox[m.to] = piece;
 	}
@@ -385,9 +381,7 @@ bitUndo makeMove(bitboard* board, bitMove m){
 		DELETE_EN_PASSANT_HASH();
 		
 		mailbox[m.to] = piece;
-		
-		//TODO: rook hash
-		
+				
 		if (m.from == 4){
 			//white
 			if (m.to == 6){

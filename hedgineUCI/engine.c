@@ -1,87 +1,59 @@
 #include "headers/engine.h"
 
-const move nullmove = {{-1, -1}, {-1, -1}, 0};
-const bitMove nullBitMove = {0, 0, 0, 0, 0};
+/*
+ * CONSTANTS 
+ * */
+const move    NULLMOVE = {{-1, -1}, {-1, -1}, 0};
+const bitMove NULLBITMOVE = {0, 0, 0, 0, 0};
+#define PosINF   2147480000  //less than 2^31 to avoid possible overflow
+#define NegINF  -2147480000
+#define MATE_NOW 2147400000
+#define MAXSEARCHDEPTH 40
 
-//~ static int intmax(int a, int b){
-	//~ return (a > b ? a : b);
-//~ }
+/*
+ * STATICS & GLOBALS
+ * */
+static bitMove      s_PVtable [MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
+static u64          s_nextp; //next position
+static int          s_maxdepth;
+static int          s_absoluteMaxDepth = MAXSEARCHDEPTH;
+static unsigned int s_searchedNodes;
+static bitboard     s_searchBoard; //the search takes place on this
+       bool         g_stopSearch = false;
 
-static int absint(int a){
+/*
+ * GENERAL HELPER FUNCS
+ * */
+static inline int i_max(int a, int b){
+	return (a > b ? a : b);
+}
+
+static inline int i_min(int a, int b){
+	return (a < b ? a : b);
+}
+
+static inline int i_abs(int a){
 	return (a < 0 ? -a : a);
+}
+
+bool isMateScore(int score) {
+	return i_abs(score) > MATE_NOW - MAXSEARCHDEPTH;
 }
 
 /*
  * UCI comunication
  * */
-
 void communicate() {
 	if(info.timeControl == true && getTime_ms()-info.startTime > info.moveTime) {
-		stopSearch = true;
+		g_stopSearch = true;
 	}
 	
 	readInput();
 }
 
-void setMoveTime(int increment){
-	info.moveTime = increment - 100;
-	if (info.moveTime < 0) info.moveTime = 0;
-	
-	if (info.timeRemaining <= 0.5 * SECOND){ //half a sec left
-		info.moveTime += 50;
-		return;
-	}
-	if (info.timeRemaining <= SECOND){ //1 sec left
-		info.moveTime += 100;
-		return;
-	}
-	if (info.timeRemaining <= 2 * SECOND){ //2 sec left
-		info.moveTime += info.timeRemaining / 5; //gets down from .4 sec to .1 sec
-		return;
-	}
-	if (info.timeRemaining <= 10 * SECOND){ //10 sec left
-		info.moveTime += 500 + (info.timeRemaining - 2000) / 16; //1 sec and gets down to half sec
-		return;
-	}
-	if (info.timeRemaining <= 30 * SECOND){ //30 sec left
-		info.moveTime += 1.5 * SECOND; //1.5 sec
-		return;
-	}
-	if (info.timeRemaining <= 60 * SECOND){ //1 min left
-		info.moveTime += 2.1 * SECOND; //2.1 sec
-		return;
-	}
-	if (info.timeRemaining <= 2 * 60 * SECOND){ //2 min left
-		info.moveTime += 3.72 * SECOND; //3.7 sec
-		return;
-	}
-	if (info.timeRemaining <= 3 * 60 * SECOND){ //3 min left
-		info.moveTime += 5.45 * SECOND; //5.5 sec
-		return;
-	}
-	if (info.timeRemaining <= 5 * 60 * SECOND){ //5 min left
-		info.moveTime += 7.91 * SECOND; 
-		return;
-	}
-	if (info.timeRemaining <= 10 * 60 * SECOND){ //10 min left
-		info.moveTime += 9.9 * SECOND; 
-		return;
-	}
-	if (info.timeRemaining <= 20 * 60 * SECOND){ //20 min left
-		info.moveTime += 15 * SECOND; 
-		return;
-	}
-	if (info.timeRemaining <= 45 * 60 * SECOND){ //45 min left
-		info.moveTime += 30 * SECOND; 
-		return;
-	}
-	info.moveTime += 40 * SECOND; 	
-}
-
 /* 
  * RANDOM MOVER BOT
  *  */
-
 move randomBot(bitboard board, bool tomove){
 	time_t t;
 	srand((unsigned) time (&t));
@@ -92,16 +64,8 @@ move randomBot(bitboard board, bool tomove){
 	return convertBitMoveToMove(legalmoves.array[i]);
 }
 
-bitMove PV [MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
-
-u64 nextp; //next position
-int maxdepth;
-int absoluteMaxDepth = MAXSEARCHDEPTH;
-
-bool stopSearch = false;
-
 //~ static int quiescenceSearch(bitboard board, bool tomove, int alpha, int beta){
-	//~ int eval = fulleval(&board, tomove, maxdepth);
+	//~ int eval = fulleval(&board, tomove, s_maxdepth);
 	//~ if (eval >= beta) return beta;
 	//~ alpha = intmax(alpha, eval);
 	
@@ -121,38 +85,71 @@ bool stopSearch = false;
 	//~ return alpha;
 //~ }
 
-unsigned int searchedNodes;
+/* depth: from the root node, 0: nothing searched yet
+ * remainingDepth: decreasing to 0
+ * 
+ * Credits partially to Sebastian Lague
+ * */
+int search(int remainingDepth, int depth, int alpha, int beta){
+	s_searchedNodes++;
+	if (2026 == s_searchedNodes % 2027) {
+		communicate();
+	}
+	if (g_stopSearch) {
+		return 0;
+	}
+	if (0 < depth) {
+		if (isRepetition(s_searchBoard.hashValue)) return 0;
+		
+		alpha = i_max(alpha, -MATE_NOW + depth);
+		beta  = i_min(beta,   MATE_NOW - depth);
+		if (alpha >= beta) {
+			return alpha;
+		}
+	}
+	
+	int eval = readHashEntry(s_searchBoard.hashValue, remainingDepth, depth, alpha, beta);
+	if (eval != NO_HASH_ENTRY){
+		for (int i = depth; i <= s_maxdepth; i++){
+			//do i really need this?
+			s_PVtable[depth][i] = NULLBITMOVE;
+		}
+		return eval;
+	}
+	
+	return 0;
+}
 
 /*
 int search(bitboard board, bool tomove, int depth, int alpha, int beta){
-	searchedNodes++;
-	if (searchedNodes % 2011 == 2){
+	s_searchedNodes++;
+	if (s_searchedNodes % 2011 == 2){
 		communicate();
 	}	
-	if (stopSearch) {
+	if (g_stopSearch) {
 		return 0;
 	}
 	
 	if (depth > 0 && isRepetition(board.hashValue)) return 0;
 	
 	const int oddity = depth % 2;
-	evalflag flag = ALPHA_EVAL_FLAG;
+	evalflag flag = LOWER_BOUND_FLAG;
 	
 	bool PVnode = (beta - alpha > 1);
 	
 	int eval = NO_HASH_ENTRY;
 	
-	if (!PVnode && depth > 0 && maxdepth > 2){ //don't swearch at low depth  
-		eval = readHashEntry(board.hashValue, &alpha, &beta, depth, maxdepth, oddity);
+	if (!PVnode && depth > 0 && s_maxdepth > 2){ //don't swearch at low depth  
+		eval = readHashEntry(board.hashValue, &alpha, &beta, depth, s_maxdepth, oddity);
 		if (eval != NO_HASH_ENTRY){
-			for (int i = depth; i <= maxdepth; i++){
-				PV[depth][i] = nullmove;
+			for (int i = depth; i <= s_maxdepth; i++){
+				s_PVtable[depth][i] = NULLMOVE;
 			}
 			return eval;
 		}
 	}
 	
-	if (depth >= maxdepth){
+	if (depth >= s_maxdepth){
 		return quiescenceSearch(board, tomove, alpha, beta);
 	}
 	
@@ -167,7 +164,7 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 		
 	storeRepetiton(board.hashValue);
 	for (int i = 0; i < legalmoves.size; i++){
-		if (i == 0 || maxdepth < 2){
+		if (i == 0 || s_maxdepth < 2){
 			eval = -search(legalmoves.boards[i], !tomove, depth+1, -beta, -alpha);
 		}
 		else {
@@ -177,17 +174,17 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 			}
 		}
 		
-		if (stopSearch) {
-			//~ for (int i = depth; i < maxdepth; i++){
-				//~ PV[depth][i] = PV[depth + 1][i];
+		if (g_stopSearch) {
+			//~ for (int i = depth; i < s_maxdepth; i++){
+				//~ s_PVtable[depth][i] = s_PVtable[depth + 1][i];
 			//~ }
 			rmLastRepetition();
 			return 0;
 		}
 		
 		if (eval >= beta){
-			if (oddity) storePosTT(board.hashValue, -beta, BETA_EVAL_FLAG, depth, maxdepth);
-			else storePosTT(board.hashValue, beta, BETA_EVAL_FLAG, depth, maxdepth);
+			if (oddity) storePosTT(board.hashValue, -beta, UPPER_BOUND_FLAG, depth, s_maxdepth);
+			else storePosTT(board.hashValue, beta, UPPER_BOUND_FLAG, depth, s_maxdepth);
 			rmLastRepetition();
 			return beta;
 		}
@@ -197,58 +194,56 @@ int search(bitboard board, bool tomove, int depth, int alpha, int beta){
 			//~ bestindex = i;
 			
 			if (depth == 0){
-				nextp = legalmoves.boards[i].hashValue;
+				s_nextp = legalmoves.boards[i].hashValue;
 			}
-			PV[depth+1][depth] = boardConvertTomove(&board, &legalmoves.boards[i], tomove);
+			s_PVtable[depth+1][depth] = boardConvertTomove(&board, &legalmoves.boards[i], tomove);
 		}
 	}
 	rmLastRepetition();
 	
-	for (int i = depth; i < maxdepth; i++){
-		PV[depth][i] = PV[depth + 1][i];
+	for (int i = depth; i < s_maxdepth; i++){
+		s_PVtable[depth][i] = s_PVtable[depth + 1][i];
 	}
 	
-	if (oddity) storePosTT(board.hashValue, -alpha, flag, depth, maxdepth);
-	else storePosTT(board.hashValue, alpha, flag, depth, maxdepth);
+	if (oddity) storePosTT(board.hashValue, -alpha, flag, depth, s_maxdepth);
+	else storePosTT(board.hashValue, alpha, flag, depth, s_maxdepth);
 	return alpha;
 }*/
 
 static inline void emptyPVTable(){
 	for (int i = 0; i <= MAXSEARCHDEPTH; i++){
 		for (int j = 0; j <= MAXSEARCHDEPTH; j++){
-			PV[i][j] = nullBitMove;
+			s_PVtable[i][j] = NULLBITMOVE;
 		}
 	}
 }
 
-move engine(bitboard board, bool tomove){
-	searchedNodes = 0;
-	move nextm = nullmove;
-	nextp = 0;
+move iterativeDeepening(bitboard board, bool tomove){
+	s_searchedNodes = 0;
+	move nextm = NULLMOVE;
+	s_nextp = 0;
 	
 	#ifdef DEBUG
 	printBitBoard2d(stdout, board);
 	if (info.timeControl) fprintf(debugOutput, "thinking time %d\n", info.moveTime);
 	#endif
 
-	stopSearch = false;
+	g_stopSearch = false;
 	info.startTime = getTime_ms();
 	int eval = 0, lastEval = 0;
-	int i;
 	
-	for (i = 1; i < absoluteMaxDepth + 1; i++){
+	for (int i = 1; i < s_absoluteMaxDepth + 1; i++){
 		emptyPVTable();
-		
-		maxdepth = i;
-		
-		eval = 0;//search(board, tomove, 0, NegINF, PosINF);
-		
+		s_maxdepth = i;
+		s_searchBoard = board;
+		eval = search(i, 0, NegINF, PosINF);
+				
 		//store the best move with a special flag to make sure next search starts with it
-		storePosTT(nextp, eval, LAST_BEST_EVAL_FLAG, 0, maxdepth);
+		storePosTT(s_nextp, eval, LAST_BEST_EVAL_FLAG, 0, s_maxdepth);
 		
-		if (PV[0][0].from != PV[0][0].to) nextm = convertBitMoveToMove(PV[0][0]);
+		if (s_PVtable[0][0].from != s_PVtable[0][0].to) nextm = convertBitMoveToMove(s_PVtable[0][0]);
 		
-		if (stopSearch){
+		if (g_stopSearch){
 			printf("info depth %d score cp %d\n", i, lastEval);
 			#ifdef DEBUG
 			fprintf(debugOutput, "info depth %d score cp %d\n", i, lastEval);
@@ -267,16 +262,16 @@ move engine(bitboard board, bool tomove){
 		if (eval >= WHITEWON || eval <= BLACKWON){
 			if ((tomove == black && eval <= BLACKWON) || (tomove == white && eval >= WHITEWON)){
 				//engine is about to win
-				printf(" score mate %d pv ", (absint(absint(eval) - WHITEWON - 100) + 1) / 2);
+				printf(" score mate %d pv ", (i_abs(i_abs(eval) - WHITEWON - 100) + 1) / 2);
 				#ifdef DEBUG
-				fprintf(debugOutput, " score mate %d pv ", (absint(absint(eval) - WHITEWON - 100) + 1) / 2);
+				fprintf(debugOutput, " score mate %d pv ", (i_abs(i_abs(eval) - WHITEWON - 100) + 1) / 2);
 				#endif
 			}
 			else{
 				//we are about to win
-				printf(" score mate %d pv ", (absint(eval) - WHITEWON - 100 + 1) / 2);
+				printf(" score mate %d pv ", (i_abs(eval) - WHITEWON - 100 + 1) / 2);
 				#ifdef DEBUG
-				fprintf(debugOutput, " score mate %d pv ", (absint(absint(eval) - WHITEWON - 100) + 1) / 2);
+				fprintf(debugOutput, " score mate %d pv ", (i_abs(i_abs(eval) - WHITEWON - 100) + 1) / 2);
 				#endif
 			}
 		}
@@ -287,10 +282,10 @@ move engine(bitboard board, bool tomove){
 			#endif
 		}
 		
-		for (int j = 0; j < i && PV[0][j].from != PV[0][j].to && !stopSearch; j++){
-			printmove(stdout, convertBitMoveToMove(PV[0][j]));
+		for (int j = 0; j < i && s_PVtable[0][j].from != s_PVtable[0][j].to && !g_stopSearch; j++){
+			printmove(stdout, convertBitMoveToMove(s_PVtable[0][j]));
 			#ifdef DEBUG
-			printmove(debugOutput, convertBitMoveToMove(PV[0][j]));
+			printmove(debugOutput, convertBitMoveToMove(s_PVtable[0][j]));
 			#endif
 		}
 		printf("\n");
@@ -301,19 +296,26 @@ move engine(bitboard board, bool tomove){
 		if (eval >= WHITEWON || eval <= BLACKWON) break; //dont think if not neccesary
 	}
 	
-	//~ rmBestMoveFlag(nextp);
+	//~ rmBestMoveFlag(s_nextp);
 	
 	//~ #ifdef DEBUG
 	//~ printCollisionStats();
 	//~ printf("\n\n");
 	//~ #endif 
 	
+	//in case the search returns a nullmove
+	if (nextm.from.file == NULLMOVE.from.file) {
+		movearray legalmoves;
+		bitGenerateLegalmoves(&legalmoves, &board, tomove, false);
+		
+		return convertBitMoveToMove(legalmoves.array[0]);
+	} 
 	return nextm;
 }
 
 /* 
  * CPU
- * recieves a move request, starts the thinking at the adequate strength
+ * recieves a move request, starts the thinking with adequate strength
  * */
 move CPU(int cpulvl, bitboard bboard, bool tomove){
 	squarenums start = {-1, -1};
@@ -331,8 +333,8 @@ move CPU(int cpulvl, bitboard bboard, bool tomove){
 		m = randomBot(bboard, tomove);
 	}	
 	else{
-		absoluteMaxDepth = cpulvl;
-		m = engine(bboard, tomove);	
+		s_absoluteMaxDepth = cpulvl;
+		m = iterativeDeepening(bboard, tomove);	
 	}
 	return m;
 }
