@@ -84,6 +84,9 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 		// parse next move
 		move m = parseLongAlgebraicNotation(currentmove);
 		
+		//~ printBitBoard2d(stdout, *board);
+		//~ printmove(stdout, m);
+		
 		// if no more moves
 		if (m.from.file == -1) break;
 		

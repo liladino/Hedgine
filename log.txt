@@ -1,3 +1,7 @@
+Date:	Feb 13 2026:
+	Fixed uci error: mailbox was not set when a position was initialized from 
+	fen.
+	
 Date:	Feb 12 2026:
 	Started reworking the search. It is so far mostly "translating" code to fit 
 	my existing code, but still tiring work. Also I have a PV table that the 

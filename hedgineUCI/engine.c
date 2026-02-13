@@ -453,7 +453,7 @@ move CPU(int cpulvl, bitboard bboard, bool tomove){
 	
 	if (cpulvl == 0){
 		#define millisec 1000
-		//~ usleep(25 * millisec); 
+		usleep(25 * millisec); 
 		m = randomBot(bboard, tomove);
 	}	
 	else{

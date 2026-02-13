@@ -166,6 +166,8 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int *fmv, int *moven
 		return 1;
 	}
 	
+	*bboard = boardConvert(board, castling, enpass, tomove);
+	setMailBox(bboard);
 	
 	//i++;
 	char* metadata = calloc( (strlen(FEN) + 1), sizeof(char));

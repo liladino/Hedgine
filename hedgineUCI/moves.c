@@ -99,16 +99,18 @@ int isMoveLegal(bitboard* board, const bool tomove, const move m){
 		return 1;
 	}
 
-	bitMove bm = legalmoves.array[x];
-	bitUndo u = makeMove(board, bm);
+	//~ bitUndo u = 
+		makeMove(board, legalmoves.array[x]);	
 	
 	legalmoves.size = 0;
 	bitGenerateLegalmoves(&legalmoves, board, !tomove, false);
-	undoMove(board, bm, u);
+	//~ undoMove(board, bm, u);
 	
 	if (legalmoves.size == 0){
 		return 2;
 	}
+	
+	//~ printBitBoard2d(stdout, *board);
 	return 0;
 }
 
