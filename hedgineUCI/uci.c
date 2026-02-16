@@ -136,7 +136,7 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 print:
 	#ifdef DEBUG
 	fprintf(debugOutput, "tomove: %d\tfifty move count: %d\tmove num: %d\n", *tomove, *fmv, *movenum);
-	//~ printBitBoard2d(*board);
+	printBitBoard2d(debugOutput, *board);
 	#endif
 	return; //to surpress warning when not in debug 
 }
@@ -257,7 +257,7 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 		}
 		
 		{
-			int x = readLineDynamic(&input, 2048);
+			int x = readLineDynamic(&input, 10000);
 			if (x == 0){
 				continue;
 			}

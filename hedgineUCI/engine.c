@@ -60,7 +60,23 @@ move randomBot(bitboard board, bool tomove){
 	movearray legalmoves;
 	bitGenerateLegalmoves(&legalmoves, &board, tomove, false);
 	
-	int i = (rand() % legalmoves.size); 
+	int legals[MAXMOVECOUNT_INPOS] = {0};
+	int j = 0;
+	for (int i = 0; i < legalmoves.size; i++){
+		if (!isCastlingLegal(&board, tomove, &legalmoves.array[i])){
+			continue;
+		}
+
+		bitUndo u = makeMove(&board, legalmoves.array[i]);
+		bool b = bitInCheck(&board, tomove);
+		undoMove(&board, legalmoves.array[i], u);
+		
+		if (b){ continue; }
+		
+		legals[j++] = i;
+	}
+	
+	int i = legals[rand() % j];
 	return convertBitMoveToMove(legalmoves.array[i]);
 }
 
