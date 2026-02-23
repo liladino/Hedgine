@@ -184,8 +184,7 @@ static void addBitKingMoves(movearray* moves, const bitboard* const board, bool 
 	
 	u64 allpieces = enemy | friendly;
 	u64 mask = 1LLU << i;
-	if (onlyCaptures){
-		//add castling too, like if it was a capture 
+	if (!onlyCaptures){
 		if (tomove == white && i == 4) {
 			if ((board->castlerights & WKINGSIDE) && ((allpieces & (mask << 1)) == 0) && ((allpieces & (mask << 2)) == 0)) {
 				legalmoves[(*array_index)++] = (bitMove){i, 6, piece, -1, CASTLE_FLAG};
@@ -224,6 +223,11 @@ static void addBitPawnMoveWhite(movearray* moves, const bitboard* const board, u
 		}
 	}
 	else if (!onlyCaptures){
+		if ((piecemask & WPAWN_PROMOTE) && 0 == (moveforward & (enemy | friendly))){
+			for (int prom = wqueen; prom <= wknight; prom++){
+				legalmoves[(*array_index)++] = (bitMove){i, i+8, piece, prom, PROMOTION_FLAG};
+			}
+		}		
 		return;
 	}
 	
@@ -246,12 +250,6 @@ static void addBitPawnMoveWhite(movearray* moves, const bitboard* const board, u
 				}
 			}
 		}
-		
-		if ((piecemask & WPAWN_PROMOTE) && 0 == (moveforward & (enemy | friendly))){
-			for (int prom = wqueen; prom <= wknight; prom++){
-				legalmoves[(*array_index)++] = (bitMove){i, i+8, piece, prom, PROMOTION_FLAG};
-			}
-		}
 	}
 }
 
@@ -272,6 +270,12 @@ static void addBitPawnMoveBlack(movearray* moves, const bitboard* const board, u
 		}
 	}
 	else if (!onlyCaptures){
+		if ((piecemask & BPAWN_PROMOTE) && 0 == (moveforward & (enemy | friendly))){
+			for (int prom = bqueen; prom <= bknight; prom++){
+				legalmoves[(*array_index)++] = (bitMove){i, i-8, piece, prom, PROMOTION_FLAG};
+			}
+		}
+		
 		return;
 	}
 	
@@ -292,12 +296,6 @@ static void addBitPawnMoveBlack(movearray* moves, const bitboard* const board, u
 				for (int prom = bqueen; prom <= bknight; prom++){
 					legalmoves[(*array_index)++] = (bitMove){i, __builtin_ctzll(currentmove), piece, prom, CAPTURE_FLAG | PROMOTION_FLAG};
 				}
-			}
-		}
-		
-		if ((piecemask & BPAWN_PROMOTE) && 0 == (moveforward & (enemy | friendly))){
-			for (int prom = bqueen; prom <= bknight; prom++){
-				legalmoves[(*array_index)++] = (bitMove){i, i-8, piece, prom, PROMOTION_FLAG};
 			}
 		}
 	}
@@ -368,13 +366,21 @@ void bitGenerateLegalmoves(movearray* moves, const bitboard* const board, bool t
 	//~ printf("--%d--\n--%d--\n", sizeof(bitboard), sizeof(movearray));
 }
 
-resultconst gameend(const bitboard* const board, bool tomove){
+resultconst gameend(bitboard* board, bool tomove){
 	movearray moves;
 	
-	bitGenerateLegalmoves(&moves, board, tomove, true);
-	if (moves.size != 0) return ONGOING;
 	bitGenerateLegalmoves(&moves, board, tomove, false);
-	if (moves.size != 0) return ONGOING;
+	
+	for (int i = 0; i < moves.size; i++){
+		if (!isCastlingLegal(board, tomove, &moves.array[i])){
+			continue;
+		}
+		bitUndo u = makeMove(board, moves.array[i]);
+		bool check = bitInCheck(board, tomove);
+		undoMove(board, moves.array[i], u);
+		
+		if (!check) return ONGOING; //we can make the move, doesn't result in check
+	}
 	
 	if (bitInCheck(board, tomove)) return (tomove == white ? BLACKWON : WHITEWON);
 	return DRAW;
@@ -384,6 +390,9 @@ resultconst gameend(const bitboard* const board, bool tomove){
  *   the move is not castling
  *    OR
  *   is castling and it is legal 
+ * 
+ * Note: the square we arrive on is not checked, as it would be redundant (that
+ * is checked for every move anyway when said move is made) 
  * */
 bool isCastlingLegal(bitboard* board, bool tomove, const bitMove* const mv){
 	if ((mv->flags & CASTLE_FLAG)){

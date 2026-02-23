@@ -1,3 +1,8 @@
+Date:	Feb 23 2026:
+	Search cancel bug fixed. 
+	Changed up quiescence search to make more sense (no castling or quiet 
+	promotions, fixed potential bugs when no move is left).
+	
 Date:	Feb 16 2026:
 	Fixed uci error: Games may have been long enough to overflow the input 
 	buffer.

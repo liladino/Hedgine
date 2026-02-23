@@ -30,7 +30,7 @@ bool bitBoardCompare(const bitboard* const b1, const bitboard* const b2){
 		if (b1->piece[i] != b2->piece[i]) { return false; }
 	}
 	if (b1->enpassanttarget != b2->enpassanttarget) { return false; }
-	//~ if (b1->hashValue != b2->hashValue)             { return false; }
+	if (b1->hashValue != b2->hashValue)             { return false; }
 	if (b1->castlerights != b2->castlerights)       { return false; }
 	return true;
 }
@@ -132,7 +132,7 @@ int perfTest(bitboard* board, bool tomove, int depth){
 bool makePerfTestsAssert(){
 	initializeAll();
 	if (!makeMoveTest()) { return false; }
-	
+	//~ return true;
 	//Source: https://www.chessprogramming.org/Perft_Results and stockfish
 	
 	bitboard bboard;
@@ -142,7 +142,7 @@ bool makePerfTestsAssert(){
 	{
 		printf("\nPosition 1\n");
 		setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", &bboard, &tomove, &temp, &temp);
-		setMailBox(&bboard);
+		//~ setMailBox(&bboard);
 		printBitBoard2d(stdout, bboard);
 		int startposValues[] = {1, 20, 400, 8902, 197281, 4865609, 119060324};
 		for (int i = 0; i < 5; i++){
@@ -155,7 +155,7 @@ bool makePerfTestsAssert(){
 	{
 		printf("\nPosition 2\n");
 		setboardFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", &bboard, &tomove, &temp, &temp);
-		setMailBox(&bboard);
+		//~ setMailBox(&bboard);
 		printBitBoard2d(stdout, bboard);
 		int posValues[] = {1, 48, 2039, 97862, 4085603};
 		for (int i = 0; i < 5; i++){
@@ -168,7 +168,7 @@ bool makePerfTestsAssert(){
 	{
 		printf("\nPosition 3\n");
 		setboardFEN("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1", &bboard, &tomove, &temp, &temp);
-		setMailBox(&bboard);
+		//~ setMailBox(&bboard);
 		printBitBoard2d(stdout, bboard);
 		int posValues[] = {1, 14, 191, 2812, 43238};
 		for (int i = 0; i < 5; i++){
@@ -181,7 +181,7 @@ bool makePerfTestsAssert(){
 	{		
 		printf("\nPosition 4\n");
 		setboardFEN("r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1", &bboard, &tomove, &temp, &temp);
-		setMailBox(&bboard);
+		//~ setMailBox(&bboard);
 		printBitBoard2d(stdout, bboard);
 		int posValues[] = {1, 6, 264, 9467, 422333};
 		for (int i = 0; i < 5; i++){
@@ -192,7 +192,7 @@ bool makePerfTestsAssert(){
 			
 		printf("\nPosition 4b\n");
 		setboardFEN("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1 ", &bboard, &tomove, &temp, &temp);
-		setMailBox(&bboard);
+		//~ setMailBox(&bboard);
 		printBitBoard2d(stdout, bboard);
 		for (int i = 0; i < 5; i++){
 			int allmovecount = perfTest(&bboard, tomove, i);
@@ -204,7 +204,7 @@ bool makePerfTestsAssert(){
 	{
 		printf("\nPosition 5\n");
 		setboardFEN("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8", &bboard, &tomove, &temp, &temp);
-		setMailBox(&bboard);
+		//~ setMailBox(&bboard);
 		printBitBoard2d(stdout, bboard);
 		int posValues[] = {1, 44, 1486, 62379, 2103487};
 		for (int i = 0; i < 5; i++){
@@ -217,7 +217,7 @@ bool makePerfTestsAssert(){
 	{
 		printf("\nPosition 6\n");
 		setboardFEN("r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10", &bboard, &tomove, &temp, &temp);
-		setMailBox(&bboard);
+		//~ setMailBox(&bboard);
 		printBitBoard2d(stdout, bboard);
 		int posValues[] = {1, 46, 2079, 89890};
 		for (int i = 0; i < 4; i++){
@@ -230,7 +230,7 @@ bool makePerfTestsAssert(){
 	{
 		printf("\nPosition 7\n");
 		setboardFEN("8/2p5/3p4/1P5r/1K5k/5p2/4P1P1/1R6 b - - 0 1", &bboard, &tomove, &temp, &temp);
-		setMailBox(&bboard);
+		//~ setMailBox(&bboard);
 		printBitBoard2d(stdout, bboard);
 		int posValues[] = {1, 18, 350, 6330, 120269};
 		for (int i = 0; i < 5; i++){
@@ -243,7 +243,7 @@ bool makePerfTestsAssert(){
 	{
 		printf("\nPosition 8\n");
 		setboardFEN("r3k2r/p6p/4N3/1P4P1/1p4p1/4n3/P6P/R3K2R w KQkq - 0 1", &bboard, &tomove, &temp, &temp);
-		setMailBox(&bboard);
+		//~ setMailBox(&bboard);
 		printBitBoard2d(stdout, bboard);
 		int posValues[] = {1, 21, 427, 9601, 221941};
 		for (int i = 2; i < 5; i++){
@@ -256,7 +256,7 @@ bool makePerfTestsAssert(){
 	{
 		printf("\nPosition 9\n");
 		setboardFEN("4k3/P7/8/8/8/8/8/QQQQKQQQ w - - 0 1", &bboard, &tomove, &temp, &temp);
-		setMailBox(&bboard);
+		//~ setMailBox(&bboard);
 		printBitBoard2d(stdout, bboard);
 		int posValues[] = {1, 102, 106, 11094, 19905, 2104182};
 		for (int i = 0; i < 6; i++){
@@ -269,7 +269,7 @@ bool makePerfTestsAssert(){
 	{
 		printf("\nPosition 10\n");
 		setboardFEN("4k3/P7/8/8/8/8/QQQQ1QQQ/RNBQKBNR w - - 0 1", &bboard, &tomove, &temp, &temp);
-		setMailBox(&bboard);
+		//~ setMailBox(&bboard);
 		printBitBoard2d(stdout, bboard);
 		int posValues[] = {1, 107, 80, 8965, 6850, 780087, 688687};
 		for (int i = 0; i < 7; i++){
@@ -282,7 +282,7 @@ bool makePerfTestsAssert(){
 	{
 		printf("\nPosition 11 (Lasker)\n");
 		setboardFEN("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1", &bboard, &tomove, &temp, &temp);
-		setMailBox(&bboard);
+		//~ setMailBox(&bboard);
 		printBitBoard2d(stdout, bboard);
 		int posValues[] = {1, 3, 15, 90, 396, 2090, 10545, 61641, 301431};
 		for (int i = 0; i < 9; i++){
