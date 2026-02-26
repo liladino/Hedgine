@@ -100,7 +100,6 @@ typedef struct movearray{
 
 typedef struct TThashentry{
 	u64 pos; //key
-	//u64 next; 
 	int eval;
 	evalflag flag;
 	int depth; 

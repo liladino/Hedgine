@@ -22,7 +22,7 @@
 #define NO_HASH_ENTRY 21454837
 
 /* Minimal and maximal size of the transposition table. The maximum size 
- * depends on, whether or not the program was compiled in debug mode.
+ * depends on whether or not the program was compiled in debug mode.
  * */
 #define TT_MIN_SIZE_MB 1
 
@@ -30,8 +30,8 @@
 	#define TT_DEF_SIZE_MB 12
 	#define TT_MAX_SIZE_MB 128
 #else
-	#define TT_DEF_SIZE_MB 1
-	#define TT_MAX_SIZE_MB 2
+	#define TT_DEF_SIZE_MB 4
+	#define TT_MAX_SIZE_MB 4
 #endif
 
 #define HASHING_ENABLED 1

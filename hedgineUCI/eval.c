@@ -284,7 +284,7 @@ static inline int sideEval(const bitboard* const board, bool tomove){
 	//~ return min(abs(w/8 - b/8), abs((w & 7) - (b & 7)));
 //~ }
 
-int fulleval(const bitboard* const board, bool tomove, int depth){
+int fulleval(bitboard* board, bool tomove, int depth){
 	//~ printBitBoard2d(*board);
 	resultconst r = gameend(board, tomove);
 	if (r == DRAW) return DRAW;

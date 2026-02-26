@@ -25,7 +25,7 @@ typedef struct key{
 
 key Zobrist;
 
-TThashentry* allocTransTable(const unsigned int sizeInMB){
+TThashentry* allocTransTable(const unsigned int sizeInMB){	
 	TTableSizeMB = sizeInMB;
 	TTableSize = TTableSizeMB * 1024llu * 1024llu / sizeof(TThashentry);	
 	if (sizeInMB == 0){
@@ -40,6 +40,8 @@ TThashentry* allocTransTable(const unsigned int sizeInMB){
 	#ifdef DEBUG
 	fprintf(debugOutput, "Transposition Table:\t%lld MB, %lld entry\n", TTableSizeMB, TTableSize);
 	fprintf(debugOutput, "Repetition Table:\t%lf kB, %d entry\n", (double) REPETITION_TABLE_SIZE * sizeof(u64) / 1024, REPETITION_TABLE_SIZE);
+	fprintf(stdout, "    Transposition Table:\t%lld MB, %lld entry\n", TTableSizeMB, TTableSize);
+	fprintf(stdout, "    Repetition Table:\t%lf kB, %d entry\n", (double) REPETITION_TABLE_SIZE * sizeof(u64) / 1024, REPETITION_TABLE_SIZE);
 	#endif
 	return TranspositionTable;
 }
@@ -183,7 +185,7 @@ void printCollisionStats(){
 	printf("\nTTable: \n");
 	printf("Filled: %llu\n", count);
 	printf("All: %lld\n", TTableSize);
-	printf("Ratio to all: %lf\n", (double)count / TTableSize);
+	printf("Ratio to all: %lf\n", (double)count / (TTableSize+1));
 	
 	//~ s_Rcollision = s_Reads = 0;
 	//~ s_Wcollision = s_Writes = 0;
@@ -298,15 +300,14 @@ void printHashEntry(u64 pos){
 	//~ current->flag = EXACT_EVAL_FLAG;
 //~ }
 
-static inline void swap(bitboard* a, bitboard* b) { 
-	bitboard temp = *a;
-	*a = *b; 
-	*b = temp;
-	//int x;
-} 
+//~ static inline void swap(bitboard* a, bitboard* b) { 
+	//~ bitboard temp = *a;
+	//~ *a = *b; 
+	//~ *b = temp;
+//~ } 
 
 
-static inline int getEval(u64 pos){
+int getEval(u64 pos){
 	TThashentry *current = &TranspositionTable[pos % TTableSize];
 	if (current->pos == pos){
 		if (current->flag == LAST_BEST_EVAL_FLAG) {
@@ -319,15 +320,19 @@ static inline int getEval(u64 pos){
 	return -1000000;
 }
 
-/* order moves in a non-descending order based on the evals stored in the hash table */
-/* simple insertion sort, too few elements to make something fancy */
-void orderMoves(movearray* legalmoves){
-	for (int i = 1; i < legalmoves->size; i++){
-		for (int j = 0; j < legalmoves->size - i; j++){
-			//~ if (getEval(legalmoves->array[j].hashValue) < getEval(legalmoves->boards[j+1].hashValue)) swap(&legalmoves->boards[j], &legalmoves->boards[j+1]);
-		}
-	}
+bitMove probeTTMove(u64 pos){
+    TThashentry* entry = &TranspositionTable[pos % TTableSize];
+    if (entry->pos == pos) return entry->m;
+    return (bitMove){0,0,0,-1,0}; // NULLBITMOVE
 }
+
+//~ void orderMoves(movearray* legalmoves){
+	//~ for (int i = 1; i < legalmoves->size; i++){
+		//~ for (int j = 0; j < legalmoves->size - i; j++){
+			//~ if (getEval(legalmoves->array[j].hashValue) < getEval(legalmoves->boards[j+1].hashValue)) swap(&legalmoves->boards[j], &legalmoves->boards[j+1]);
+		//~ }
+	//~ }
+//~ }
 
 
 /* 

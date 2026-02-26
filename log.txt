@@ -1,3 +1,11 @@
+Date:	Feb 26 2026:
+	debugged the search mostly. Implemented a move orderer. 
+	
+Date:	Feb 25 2026:
+	cancelling the search early results in bad moves coming up as best - this is
+	avoidable with a PV line, so I think that I should drop the current approach
+	and consider only the move at PV[0][0].
+	
 Date:	Feb 23 2026:
 	Search cancel bug fixed. 
 	Changed up quiescence search to make more sense (no castling or quiet 

@@ -44,8 +44,6 @@ void hashCastleO(bitboard *board, uint8_t mask);
 
 void printBestLine(u64 pos, bool tomove);
 
-void orderMoves(movearray* legalmoves);
-
 void printHashEntry(u64 pos);
 
 #ifdef DEBUG
@@ -55,6 +53,10 @@ void printCollisionStats();
 void clearTransTable();
 
 //~ void rmBestMoveFlag(u64 pos);
+
+int getEval(u64 pos);
+
+bitMove probeTTMove(u64 pos);
 
 extern int g_RTwriteIndex;
 

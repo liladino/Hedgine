@@ -50,12 +50,13 @@ int main(int argc, char* argv[]){
 	
 	endEverything:
 	
-	freeTransTable();
-	
 	#ifdef DEBUG
 	fprintf(debugOutput, "runtime: %ld\n", getTime_ms() - runStartTime);
+	printCollisionStats();	
 	fclose(debugOutput);
 	#endif
+	
+	freeTransTable();
 	
 	return 0;
 }

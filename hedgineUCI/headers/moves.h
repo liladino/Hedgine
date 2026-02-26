@@ -49,4 +49,6 @@ bitUndo makeMove(bitboard* board, bitMove m);
 
 void undoMove(bitboard* board, const bitMove m, const bitUndo u);
 
+int attackValue(int from, int to);
+
 #endif

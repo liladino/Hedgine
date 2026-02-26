@@ -290,7 +290,12 @@ int8_t mailbox[64] =
 	 -1, -1, -1, -1, -1, -1, -1, -1,
 	 -1, -1, -1, -1, -1, -1, -1, -1,
 	 -1, -1, -1, -1, -1, -1, -1, -1};
-	
+	 
+int attackValue(int from, int to){
+	static int pieceValue[12] = { 0, 900, 500, 300, 300, 100, 0, 900, 500, 300, 300, 100 };
+	return pieceValue[mailbox[to]] - pieceValue[mailbox[from]];
+}
+
 void setMailBox(const bitboard* const board){
 	u64 pieces = enemypieces(board, 1) | enemypieces(board, 0);
 	u64 mask = 1; int i = 0;
