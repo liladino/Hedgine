@@ -21,9 +21,6 @@
 #include <signal.h>
 
 extern bool g_stopSearch;
-//~ extern bitMove PV[MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
-
-//~ move lvl0(bitboard board, bool tomove);
 
 bool isMateScore(int score);
 

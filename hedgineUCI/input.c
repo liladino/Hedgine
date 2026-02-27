@@ -58,7 +58,7 @@ int readLineDynamic(char **str, size_t maxSize) {
 	
 	#ifdef DEBUG
 	//echo input to log
-	if (size > 0) fprintf(debugOutput, "--> %s\n", *str);
+	if (size > 0) fprintf(g_debugOutput, "--> %s\n", *str);
 	#endif
 
 	return size;

@@ -13,17 +13,22 @@ const bitMove NULLBITMOVE = {0, 0, 0, -1, 0};
 /*
  * STATICS & GLOBALS
  * */
-static bitMove      s_PVtable [MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
-static int          s_PVlen [MAXSEARCHDEPTH]; // length of PV line at each depth
-static bitMove      s_PVcommit [MAXSEARCHDEPTH+1];
-static int          s_PVcommitlen;
-static int          s_maxdepth;
-static int          s_absoluteMaxDepth = MAXSEARCHDEPTH;
-static unsigned int s_searchedNodes;
-static bitboard     s_searchBoard; //the search takes place on this
-static int          s_history[12][64]; //beta cutoff storing
-
-       bool         g_stopSearch = false;
+//current max depth and limit (engine strength)
+static int      s_maxdepth;
+static int      s_searchDepthLimit = MAXSEARCHDEPTH;
+//search
+static u64      s_searchedNodes;
+static bitboard s_searchBoard; //the search takes place on this
+//PV
+static bitMove  s_PVtable [MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
+static int      s_PVlen [MAXSEARCHDEPTH]; // length of PV line at each depth
+static bitMove  s_PVcommit [MAXSEARCHDEPTH+1];
+static int      s_PVcommitlen;
+//heuristics
+static int      s_history[12][64]; //beta cutoff storing
+static bitMove  s_killers[2][MAXSEARCHDEPTH+1];
+//golbals
+       bool     g_stopSearch = false;
 
 /*
  * GENERAL HELPER FUNCS
@@ -112,21 +117,22 @@ static inline bool sameMove(const bitMove* const a, const bitMove* const b) {
 		   a->flags == b->flags;
 }
 
-static int scoreMove(bitMove* m, bitMove* lastBest) {
+static int scoreMove(bitMove* m, bitMove* lastBest, int depth) {
 	static int pieceValue[12] = { 0, 900, 500, 300, 300, 100, 0, 900, 500, 300, 300, 100 };
 	if (sameMove(m, lastBest)) { return 1000000; }
 	if (m->flags & PROMOTION_FLAG) { return 900000 + pieceValue[m->promotion]; }
 	if (m->flags & (CAPTURE_FLAG | EN_PASSANT_FLAG)) { return 800000 + attackValue(m->from, m->to); }
-	//~ if (sameMove(&m, &killer1[ply])) return 700000;
-	//~ if (sameMove(&m, &killer2[ply])) return 650000;
+	
+	if (sameMove(m, &s_killers[0][depth])) return 700000;
+	if (sameMove(m, &s_killers[1][depth])) return 650000;
 	
 	return s_history[m->piece][m->to];
 }
 
-static void orderMoves(movearray* legalmoves, bitMove* lastBest) {
+static void orderMoves(movearray* legalmoves, bitMove* lastBest, int depth) {
 	pair moveScores[MAXMOVECOUNT_INPOS];
 	for (int i = 0; i < legalmoves->size; i++) {
-		moveScores[i] = (pair){scoreMove(&legalmoves->array[i], lastBest), i};
+		moveScores[i] = (pair){scoreMove(&legalmoves->array[i], lastBest, depth), i};
 	}
 	insertionSort(moveScores, legalmoves->size);
 	
@@ -236,11 +242,11 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 	 * */
 	if (depth == 0){
 		bitMove hint = (s_PVcommitlen > 0) ? s_PVcommit[0] : NULLBITMOVE;
-		orderMoves(&legalmoves, &hint);
+		orderMoves(&legalmoves, &hint, depth);
 	}
 	else {
 		bitMove ttMove = probeTTMove(s_searchBoard.hashValue);
-		orderMoves(&legalmoves, &ttMove);
+		orderMoves(&legalmoves, &ttMove, depth);
 	}
 	
 	/*
@@ -300,17 +306,22 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 		 * Pruning
 		 * */
 		if (eval >= beta) {
-			storePosTT(s_searchBoard.hashValue, beta, LOWER_BOUND_FLAG, remainingDepth, depth, currentMove); //probably bestMove instead of currentMove?? - not sure, becase the currentmoove wa the "refutation"
+			//the "refutation"
+			storePosTT(s_searchBoard.hashValue, beta, LOWER_BOUND_FLAG, remainingDepth, depth, currentMove); //probably bestMove instead of currentMove?? - not sure, becase the currentMove wa 
 			
 			/*
-			 * Killer move history
+			 * Killers and history
 			 * */
 			if (!(currentMove->flags & CAPTURE_FLAG) && !(currentMove->flags & PROMOTION_FLAG)) {
-				//~ // killers
-				//~ if (!sameMove(currentMove, &killer1[depth])) {
-					//~ killer2[depth] = killer1[depth];
-					//~ killer1[depth] = *currentMove;
-				//~ }
+				if (sameMove(currentMove, &s_killers[1][depth])) {
+					// promote 
+					s_killers[1][depth] = s_killers[0][depth];
+					s_killers[0][depth] = *currentMove;
+				} else if (!sameMove(currentMove, &s_killers[0][depth])) {
+					// new killer
+					s_killers[1][depth] = s_killers[0][depth];
+					s_killers[0][depth] = *currentMove;
+				}
 				
 				s_history[currentMove->piece][currentMove->to] += depth * depth;
 			}
@@ -470,6 +481,14 @@ static inline void emptyPVTable(){
 	}
 }
 
+static inline void emptyKillers(){
+	for (int i = 0; i <= 1; i++){
+		for (int j = 0; j <= MAXSEARCHDEPTH; j++){
+			s_killers[i][j] = NULLBITMOVE;
+		}
+	}
+}
+
 static inline void ageHistory(){
 	for (int i = 0; i < 12; i++){
 		for (int j = 0; j < 64; j++){
@@ -481,20 +500,20 @@ static inline void ageHistory(){
 move iterativeDeepening(bitboard board, bool tomove){
 	s_searchedNodes = 0;
 	move nextm = NULLMOVE;
-	ageHistory();
 	emptyPVTable();
+	emptyKillers();
 	
 	#ifdef DEBUG
 	printBitBoard2d(stdout, board);
-	if (info.timeControl) fprintf(debugOutput, "thinking time %d\n", info.moveTime);
+	if (info.timeControl) fprintf(g_debugOutput, "thinking time %d\n", info.moveTime);
 	#endif
 
 	g_stopSearch = false;
 	info.startTime = getTime_ms();
 	int eval = 0, lastEval = 0;
 	
-	for (int i = 1; i < s_absoluteMaxDepth + 1; i++){
-		
+	for (int i = 1; i < s_searchDepthLimit + 1; i++){
+		ageHistory();
 		s_maxdepth = i;
 		s_searchBoard = board;
 		eval = search(tomove, i, 0, NegINF, PosINF);
@@ -515,7 +534,7 @@ move iterativeDeepening(bitboard board, bool tomove){
 		if (g_stopSearch){
 			printf("info depth %d score cp %d\n", i, lastEval);
 			#ifdef DEBUG
-			fprintf(debugOutput, "info depth %d score cp %d\n", i, lastEval);
+			fprintf(g_debugOutput, "info depth %d score cp %d\n", i, lastEval);
 			#endif
 			break;
 		}
@@ -525,45 +544,46 @@ move iterativeDeepening(bitboard board, bool tomove){
 		
 		printf("info depth %d", i);
 		#ifdef DEBUG
-		fprintf(debugOutput, "info depth %d", i);
+		fprintf(g_debugOutput, "info depth %d", i);
 		#endif
 		
+		bool mate = false;
 		if (i_abs(eval) >= WHITEWON-1000){
 			if ((tomove == black && eval <= BLACKWON+1000) || (tomove == white && eval >= WHITEWON-1000)){
 				//engine is about to win
 				printf(" score mate %d pv ", (i_abs(i_abs(eval) - WHITEWON) + 1) / 2);
 				#ifdef DEBUG
-				fprintf(debugOutput, " score mate %d pv ", (i_abs(i_abs(eval) - WHITEWON) + 1) / 2);
+				fprintf(g_debugOutput, " score mate %d pv ", (i_abs(i_abs(eval) - WHITEWON) + 1) / 2);
 				#endif
 			}
 			else{
 				//we are about to win
-				printf(" score mate %d pv ", (i_abs(eval) - WHITEWON + 1) / 2);
+				printf(" score mate %d pv ", -(i_abs(i_abs(eval) - WHITEWON) + 1) / 2);
 				#ifdef DEBUG
-				fprintf(debugOutput, " score mate %d pv ", (i_abs(i_abs(eval) - WHITEWON) + 1) / 2);
+				fprintf(g_debugOutput, " score mate %d pv ", -(i_abs(i_abs(eval) - WHITEWON) + 1) / 2);
 				#endif
 			}
-			break;
+			mate = true;
 		}
 		else{
 			printf(" score cp %d pv ", eval);
 			#ifdef DEBUG
-			fprintf(debugOutput, " score cp %d pv ", eval);
+			fprintf(g_debugOutput, " score cp %d pv ", eval);
 			#endif
 		}
 		
 		for (int j = 0; j < s_PVcommitlen && j < i && !g_stopSearch; j++){
 			printmove(stdout, convertBitMoveToMove(s_PVcommit[j]));
 			#ifdef DEBUG
-			printmove(debugOutput, convertBitMoveToMove(s_PVtable[0][j]));
+			printmove(g_debugOutput, convertBitMoveToMove(s_PVtable[0][j]));
 			#endif
 		}
 		printf("\n");
 		#ifdef DEBUG
-		fprintf(debugOutput, "\n");
+		fprintf(g_debugOutput, "\n");
 		#endif
 		
-		if (eval >= WHITEWON || eval <= BLACKWON) break; //dont think if not neccesary
+		if (mate) break;
 	}
 	
 	//~ rmBestMoveFlag(s_nextpos);
@@ -603,8 +623,8 @@ move CPU(int cpulvl, bitboard bboard, bool tomove){
 		m = randomBot(bboard, tomove);
 	}	
 	else{
-		s_absoluteMaxDepth = cpulvl;
-		//~ s_absoluteMaxDepth = 2;
+		s_searchDepthLimit = cpulvl;
+		//~ s_searchDepthLimit = 2;
 		m = iterativeDeepening(bboard, tomove);	
 	}
 	return m;

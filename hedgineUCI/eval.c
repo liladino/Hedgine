@@ -266,23 +266,23 @@ static inline int sideEval(const bitboard* const board, bool tomove){
 	return eval;
 }
 
-//~ static inline int signum(int x){
-	//~ if (x > 0) return 1;
-	//~ if (x < 0) return -1;
-	//~ return 0;
-//~ }
+static inline int signum(int x){
+	if (x > 0) return 1;
+	if (x < 0) return -1;
+	return 0;
+}
 
-//~ static inline int min(int a, int b){
-	//~ if (a < b) return a;
-	//~ return b;
-//~ }
+static inline int min(int a, int b){
+	if (a < b) return a;
+	return b;
+}
 
-//~ int kingDist(u64 wk, u64 bk){
-	//~ int w = __builtin_ctzll(wk);
-	//~ int b = __builtin_ctzll(bk);
+static inline int kingDist(u64 wk, u64 bk){
+	int w = __builtin_ctzll(wk);
+	int b = __builtin_ctzll(bk);
 	
-	//~ return min(abs(w/8 - b/8), abs((w & 7) - (b & 7)));
-//~ }
+	return min(abs(w/8 - b/8), abs((w & 7) - (b & 7)));
+}
 
 int fulleval(bitboard* board, bool tomove, int depth){
 	//~ printBitBoard2d(*board);
@@ -299,64 +299,25 @@ int fulleval(bitboard* board, bool tomove, int depth){
 		//~ endWeight = (6-pieces)/3 + 1;
 	//~ }
 	
-	//~ typedef enum pieceVal{
-		//~ val_wking = 0, val_wqueen =  900, val_wrook =  500, val_wbishop =  313, val_wknight =  310, val_wpawn =  100, 
-		//~ val_bking = 0, val_bqueen = -900, val_brook = -500, val_bbishop = -313, val_bknight = -310, val_bpawn = -100
-	//~ } pieceVal;
-	
 	// wking wqueen	wrook wbishop wknight wpawn bking bqueen brook bbishop bknight bpawn	
-	int pieceVal[12] = {0, 900, 500, 313, 310, 100, 0, -900, -500, -313, -310, -100};
-    
-    int eval = 0;
-    
-    //~ //pawn
-	//~ {
-		//~ u64 bb = board->piece[wpawn];
-        //~ while (bb) {
-			//~ int sq = __builtin_ctzll(bb);
-			//~ eval += sq / 8;
-            //~ eval += val_wpawn;
-            //~ bb &= bb - 1;  // Clear the LSB
-        //~ }
-		//~ bb = board->piece[bpawn];
-        //~ while (bb) {
-			//~ int sq = __builtin_ctzll(bb);
-			//~ eval -= 7 - sq / 8;
-            //~ eval -= val_bpawn;
-            //~ bb &= bb - 1;  // Clear the LSB
-        //~ }
-	//~ }
-    
-    //~ //king
-    //~ {
+	//~ int pieceVal[12] = {0, 900, 500, 313, 310, 100, 0, -900, -500, -313, -310, -100};
 		
+	//~ int eval = 0;
+	//~ for (int curr = wking; curr <= bpawn; curr++) {
+		//~ u64 bb = board->piece[curr];
+		//~ while (bb) {
+			//~ int sq = __builtin_ctzll(bb);
+			//~ eval += pieceVal[curr];
+			//~ bb &= bb - 1;  // Clear the LSB
+		//~ }
 	//~ }
-    
-    for (int curr = wking; curr <= bpawn; curr++) {
-        u64 bb = board->piece[curr];
-        while (bb) {
-			int sq = __builtin_ctzll(bb);
-			if (wpawn == curr){
-				eval += sq / 8;
-			}
-			else if (bpawn == curr){
-				eval -= 7 - sq / 8;
-			}
-            eval += pieceVal[curr];
-            bb &= bb - 1;  // Clear the LSB
-        }
-    }
 
 	//~ if (endgame){
 		//~ eval += endWeight * signum(eval) * kingDist(board->piece[wking], board->piece[bking]);
 	//~ }
 	
-    //~ for (int i = 0; i < 12; i++){
-		//~ printf("%d ", counter[i]);
-	//~ }
-	//~ exit(0);
-	if (tomove == black) eval *= -1;
+	//~ if (tomove == black) eval *= -1;
 	
-	return eval;
-	//~ return (sideEval(board, white) - sideEval(board, black)) * (tomove == white ? 1 : -1);
+	//~ return eval;
+	return (sideEval(board, white) - sideEval(board, black)) * (tomove == white ? 1 : -1);
 }

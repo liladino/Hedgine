@@ -38,8 +38,8 @@ TThashentry* allocTransTable(const unsigned int sizeInMB){
 	clearTransTable();
 	
 	#ifdef DEBUG
-	fprintf(debugOutput, "Transposition Table:\t%lld MB, %lld entry\n", TTableSizeMB, TTableSize);
-	fprintf(debugOutput, "Repetition Table:\t%lf kB, %d entry\n", (double) REPETITION_TABLE_SIZE * sizeof(u64) / 1024, REPETITION_TABLE_SIZE);
+	fprintf(g_debugOutput, "Transposition Table:\t%lld MB, %lld entry\n", TTableSizeMB, TTableSize);
+	fprintf(g_debugOutput, "Repetition Table:\t%lf kB, %d entry\n", (double) REPETITION_TABLE_SIZE * sizeof(u64) / 1024, REPETITION_TABLE_SIZE);
 	fprintf(stdout, "    Transposition Table:\t%lld MB, %lld entry\n", TTableSizeMB, TTableSize);
 	fprintf(stdout, "    Repetition Table:\t%lf kB, %d entry\n", (double) REPETITION_TABLE_SIZE * sizeof(u64) / 1024, REPETITION_TABLE_SIZE);
 	#endif
@@ -238,25 +238,11 @@ int readHashEntry(u64 hashValue, int remainingDepth, int depth, int alpha, int b
 	}
 	
 	// Upper bound known
-	
-	/* TODO:
-	 * test here, whether it's worth to write:
-	 * 
-	 * correctedScore > alpha:
-	 *   beta = correctedScore 
-	 * */
 	if (entry->flag == UPPER_BOUND_FLAG && correctedScore <= alpha) {
 		return correctedScore;
 	}
 	
 	// We have stored the lower bound of the eval for this position. Only return if it causes a beta cut-off.
-	
-	/* TODO:
-	 * test here, whether it's worth to write:
-	 * 
-	 * correctedScore < beta:
-	 *   alpha = correctedScore 
-	 * */
 	if (entry->flag == LOWER_BOUND_FLAG && correctedScore >= beta) {
 		return correctedScore;
 	}

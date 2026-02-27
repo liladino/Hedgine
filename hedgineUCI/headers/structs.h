@@ -123,7 +123,7 @@ typedef struct gameInfo{
 extern const move NULLMOVE;
 extern const bitMove NULLBITMOVE;
 
-extern FILE* debugOutput;
+extern FILE* g_debugOutput;
 
 
 #endif

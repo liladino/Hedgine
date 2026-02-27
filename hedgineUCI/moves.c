@@ -428,13 +428,9 @@ bitUndo makeMove(bitboard* board, bitMove m){
 		hashEnPassantIO(board, m.to % 8);
 		board->enpassanttarget = (1LL << (m.to > 31 ? m.to+8 : m.to-8));
 		
-		//~ hashPieceIO(board, m.from, piece);
-		//~ hashPieceIO(board, m.to, piece);
-		
 		mailbox[m.to] = piece;
 	}
 	else if ((m.flags & CAPTURE_FLAG)){
-		//
 		DELETE_EN_PASSANT_HASH();
 		
 		if ((m.flags & EN_PASSANT_FLAG)){

@@ -97,7 +97,7 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 			info.quit = true;
 			fprintf(stderr, "Ilegal move found!\n");
 			#ifdef DEBUG
-			fprintf(debugOutput, "Ilegal move found!\n");
+			fprintf(g_debugOutput, "Ilegal move found!\n");
 			#endif
 			break;
 		}
@@ -106,7 +106,7 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 			info.quit = true;
 			fprintf(stderr, "No legal moves in position!\n" );
 			#ifdef DEBUG
-			fprintf(debugOutput, "No legal moves in position!\n");
+			fprintf(g_debugOutput, "No legal moves in position!\n");
 			#endif
 			break;
 		}
@@ -135,8 +135,8 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 	
 print:
 	#ifdef DEBUG
-	fprintf(debugOutput, "tomove: %d\tfifty move count: %d\tmove num: %d\n", *tomove, *fmv, *movenum);
-	printBitBoard2d(debugOutput, *board);
+	fprintf(g_debugOutput, "tomove: %d\tfifty move count: %d\tmove num: %d\n", *tomove, *fmv, *movenum);
+	printBitBoard2d(g_debugOutput, *board);
 	#endif
 	return; //to surpress warning when not in debug 
 }
@@ -217,8 +217,8 @@ void parseGo(char *command, bitboard* board, bool *tomove) {
 	info.startTime = getTime_ms();
 
 	#ifdef DEBUG
-	fprintf(debugOutput, "time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, depth);
-	printBitBoard2d(debugOutput, *board);
+	fprintf(g_debugOutput, "time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, depth);
+	printBitBoard2d(g_debugOutput, *board);
 	#endif
 	
 	move m = CPU(depth, *board, *tomove);
@@ -228,10 +228,10 @@ void parseGo(char *command, bitboard* board, bool *tomove) {
 	fflush(stdout);
 	
 	#ifdef DEBUG
-	fprintf(debugOutput, "bestmove: ");
-	printmove(debugOutput, m);
-	fprintf(debugOutput, "\n");
-	fflush(debugOutput);
+	fprintf(g_debugOutput, "bestmove: ");
+	printmove(g_debugOutput, m);
+	fprintf(g_debugOutput, "\n");
+	fflush(g_debugOutput);
 	#endif
 }
 

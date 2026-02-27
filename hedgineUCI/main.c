@@ -1,6 +1,6 @@
 #include "headers/main.h"
 
-FILE* debugOutput;
+FILE* g_debugOutput;
 
 //test run:  ./hedgine test quit
 
@@ -9,8 +9,8 @@ int main(int argc, char* argv[]){
 	
 	#ifdef DEBUG
 	long int runStartTime = getTime_ms();
-	debugOutput = fopen("debuglog.txt", "w");
-	if (debugOutput == NULL){
+	g_debugOutput = fopen("debuglog.txt", "w");
+	if (g_debugOutput == NULL){
 		return 0;
 	}
 	#endif
@@ -51,9 +51,9 @@ int main(int argc, char* argv[]){
 	endEverything:
 	
 	#ifdef DEBUG
-	fprintf(debugOutput, "runtime: %ld\n", getTime_ms() - runStartTime);
+	fprintf(g_debugOutput, "runtime: %ld\n", getTime_ms() - runStartTime);
 	printCollisionStats();	
-	fclose(debugOutput);
+	fclose(g_debugOutput);
 	#endif
 	
 	freeTransTable();
