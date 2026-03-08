@@ -60,8 +60,12 @@ void communicate() {
  * RANDOM MOVER BOT
  *  */
 move randomBot(bitboard board, bool tomove){
-	time_t t;
-	srand((unsigned) time (&t));
+	static bool called = false;
+	if (!called){
+		srand((unsigned) time (NULL));
+		called = true;
+	}
+	
 	movearray legalmoves;
 	bitGenerateLegalmoves(&legalmoves, &board, tomove, false);
 	
@@ -543,7 +547,6 @@ move iterativeDeepening(bitboard board, bool tomove){
 				fprintf(debugOutput, " score mate %d pv ", (i_abs(i_abs(eval) - WHITEWON) + 1) / 2);
 				#endif
 			}
-			break;
 		}
 		else{
 			printf(" score cp %d pv ", eval);
@@ -563,7 +566,7 @@ move iterativeDeepening(bitboard board, bool tomove){
 		fprintf(debugOutput, "\n");
 		#endif
 		
-		if (eval >= WHITEWON || eval <= BLACKWON) break; //dont think if not neccesary
+		if (i_abs(eval) >= WHITEWON-1000) break; //dont think if not neccesary
 	}
 	
 	//~ rmBestMoveFlag(s_nextpos);

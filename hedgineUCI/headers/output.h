@@ -7,6 +7,12 @@
 #include <stdio.h>
 #include <stdbool.h>
 
+void printDebug(
+#ifdef DEBUG
+	const char* log, ...
+#endif
+	);
+	
 void printboardLetters(FILE* ostream, char board[12][12]);
 
 void printBitBoard2d(FILE* ostream, bitboard board);
