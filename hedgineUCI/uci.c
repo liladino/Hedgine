@@ -40,62 +40,58 @@ static char* findToken(char* str, const char* token) {
 
 /* 
  * UCI communication
- * forked from BBC
- * by Maksim Korzh
+ * loosely based on Maksim Korzh's implementation in BBC.
+ * Improved string handling.
  */
  
+#define STARTPOS "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+	
 // parse UCI "position" command
-//e.g position startpos moves e2e4 e7e5
+// e.g position startpos moves e2e4 e7e5
 //	position fen ... moves ...
 void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* movenum){
-	char* position = jumpToNextToken(command); // after "position "
-	if (!position) return; 
-	
-	if (strncmp(position, "startpos", 8) == 0){
-		setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", board, tomove, fmv, movenum);
-	}
-	else { 
-		position = findToken(command, "fen"); 
-		//~ position = strstr(command, "fen");
+	char *token = jumpToNextToken(command); // after "position"
+	if (!token) return;
+
+	printDebug(token);
+	if (compareToken(token, "startpos", 8)) {
+		setboardFEN(STARTPOS, board, tomove, fmv, movenum);
+		token = jumpToNextToken(token);
 		
-		// if no "fen" command is available within command string
-		if (position == NULL){
-			// init chess board with start position, nothing was specified
-			setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", board, tomove, fmv, movenum);
-		}
-		else{
-			// shift to next token
-			position = jumpToNextToken(position);
-			
-			// init chess board with position from FEN string
-			readFEN(position, board, tomove, fmv, movenum);
+	} else if (compareToken(token, "fen", 3)) {
+		token = jumpToNextToken(token);
+		if (!token) goto posError;
+
+		if (setboardFEN(token, board, tomove, fmv, movenum)) {
+			goto posError;
 		}
 	}
+	else {
+		goto posError; // invalid command
+	}
+	
 	//store the start position in the repetition table too
 	storeRepetiton(board->hashValue);
 	
-	char* currentmove = findToken(command, "moves"); //~ strstr(command, "moves");
+	char* currentmove = findToken(command, "moves");
 	if (currentmove == NULL){
-		goto print;
-	}	
+		goto noMovesGiven;
+	}
 	currentmove = jumpToNextToken(currentmove); //skip the "moves" token
 	
 	while(currentmove){
 		// parse next move
 		move m = parseLongAlgebraicNotation(currentmove);
 		
-		//~ printBitBoard2d(stdout, *board);
-		//~ printmove(stdout, m);
-		
-		// if no more moves
+		// if no more moves / error
 		if (m.from.file == -1) break;
 		
 		bitboard last = *board; 
-		int x = isMoveLegal(board, *tomove, m);
+		int x = makeMoveIfLegal(board, *tomove, m);
 		if (x == 1){
 			//the move was illegal
 			info.quit = true;
-			fprintf(stderr, "Ilegal move found!\n");
+			fprintf(stderr, "Illegal move found!\n");
 			#ifdef DEBUG
 			fprintf(g_debugOutput, "Ilegal move found!\n");
 			#endif
@@ -133,12 +129,18 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 		currentmove = jumpToNextToken(currentmove);
 	}
 	
-print:
+noMovesGiven:
 	#ifdef DEBUG
-	fprintf(g_debugOutput, "tomove: %d\tfifty move count: %d\tmove num: %d\n", *tomove, *fmv, *movenum);
+	printDebug( "tomove: %d\tfifty move count: %d\tmove num: %d\n", *tomove, *fmv, *movenum);
+	#endif
+	return; 
+
+posError:
+	setboardFEN(STARTPOS, board, tomove, fmv, movenum);
+	#ifdef DEBUG
+	printDebug( "error in command, startpos set\n");
 	printBitBoard2d(g_debugOutput, *board);
 	#endif
-	return; //to surpress warning when not in debug 
 }
 
 // reset time control variables
@@ -217,7 +219,7 @@ void parseGo(char *command, bitboard* board, bool *tomove) {
 	info.startTime = getTime_ms();
 
 	#ifdef DEBUG
-	fprintf(g_debugOutput, "time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, depth);
+	printDebug( "time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, depth);
 	printBitBoard2d(g_debugOutput, *board);
 	#endif
 	

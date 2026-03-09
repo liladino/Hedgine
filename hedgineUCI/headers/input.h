@@ -19,6 +19,4 @@ move parseLongAlgebraicNotation(char str[]);
 
 int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int *fmv, int *movenum);
 
-void readFEN(char str[], bitboard* bboard, bool *tomove, int* fmv, int* movenum);
-
 #endif

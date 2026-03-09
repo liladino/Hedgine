@@ -23,7 +23,7 @@ void setmove(move *m, square from, square to, int promotion);
 
 //bits:
 
-int isMoveLegal(bitboard* board, const bool tomove, const move m);
+int makeMoveIfLegal(bitboard* board, const bool tomove, const move m);
 
 bitboard boardConvert(char board2d[12][12], int castling[4], squarenums enpass, bool tomove);
 

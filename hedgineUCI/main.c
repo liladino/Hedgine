@@ -13,6 +13,9 @@ int main(int argc, char* argv[]){
 	if (g_debugOutput == NULL){
 		return 0;
 	}
+	
+	printDebug("qwertyuiop\nasdfghjkl\nzxcvbnm\n%d%c", 100, 'a');
+	printDebug("\n");
 	#endif
 		
 	for (int i = 0; i < argc; i++) {
@@ -51,7 +54,7 @@ int main(int argc, char* argv[]){
 	endEverything:
 	
 	#ifdef DEBUG
-	fprintf(g_debugOutput, "runtime: %ld\n", getTime_ms() - runStartTime);
+	printDebug("runtime: %ld\n", getTime_ms() - runStartTime);
 	printCollisionStats();	
 	fclose(g_debugOutput);
 	#endif

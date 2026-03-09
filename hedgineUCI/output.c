@@ -1,5 +1,34 @@
 #include "headers/output.h"
 
+/* 
+ * my print "wrapper". 
+ * usage: printDebug("meow meow %d", 10);
+ * result:
+ *  printf("meow meow %d", 10);
+ *  fprintf(g_debugOutput, "meow meow %d", 10);
+ * 
+ * stolen code.
+ * */
+void printDebug(
+#ifdef DEBUG
+	const char* log, ...
+#endif
+	) {
+#ifdef DEBUG
+	va_list args1, args2;
+	va_start(args1, log);
+	
+	// Copy args for the second call
+	va_copy(args2, args1);
+
+	vprintf(log, args1); 
+	vfprintf(g_debugOutput, log, args2); 
+
+	va_end(args1);
+	va_end(args2);
+#endif
+}
+
 void printmove(FILE* ostream, move m) {
 	fprintf(ostream, "%c%d%c%d%c ", m.from.file+'a'-2, m.from.rank-1, m.to.file+'a'-2, m.to.rank-1, (m.promotion >= 'a' && m.promotion <= 'z' ? m.promotion : ' ') );
 }

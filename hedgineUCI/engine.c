@@ -65,8 +65,12 @@ void communicate() {
  * RANDOM MOVER BOT
  *  */
 move randomBot(bitboard board, bool tomove){
-	time_t t;
-	srand((unsigned) time (&t));
+	static bool called = false;
+	if (!called){
+		srand((unsigned) time (NULL));
+		called = true;
+	}
+	
 	movearray legalmoves;
 	bitGenerateLegalmoves(&legalmoves, &board, tomove, false);
 	

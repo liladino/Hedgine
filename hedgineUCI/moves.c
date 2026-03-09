@@ -90,7 +90,7 @@ int isMoveInMoveArray(const movearray* legalmoves, const move m){
 	return -1;
 } 
 
-int isMoveLegal(bitboard* board, const bool tomove, const move m){
+int makeMoveIfLegal(bitboard* board, const bool tomove, const move m){
 	movearray legalmoves;
 	bitGenerateLegalmoves(&legalmoves, board, tomove, false);
 	int x = isMoveInMoveArray(&legalmoves, m);

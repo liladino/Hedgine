@@ -273,35 +273,3 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int *fmv, int *moven
 	
 	return 0;
 }
-
-
-void readFEN(char str[], bitboard* bboard, bool *tomove, int* fmv, int* movenum){
-	//rnbqkbnr/ppp2ppp/4p3/3pP3/8/8/PPPP1PPP/RNBQKBNR w KQkq d6 0 3
-	char pos[64+7+1] = {0}; //overly cautius upper bound (64 squares + 7 slahshes + 0 at the end)
-	char tomovestr[2] = {0};
-	char castlerights[5] = {0};
-	char enpassanttarget[3] = {0};
-	sscanf(str, "%71s %1s %4s %2s %d %d", pos, tomovestr, castlerights, enpassanttarget, fmv, movenum);
-	
-	char FEN[129] = {0};
-	char space[] = " ";
-	strcat(FEN, pos);
-	strcat(FEN, space);
-	
-	strcat(FEN, tomovestr);
-	strcat(FEN, space);
-	
-	strcat(FEN, castlerights);
-	strcat(FEN, space);
-	
-	strcat(FEN, enpassanttarget);
-	strcat(FEN, space);
-	
-	char numbers[10] = {0};
-	snprintf(numbers, sizeof(numbers), "%d %d", (int)((*fmv) % 100), (int)((*movenum) % 1000));
-	strcat(FEN, numbers);
-	
-	if (setboardFEN(FEN, bboard, tomove, fmv, movenum)){
-		setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", bboard, tomove, fmv, movenum);
-	}
-}
