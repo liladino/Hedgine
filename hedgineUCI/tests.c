@@ -14,11 +14,11 @@ void testLasker(){
 	bool tomove;
 	
 	char* command = calloc(100, sizeof(char));
-	strcpy(command, "fen 8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1");
+	strcpy(command, "position fen 8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1");
 	parsePosition(command, &board, &tomove, &temp, &temp);
 	printBitBoard2d(stdout, board);
 	
-	strcpy(command, "movetime 15000");
+	strcpy(command, "go movetime 15000");
 	parseGo(command, &board, &tomove);	
 	
 	free(command);

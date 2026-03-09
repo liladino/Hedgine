@@ -32,7 +32,7 @@ int main(int argc, char* argv[]){
 				return 0;
 			}
 		}
-		if (strncmp(argv[1], "testLasker", 10) == 0){
+		else if (strncmp(argv[1], "testLasker", 10) == 0){
 			testLasker();
 		}
 	}

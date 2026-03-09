@@ -12,3 +12,7 @@ Tests on different optimization levels
 9	0.92	0.45	0.42	0.39
 10	0.93	0.45	0.42	0.39
 AVG	0.92	0.443	0.418	0.393
+
+make profiling 
+./hedgine testLasker quit
+gprof hedgine > report.txt 

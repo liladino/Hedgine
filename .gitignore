@@ -76,3 +76,6 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+##VSCodium garbage
+*.json

@@ -1,3 +1,6 @@
+Date:	Mar 09 2026:
+	Fixed Lasker test.
+
 Date:	Mar 08 2026:
 	Refactors in UCI communication.
 
