@@ -498,6 +498,8 @@ static inline void ageHistory(){
 }
 
 move iterativeDeepening(bitboard board, bool tomove){
+	long int searchStartTime = getTime_ms();
+	
 	s_searchedNodes = 0;
 	move nextm = NULLMOVE;
 	emptyPVTable();
@@ -549,21 +551,24 @@ move iterativeDeepening(bitboard board, bool tomove){
 		
 		bool mate = false;
 		if (i_abs(eval) >= WHITEWON-1000){
+			int mateIn = 1e8;
 			if ((tomove == black && eval <= BLACKWON+1000) || (tomove == white && eval >= WHITEWON-1000)){
 				//engine is about to win
-				printf(" score mate %d pv ", (i_abs(i_abs(eval) - WHITEWON) + 1) / 2);
+				mateIn = (i_abs(i_abs(eval) - WHITEWON) + 1) / 2;
+				printf(" score mate %d pv ", mateIn);
 				#ifdef DEBUG
 				fprintf(g_debugOutput, " score mate %d pv ", (i_abs(i_abs(eval) - WHITEWON) + 1) / 2);
 				#endif
 			}
 			else{
 				//we are about to win
-				printf(" score mate %d pv ", -(i_abs(i_abs(eval) - WHITEWON) + 1) / 2);
+				mateIn = (i_abs(i_abs(eval) - WHITEWON) + 1) / 2;
+				printf(" score mate %d pv ", -mateIn);
 				#ifdef DEBUG
 				fprintf(g_debugOutput, " score mate %d pv ", -(i_abs(i_abs(eval) - WHITEWON) + 1) / 2);
 				#endif
 			}
-			mate = true;
+			if (mateIn * 2 <= i) mate = true;
 		}
 		else{
 			printf(" score cp %d pv ", eval);
@@ -592,6 +597,11 @@ move iterativeDeepening(bitboard board, bool tomove){
 	//~ printCollisionStats();
 	//~ printf("\n\n");
 	//~ #endif 
+	
+	// if we return the move too quickly, some GUIs don't register it
+	if (!g_stopSearch && getTime_ms() - searchStartTime < 1000) {
+		usleep(1000); 
+	}
 	
 	//in case the search returns a nullmove
 	if (nextm.from.file == NULLMOVE.from.file) {

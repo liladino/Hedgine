@@ -1,3 +1,10 @@
+Date:	Mar 01 2026:
+	Search stop policy on mate refined. Found out, that if we return early, the
+	search sometimes isn't fruitful, and the players just move around aimlessly,
+	as the TT is filled with "mate in N" records.
+	A possible solution seems to be that if the TT says mate in X, don't stop 
+	the iterative deepening until i is at least 2X.
+		 
 Date:	Feb 27 2026:
 	Killer moves implemented.
 	 
