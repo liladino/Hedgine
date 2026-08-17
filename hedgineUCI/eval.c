@@ -131,29 +131,20 @@ static int max(int a, int b){
 	return (a > b ? a : b);
 }
 
- int countPieces(const bitboard* const board){
-	u64 all = (board->piece[wqueen] | board->piece[wbishop] | board->piece[wknight] | board->piece[wrook] | board->piece[bqueen] | board->piece[bbishop] | board->piece[bknight] | board->piece[brook]);
-	u64 mask = 1;
-	int count = 0;
-	for (int i = 0; i < 64; i++){
-		if (mask & all) count++;
-		mask = mask << 1;
-	}
-	return count;
+static inline int counter(u64 var){
+    return __builtin_popcountll(var);  
 }
 
- int countFriendlyPieces(const bitboard* const board, bool tomove){
+int countPieces(const bitboard* const board){
+	u64 all = (board->piece[wqueen] | board->piece[wbishop] | board->piece[wknight] | board->piece[wrook] | board->piece[bqueen] | board->piece[bbishop] | board->piece[bknight] | board->piece[brook]);
+	return counter(all); 
+}
+
+int countFriendlyPieces(const bitboard* const board, bool tomove){
 	u64 all;
 	if (white == tomove) all = (board->piece[wqueen] | board->piece[wbishop] | board->piece[wknight] | board->piece[wpawn]);
 	else all = (board->piece[bpawn] | board->piece[bqueen] | board->piece[bbishop] | board->piece[bknight] | board->piece[brook]);
-	
-	u64 mask = 1;
-	int count = 0;
-	for (int i = 0; i < 64; i++){
-		if (mask & all) count++;
-		mask = mask << 1;
-	}
-	return count;
+	return counter(all);
 }
 
 /* Provides a transition between two values.

@@ -52,6 +52,8 @@ test
 *.pdb
 gmon.out
 report.txt
+report_old.txt
+hedgineUCI/tests
 
 # notes and test files
 *.fen
@@ -79,3 +81,4 @@ dkms.conf
 
 ##VSCodium garbage
 *.json
+.vscode/
