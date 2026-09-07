@@ -174,6 +174,9 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 	int legalFound = 0;
 
 	for (int i = 0; i < moves.size; i++) {
+		if (!isCastlingLegal(&s_searchBoard, tomove, &moves.array[i])){
+			continue;
+		}
 		bitUndo u = makeMove(&s_searchBoard, moves.array[i]);
 		if (bitInCheck(&s_searchBoard, tomove)) {
 			undoMove(&s_searchBoard, moves.array[i], u);
