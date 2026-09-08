@@ -106,8 +106,8 @@ typedef enum bitMoveFlags{
 typedef enum evalflag{
 	EXACT_EVAL_FLAG = 1, 
 	LOWER_BOUND_FLAG = 2, 
-	UPPER_BOUND_FLAG = 3, 
-	LAST_BEST_EVAL_FLAG = 4
+	UPPER_BOUND_FLAG = 3
+	// LAST_BEST_EVAL_FLAG = 4
 }evalflag;
 
 #endif

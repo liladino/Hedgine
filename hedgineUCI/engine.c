@@ -146,6 +146,7 @@ static void orderMoves(movearray* legalmoves, bitMove* lastBest, int depth) {
 	}
 }
 
+
 /*
  * Quiescence search
  * */
@@ -153,6 +154,12 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 	s_searchedNodes++;
 	if (2026 == s_searchedNodes % 2027) { communicate(); }
 	if (g_stopSearch) { return 0; }
+
+	if (isRepetition(s_searchBoard.hashValue)) { return 0; }
+
+	if (depth >= MAXSEARCHDEPTH) {
+    	return fulleval(&s_searchBoard, tomove, s_maxdepth);
+	}
 
 	bool inCheck = bitInCheck(&s_searchBoard, tomove);
 
@@ -173,6 +180,8 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 
 	int legalFound = 0;
 
+	storeRepetiton(s_searchBoard.hashValue);
+
 	for (int i = 0; i < moves.size; i++) {
 		if (!isCastlingLegal(&s_searchBoard, tomove, &moves.array[i])){
 			continue;
@@ -180,6 +189,10 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 		bitUndo u = makeMove(&s_searchBoard, moves.array[i]);
 		if (bitInCheck(&s_searchBoard, tomove)) {
 			undoMove(&s_searchBoard, moves.array[i], u);
+			if (g_stopSearch) { 
+				rmLastRepetition();
+				return 0; 
+			}
 			continue;
 		}
 		legalFound++;
@@ -187,9 +200,14 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 		int eval = -quiescenceSearch(!tomove, -beta, -alpha, depth+1);
 		undoMove(&s_searchBoard, moves.array[i], u);
 
-		if (eval >= beta) return beta;
+		if (eval >= beta) {
+			rmLastRepetition();
+			return beta;
+		}
 		alpha = i_max(alpha, eval);
 	}
+
+	rmLastRepetition();
 	
 	// mate
 	if (inCheck && 0 == legalFound) {
@@ -214,10 +232,10 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 	if (g_stopSearch) { return 0; }
 	
 	if (0 < depth) {
-		if (isRepetition(s_searchBoard.hashValue)) return -1;
+		if (isRepetition(s_searchBoard.hashValue)) { return 0; }
 		
-		alpha = i_max(alpha, -MATE_NOW + depth);
-		beta  = i_min(beta,   MATE_NOW - depth);
+		alpha = i_max(alpha, -MATE_NOW + remainingDepth);
+		beta  = i_min(beta,   MATE_NOW - remainingDepth);
 		if (alpha >= beta) {
 			return alpha;
 		}
@@ -314,7 +332,7 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 		 * */
 		if (eval >= beta) {
 			//the "refutation"
-			storePosTT(s_searchBoard.hashValue, beta, LOWER_BOUND_FLAG, remainingDepth, depth, currentMove); //probably bestMove instead of currentMove?? - not sure, becase the currentMove wa 
+			storePosTT(s_searchBoard.hashValue, beta, LOWER_BOUND_FLAG, remainingDepth, depth, currentMove); 
 			
 			/*
 			 * Killers and history

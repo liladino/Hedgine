@@ -48,6 +48,7 @@ void freeTransTable(){
 	if (TranspositionTable != NULL){
 		free(TranspositionTable);
 	}
+	TranspositionTable = NULL;
 	
 	TTableSize = TTableSizeMB = 0;
 }
@@ -132,6 +133,9 @@ u64 hashPosition(const bitboard* const board, bool tomove){
     return result;
 }
 
+/*
+ * Assumes TT is filled.
+ */
 TThashentry* lookup(const u64 position){
 	const u64 tmp = position % TTableSize;
 	if (TranspositionTable[tmp].pos == position){
@@ -253,6 +257,15 @@ void storePosTT(const u64 hashValue, int eval, evalflag flag, int depthRemaining
 		return;
 	}
 	u64 current = hashValue % TTableSize;
+
+	// TThashentry *entry = &TranspositionTable[current];
+
+	// if (entry->depth >= 0 &&
+	// 	entry->pos == hashValue &&
+	// 	entry->depth > depthRemaining)
+	// {
+	// 	return;
+	// }
 	
 	#ifdef DEBUG
 	if (TranspositionTable[current].pos != 0) s_Wcollision++;
@@ -272,7 +285,7 @@ void printHashEntry(u64 pos){
 		printf("No record/overweitten\n");
 		return;
 	}
-	printf("%lf %s depth: %d ", current->eval * 0.01/* * (tomove == white ? 1: -1)*/, current->flag == EXACT_EVAL_FLAG ? " EXACT_EVAL_FLAG" : current->flag == LAST_BEST_EVAL_FLAG ? " LAST_BEST_EVAL_FLAG" : " otherFlag", current->depth);
+	printf("%lf %s depth: %d ", current->eval * 0.01/* * (tomove == white ? 1: -1)*/, current->flag == EXACT_EVAL_FLAG ? " EXACT_EVAL_FLAG" : " otherFlag", current->depth);
 	printBitPiece(pos);
 }
 
@@ -294,20 +307,17 @@ void printHashEntry(u64 pos){
 int getEval(u64 pos){
 	TThashentry *current = &TranspositionTable[pos % TTableSize];
 	if (current->pos == pos){
-		if (current->flag == LAST_BEST_EVAL_FLAG) {
-			//remove the flag maybe?
-			current->flag = EXACT_EVAL_FLAG;
-			return 1000000 + current->depth;
-		}
 		if (current->flag == EXACT_EVAL_FLAG || current->flag == LOWER_BOUND_FLAG) return current->eval;
 	}
 	return -1000000;
 }
 
 bitMove probeTTMove(u64 pos){
+	if (!HASHING_ENABLED || TranspositionTable == NULL || TTableSize == 0)
+    	return NULLBITMOVE;  
     TThashentry* entry = &TranspositionTable[pos % TTableSize];
     if (entry->pos == pos) return entry->m;
-    return (bitMove){0,0,0,-1,0}; // NULLBITMOVE
+    return NULLBITMOVE;
 }
 
 //~ void orderMoves(movearray* legalmoves){
