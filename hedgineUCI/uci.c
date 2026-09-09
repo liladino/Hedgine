@@ -296,7 +296,7 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 			char* temp = jumpToNextToken(input);
 			if (compareToken(temp, "name", 4)){
 				if (compareToken(temp = jumpToNextToken(temp), "Hash", 4)){
-					if (compareToken(temp = jumpToNextToken(temp), "value", 4)){
+					if (compareToken(temp = jumpToNextToken(temp), "value", 5)){
 						if ((temp = jumpToNextToken(temp))){
 							int mb = atoi(temp);
 							if(mb < TT_MIN_SIZE_MB) mb = TT_MIN_SIZE_MB;
