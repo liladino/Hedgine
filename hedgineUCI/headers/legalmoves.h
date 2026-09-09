@@ -33,6 +33,8 @@ void bitGenerateLegalmoves(movearray* moves, const bitboard* const board, bool t
 
 resultconst gameend(bitboard* board, bool tomove);
 
+bool hasLegalMove(bitboard *board, bool tomove);
+
 bool isCastlingLegal(bitboard* board, bool tomove, const bitMove* const mv);
 
 #endif

@@ -383,24 +383,35 @@ void bitGenerateLegalmoves(movearray* moves, const bitboard* const board, bool t
 	//~ printf("--%d--\n--%d--\n", sizeof(bitboard), sizeof(movearray));
 }
 
-resultconst gameend(bitboard* board, bool tomove){
-	movearray moves;
-	
-	bitGenerateLegalmoves(&moves, board, tomove, false);
-	
-	for (int i = 0; i < moves.size; i++){
-		if (!isCastlingLegal(board, tomove, &moves.array[i])){
-			continue;
-		}
-		bitUndo u = makeMove(board, moves.array[i]);
-		bool check = bitInCheck(board, tomove);
-		undoMove(board, moves.array[i], u);
-		
-		if (!check) return ONGOING; //we can make the move, doesn't result in check
-	}
-	
-	if (bitInCheck(board, tomove)) return (tomove == white ? BLACKWON : WHITEWON);
-	return DRAW;
+bool hasLegalMove(bitboard *board, bool tomove){
+    movearray moves;
+    bitGenerateLegalmoves(&moves, board, tomove, false);
+
+    for (int i = 0; i < moves.size; ++i) {
+        bitMove m = moves.array[i];
+
+        if (!isCastlingLegal(board, tomove, &m))
+            continue;
+
+        bitUndo u = makeMove(board, m);
+        bool legal = !bitInCheck(board, tomove);
+        undoMove(board, m, u);
+
+        if (legal)
+            return true;
+    }
+
+    return false;
+}
+
+resultconst gameend(bitboard *board, bool tomove){
+    if (hasLegalMove(board, tomove))
+        return ONGOING;
+
+    if (!bitInCheck(board, tomove))
+        return DRAW;
+
+    return tomove == white ? BLACKWON : WHITEWON;
 }
 
 /*returns true if:

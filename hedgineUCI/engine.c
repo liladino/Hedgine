@@ -158,16 +158,20 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 	if (isRepetition(s_searchBoard.hashValue)) { return 0; }
 
 	if (depth >= MAXSEARCHDEPTH) {
-    	return fulleval(&s_searchBoard, tomove, s_maxdepth);
+    	return staticEval(&s_searchBoard, tomove);
 	}
 
 	bool inCheck = bitInCheck(&s_searchBoard, tomove);
 
 	if (!inCheck) {
 		//~ printBitBoard2d(stdout, s_searchBoard);
-		int stand = fulleval(&s_searchBoard, tomove, s_maxdepth);
-		if (stand >= beta) return beta;
-		if (stand > alpha) alpha = stand;
+		int stand = staticEval(&s_searchBoard, tomove);
+		if (stand >= beta) {
+			return hasLegalMove(&s_searchBoard, tomove) ? beta : 0;
+		}
+		if (stand > alpha){
+			alpha = stand;
+		}
 	}
 
 	movearray moves;
@@ -209,9 +213,13 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 
 	rmLastRepetition();
 	
-	// mate
-	if (inCheck && 0 == legalFound) {
-		return -(MATE_NOW - depth);
+	if (0 == legalFound) {
+		if (inCheck){
+			return -(MATE_NOW - depth);
+		}
+		if (!hasLegalMove(&s_searchBoard, tomove)){
+        	return 0;
+		}
 	}
 
 	return alpha;

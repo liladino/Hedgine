@@ -275,11 +275,15 @@ static inline int kingDist(u64 wk, u64 bk){
 	return min(abs(w/8 - b/8), abs((w & 7) - (b & 7)));
 }
 
-int fulleval(bitboard* board, bool tomove, int depth){
+int staticEval(bitboard *board, bool tomove)
+{
+    int score = sideEval(board, white) - sideEval(board, black);
+    return tomove == white ? score : -score;
+}
 	//~ printBitBoard2d(*board);
-	resultconst r = gameend(board, tomove);
-	if (r == DRAW) return DRAW;
-	if (r != ONGOING) return (BLACKWON - 100 + depth);
+	// resultconst r = gameend(board, tomove);
+	// if (r == DRAW) return DRAW;
+	// if (r != ONGOING) return (BLACKWON - 100 + depth);
 	
 	//~ bool opening = false, middlegame = false, endgame = false;
 	//~ int opeWeight = 0, midWeight = 0, endWeight = 0;
@@ -310,5 +314,5 @@ int fulleval(bitboard* board, bool tomove, int depth){
 	//~ if (tomove == black) eval *= -1;
 	
 	//~ return eval;
-	return (sideEval(board, white) - sideEval(board, black)) * (tomove == white ? 1 : -1);
-}
+// 	return (sideEval(board, white) - sideEval(board, black)) * (tomove == white ? 1 : -1);
+// }

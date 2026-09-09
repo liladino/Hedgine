@@ -1,10 +1,5 @@
 #include "headers/hash.h"
 
-/*
- * The transposition table logic is partly based on Sebastian Lague's 
- * implementation.
- * */
-
 u64 TTableSizeMB = 0;
 u64 TTableSize = 0;
 TThashentry* TranspositionTable = NULL;
@@ -305,6 +300,8 @@ void printHashEntry(u64 pos){
 
 
 int getEval(u64 pos){
+	if (!HASHING_ENABLED)
+    	return -1000000;  
 	TThashentry *current = &TranspositionTable[pos % TTableSize];
 	if (current->pos == pos){
 		if (current->flag == EXACT_EVAL_FLAG || current->flag == LOWER_BOUND_FLAG) return current->eval;
@@ -313,7 +310,7 @@ int getEval(u64 pos){
 }
 
 bitMove probeTTMove(u64 pos){
-	if (!HASHING_ENABLED || TranspositionTable == NULL || TTableSize == 0)
+	if (!HASHING_ENABLED)
     	return NULLBITMOVE;  
     TThashentry* entry = &TranspositionTable[pos % TTableSize];
     if (entry->pos == pos) return entry->m;
