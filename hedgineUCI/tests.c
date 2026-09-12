@@ -5,6 +5,24 @@ void printLogo(){
 }
 
 
+void testLasker(){
+	initializeAll();
+	
+	printf("Lasker-Reichhelm position: 8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1\n");
+	bitboard board;
+	int temp;
+	bool tomove;
+	
+	char* command = calloc(100, sizeof(char));
+	strcpy(command, "fen 8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1");
+	parsePosition(command, &board, &tomove, &temp, &temp);
+	
+	strcpy(command, "movetime 15000");
+	parseGo(command, &board, &tomove);	
+	
+	free(command);
+}
+
 int perfTest(bitboard board, bool tomove, int depth){	
 	movearray legalmoves;
 	
@@ -66,19 +84,19 @@ bool makePerfTestsAssert(){
 	bitboard bboard;
 	int temp;
 	bool tomove;
-	
+	//~ goto p11;
 	{
 		printf("\nPosition 1\n");
 		setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", &bboard, &tomove, &temp, &temp);
 		printBitBoard2d(stdout, bboard);
-		int startposValues[] = {1, 20, 400, 8902, 197281};
+		int startposValues[] = {1, 20, 400, 8902, 197281, 4865609, 119060324};
 		for (int i = 0; i < 5; i++){
 			int allmovecount = perfTest(bboard, tomove, i);
 			printf("%d ply:\nLeaves:\t%d\nExp:\t%d\n\n", i+1, allmovecount, startposValues[i]);
 			if (allmovecount != startposValues[i]) return false;
 		}
 	}
-	
+	//~ return true;
 	{
 		printf("\nPosition 2\n");
 		setboardFEN("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", &bboard, &tomove, &temp, &temp);
@@ -166,6 +184,42 @@ bool makePerfTestsAssert(){
 		printBitBoard2d(stdout, bboard);
 		int posValues[] = {1, 21, 427, 9601, 221941};
 		for (int i = 0; i < 5; i++){
+			int allmovecount = perfTest(bboard, tomove, i);
+			printf("%d ply:\nLeaves:\t%d\nExp:\t%d\n\n", i+1, allmovecount, posValues[i]);
+			if (allmovecount != posValues[i]) return false;
+		}
+	}
+	
+	{
+		printf("\nPosition 9\n");
+		setboardFEN("4k3/P7/8/8/8/8/8/QQQQKQQQ w - - 0 1", &bboard, &tomove, &temp, &temp);
+		printBitBoard2d(stdout, bboard);
+		int posValues[] = {1, 102, 106, 11094, 19905, 2104182};
+		for (int i = 0; i < 6; i++){
+			int allmovecount = perfTest(bboard, tomove, i);
+			printf("%d ply:\nLeaves:\t%d\nExp:\t%d\n\n", i+1, allmovecount, posValues[i]);
+			if (allmovecount != posValues[i]) return false;
+		}
+	}
+	
+	{
+		printf("\nPosition 10\n");
+		setboardFEN("4k3/P7/8/8/8/8/QQQQ1QQQ/RNBQKBNR w - - 0 1", &bboard, &tomove, &temp, &temp);
+		printBitBoard2d(stdout, bboard);
+		int posValues[] = {1, 107, 80, 8965, 6850, 780087, 688687};
+		for (int i = 0; i < 7; i++){
+			int allmovecount = perfTest(bboard, tomove, i);
+			printf("%d ply:\nLeaves:\t%d\nExp:\t%d\n\n", i+1, allmovecount, posValues[i]);
+			if (allmovecount != posValues[i]) return false;
+		}
+	}
+	//~ p11:
+	{
+		printf("\nPosition 11 (Lasker)\n");
+		setboardFEN("8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1", &bboard, &tomove, &temp, &temp);
+		printBitBoard2d(stdout, bboard);
+		int posValues[] = {1, 3, 15, 90, 396, 2090, 10545, 61641, 301431};
+		for (int i = 0; i < 9; i++){
 			int allmovecount = perfTest(bboard, tomove, i);
 			printf("%d ply:\nLeaves:\t%d\nExp:\t%d\n\n", i+1, allmovecount, posValues[i]);
 			if (allmovecount != posValues[i]) return false;

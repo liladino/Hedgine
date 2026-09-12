@@ -23,7 +23,9 @@ void communicate() {
 }
 
 void setMoveTime(int increment){
-	info.moveTime = increment;
+	info.moveTime = increment - 100;
+	if (info.moveTime < 0) info.moveTime = 0;
+	
 	if (info.timeRemaining <= 0.5 * SECOND){ //half a sec left
 		info.moveTime += 50;
 		return;
@@ -325,7 +327,7 @@ move CPU(int cpulvl, bitboard bboard, bool tomove){
 	
 	if (cpulvl == 0){
 		#define millisec 1000
-		usleep(25 * millisec); //to not move immediately
+		//~ usleep(25 * millisec); 
 		m = randomBot(bboard, tomove);
 	}	
 	else{

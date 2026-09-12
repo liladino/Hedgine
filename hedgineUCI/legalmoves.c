@@ -698,11 +698,6 @@ static void addBitQueenMoves(movearray* moves, bitboard board, bool tomove, u64 
 }
 
 void bitGenerateLegalmoves(movearray* moves, bitboard board, bool tomove, bool onlyCaptures){
-	/* if (bitInCheck(&board, tomove, enemypieces(&board, !tomove), enemypieces(&board, tomove))){
-		printf("enemy\n");
-		printBitPieceAsBoard(enemypieces(&board, !tomove));
-	} */
-	
 	u64 enemy = enemypieces(&board, !tomove); 
 	u64 friendly = enemypieces(&board, tomove);
 	
