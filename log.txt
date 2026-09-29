@@ -1,3 +1,10 @@
+Date:	Sep 29 2026:
+	Fix token length error in input: couldn't set hash size.
+	Fix logic error in quiescence search: stop after a fixed number of plies to avoid infinite check sequences, check repetitions, check castling legality.
+	Fix memory handling error with TT (free).
+	Remove last best flag.
+	Slight optimizations: Remove unnecesary gameend checks.
+
 Date:	Mar 09 2026:
 	Fixed Lasker test.
 
