@@ -404,6 +404,9 @@ bool hasLegalMove(bitboard *board, bool tomove){
     return false;
 }
 
+/**
+ * Not neccessary for search.
+ */
 resultconst gameend(bitboard *board, bool tomove){
     if (hasLegalMove(board, tomove))
         return ONGOING;

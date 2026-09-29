@@ -279,40 +279,6 @@ int staticEval(bitboard *board, bool tomove)
 {
     int score = sideEval(board, white) - sideEval(board, black);
     return tomove == white ? score : -score;
+	
+	// printBitBoard2d(stdout, *board);
 }
-	//~ printBitBoard2d(*board);
-	// resultconst r = gameend(board, tomove);
-	// if (r == DRAW) return DRAW;
-	// if (r != ONGOING) return (BLACKWON - 100 + depth);
-	
-	//~ bool opening = false, middlegame = false, endgame = false;
-	//~ int opeWeight = 0, midWeight = 0, endWeight = 0;
-	//~ int pieces = countPieces(board);
-	
-	//~ if (pieces < 6){
-		//~ endgame = true;
-		//~ endWeight = (6-pieces)/3 + 1;
-	//~ }
-	
-	// wking wqueen	wrook wbishop wknight wpawn bking bqueen brook bbishop bknight bpawn	
-	//~ int pieceVal[12] = {0, 900, 500, 313, 310, 100, 0, -900, -500, -313, -310, -100};
-		
-	//~ int eval = 0;
-	//~ for (int curr = wking; curr <= bpawn; curr++) {
-		//~ u64 bb = board->piece[curr];
-		//~ while (bb) {
-			//~ int sq = __builtin_ctzll(bb);
-			//~ eval += pieceVal[curr];
-			//~ bb &= bb - 1;  // Clear the LSB
-		//~ }
-	//~ }
-
-	//~ if (endgame){
-		//~ eval += endWeight * signum(eval) * kingDist(board->piece[wking], board->piece[bking]);
-	//~ }
-	
-	//~ if (tomove == black) eval *= -1;
-	
-	//~ return eval;
-// 	return (sideEval(board, white) - sideEval(board, black)) * (tomove == white ? 1 : -1);
-// }
