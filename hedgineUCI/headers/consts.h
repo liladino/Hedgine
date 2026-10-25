@@ -104,6 +104,7 @@ typedef enum bitMoveFlags{
 } bitMoveFlags;
 
 typedef enum evalflag{
+	TT_EMPTY = 0,
 	EXACT_EVAL_FLAG = 1, 
 	LOWER_BOUND_FLAG = 2, 
 	UPPER_BOUND_FLAG = 3
@@ -113,8 +114,7 @@ typedef enum evalflag{
 //move generation
 typedef enum {
     GEN_TACTICAL,  // All captures and all promotions (non capturing too)
-    GEN_QUIET,     // Non-captures, excluding promotions and castling
-    GEN_CASTLING,
+    GEN_QUIET,     // Non-captures, including castling, excluding promotions
     GEN_EVASIONS   // All candidate responses to check
 } GenMode;
 

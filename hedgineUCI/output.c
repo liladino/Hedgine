@@ -84,7 +84,7 @@ void printLegalmoves(movearray legalmoves, bitboard board){
 	for (int i = 0; i < legalmoves.size; i++){
 		printmove(stdout, convertBitMoveToMove(legalmoves.array[i]));
 		bitUndo u = makeMove(&board, &legalmoves.array[i]);
-		printHashEntry(board.hashValue);
+		// printHashEntry(board.hashValue);
 		undoMove(&board, &legalmoves.array[i], &u);
 		//~ printf("%lf\n", legalmoves.boards[i].eval * 0.01);
 	}

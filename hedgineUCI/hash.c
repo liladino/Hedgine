@@ -128,20 +128,23 @@ u64 hashPosition(const bitboard* const board, bool tomove){
     return result;
 }
 
-/*
- * Assumes TT is filled.
- */
-TThashentry* lookup(const u64 position){
-	const u64 tmp = position % TTableSize;
-	if (TranspositionTable[tmp].pos == position){
-		return &TranspositionTable[tmp];
+static TThashentry *findEntry(u64 hash) {
+    if (!HASHING_ENABLED) {
+        return NULL;
+    }
+
+    TThashentry *entry = &TranspositionTable[hash % TTableSize];
+
+    if (entry->flag == TT_EMPTY || entry->pos != hash) {
+        return NULL;
 	}
-	return NULL;
+
+    return entry;
 }
 
 void printTransTable(){
 	for (size_t i = 0; i < TTableSize; i++){
-		if (TranspositionTable[i].pos != 0){
+		if (TranspositionTable[i].flag != TT_EMPTY){
 			printf("place: %lld\n", TranspositionTable[i].pos % (TTableSize));
 		/*	printf("hash: ");
 			printBitPiece(TranspositionTable[i].pos);
@@ -154,7 +157,7 @@ void printTransTable(){
 
 void clearTransTable(){
 	for (size_t i = 0; i < TTableSize; i++){
-		TranspositionTable[i].pos = 0;
+		TranspositionTable[i].flag = TT_EMPTY;
 	}
 }
 
@@ -175,7 +178,7 @@ void printCollisionStats(){
 	
 	u64 count = 0;
 	for (size_t i = 0; i < TTableSize; i++){
-		if (TranspositionTable[i].pos != 0){
+		if (TranspositionTable[i].flag != TT_EMPTY){
 			count++;
 		}
 	}
@@ -212,17 +215,19 @@ int readHashEntry(u64 hashValue, int remainingDepth, int depth, int alpha, int b
 	if (!HASHING_ENABLED) {
 		return NO_HASH_ENTRY;
 	}
-	const TThashentry *entry = &TranspositionTable[hashValue % TTableSize];
-
-	if (entry->pos != hashValue) {
-		#ifdef DEBUG
-		if (0 != entry->pos) s_Rcollision++;
-		#endif
+	const TThashentry *entry = findEntry(hashValue);
+	if (!entry){
 		return NO_HASH_ENTRY;
 	}
+
 	#ifdef DEBUG
+	if (entry->pos != hashValue) {
+		if (0 != entry->pos) s_Rcollision++;
+		return NO_HASH_ENTRY;
+	}
 	s_Reads++;
 	#endif
+	
 	if (entry->depth < remainingDepth){
 		return NO_HASH_ENTRY;	
 	}
@@ -251,53 +256,32 @@ void storePosTT(const u64 hashValue, int eval, evalflag flag, int depthRemaining
 	if (!HASHING_ENABLED) {
 		return;
 	}
-	u64 current = hashValue % TTableSize;
+	TThashentry *entry = &TranspositionTable[hashValue % TTableSize];
+	if (!entry){
+		return;
+	}
 
-	// TThashentry *entry = &TranspositionTable[current];
-
-	// if (entry->depth >= 0 &&
-	// 	entry->pos == hashValue &&
-	// 	entry->depth > depthRemaining)
-	// {
-	// 	return;
-	// }
+	if (entry->depth >= 0 && entry->pos == hashValue && entry->depth > depthRemaining) {
+		return;
+	}
 	
 	#ifdef DEBUG
-	if (TranspositionTable[current].pos != 0) s_Wcollision++;
+	if (entry->flag != 0) s_Wcollision++;
 	s_Writes++;
 	#endif
 	
-	TranspositionTable[current].pos = hashValue; //key 
-	TranspositionTable[current].eval = correctMateScoreForStorage(eval, depthSearched);
-	TranspositionTable[current].flag = flag;
-	TranspositionTable[current].depth = depthRemaining;
-	TranspositionTable[current].m = *m;
+	entry->pos = hashValue; //key 
+	entry->eval = correctMateScoreForStorage(eval, depthSearched);
+	entry->depth = depthRemaining;
+	entry->m = *m;
+	entry->flag = flag;
 }
-
-void printHashEntry(u64 pos){
-	TThashentry* current = lookup(pos);
-	if (current == NULL) {
-		printf("No record/overweitten\n");
-		return;
-	}
-	printf("%lf %s depth: %d ", current->eval * 0.01/* * (tomove == white ? 1: -1)*/, current->flag == EXACT_EVAL_FLAG ? " EXACT_EVAL_FLAG" : " otherFlag", current->depth);
-	printBitPiece(pos);
-}
-
-//~ void rmBestMoveFlag(u64 pos){
-	//~ TThashentry* current = lookup(pos);
-	//~ if (current == NULL) {
-		//~ return;
-	//~ }
-	//~ current->flag = EXACT_EVAL_FLAG;
-//~ }
 
 //~ static inline void swap(bitboard* a, bitboard* b) { 
 	//~ bitboard temp = *a;
 	//~ *a = *b; 
 	//~ *b = temp;
 //~ } 
-
 
 int getEval(u64 pos){
 	if (!HASHING_ENABLED)
@@ -312,9 +296,11 @@ int getEval(u64 pos){
 bitMove probeTTMove(u64 pos){
 	if (!HASHING_ENABLED) return NULLBITMOVE;
 
-    TThashentry* entry = &TranspositionTable[pos % TTableSize];
-    if (entry->pos == pos) return entry->m;
-    return NULLBITMOVE;
+    TThashentry *entry = findEntry(pos);
+	if (!entry){
+		return NULLBITMOVE;
+	}
+	return entry->m;
 }
 
 

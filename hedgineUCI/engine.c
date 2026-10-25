@@ -21,7 +21,7 @@ static u64      s_searchedNodes;
 static bitboard s_searchBoard; //the search takes place on this
 //PV
 static bitMove  s_PVtable [MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
-static int      s_PVlen [MAXSEARCHDEPTH]; // length of PV line at each depth
+static int      s_PVlen [MAXSEARCHDEPTH+1]; // length of PV line at each depth
 static bitMove  s_PVcommit [MAXSEARCHDEPTH+1];
 static int      s_PVcommitlen;
 //heuristics
@@ -198,6 +198,10 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 
 		int eval = -quiescenceSearch(!tomove, -beta, -alpha, depth+1);
 		undoMove(&s_searchBoard, &currentMove, &u);
+		if (g_stopSearch) { 
+			rmLastRepetition();
+			return 0; 
+		}
 
 		if (eval >= beta) {
 			rmLastRepetition();
@@ -235,8 +239,8 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 	if (0 < depth) {
 		if (isRepetition(s_searchBoard.hashValue)) { return 0; }
 		
-		alpha = i_max(alpha, -MATE_NOW + remainingDepth);
-		beta  = i_min(beta,   MATE_NOW - remainingDepth);
+		alpha = i_max(alpha, -MATE_NOW + depth);
+		beta  = i_min(beta,   MATE_NOW - depth - 1);
 		if (alpha >= beta) {
 			return alpha;
 		}

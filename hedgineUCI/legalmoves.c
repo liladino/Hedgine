@@ -454,17 +454,22 @@ void initMovePicker(MovePicker* picker, const bitMove* const hint, bool inCheck,
 }
 
 bool nextMove(MovePicker *picker, const bitboard *board, bool tomove, bitMove *out){
+	/*
+	PICK_HINT,
+	GENERATE_TACTICAL,
+	PICK_TACTICAL,
+	GENERATE_QUIET,
+	PICK_QUIET,
+	GENERATE_EVASIONS,
+	PICK_EVASIONS,
+	PICK_DONE
+	*/
+
 	//dummy implementation: no stage behavior
 	
 	if (0 == picker->moves.size) {
-		bitGenerateLegalmoves(&picker->moves, board, tomove, picker->quiescence);
-		if (picker->quiescence){
-			if (picker->inCheck) {
-				bitGenerateLegalmoves(&picker->moves, board, tomove, false); 
-			} else {
-				bitGenerateLegalmoves(&picker->moves, board, tomove, true);  
-			}
-		}
+		bool onlyCaptures = picker->quiescence && !picker->inCheck;
+		bitGenerateLegalmoves(&picker->moves, board, tomove, onlyCaptures);
 	}
 	if (picker->next < picker->moves.size){
 		*out = picker->moves.array[picker->next++];
