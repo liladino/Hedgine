@@ -186,6 +186,31 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 
 	storeRepetiton(s_searchBoard.hashValue);
 
+	// MovePicker picker;
+	// initMovePicker(&picker, hint, inCheck, false);
+
+	// bitMove move;
+	// while (nextMove(&picker, &s_searchBoard, tomove, &move)) {
+	// 	if (!isCastlingLegal(&s_searchBoard, tomove, &move))
+	// 		continue;
+
+	// 	bitUndo undo = makeMove(&s_searchBoard, move);
+
+	// 	if (bitInCheck(&s_searchBoard, tomove)) {
+	// 		undoMove(&s_searchBoard, move, undo);
+	// 		continue;
+	// 	}
+
+	// 	++actualLegalMoves;
+
+	// 	int score = -search(
+	// 		!tomove, remainingDepth - 1, depth + 1, -beta, -alpha);
+
+	// 	undoMove(&s_searchBoard, move, undo);
+
+	// 	// Existing stop, cutoff, history, TT, and PV handling.
+	// }
+
 	for (int i = 0; i < moves.size; i++) {
 		if (!isCastlingLegal(&s_searchBoard, tomove, &moves.array[i])){
 			continue;
@@ -328,7 +353,7 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 		 * Search
 		 * */
 		eval = -search(!tomove, remainingDepth-1, depth+1, -beta, -alpha);
-		undoMove(&s_searchBoard, &currentMove, &u);
+		undoMove(&s_searchBoard, currentMove, &u);
 		
 		if (g_stopSearch) {
 			rmLastRepetition();

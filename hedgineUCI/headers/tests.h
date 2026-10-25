@@ -22,4 +22,6 @@ void makePerfTest(bitboard* board, bool tomove);
 
 void testLasker();
 
+void testEnglish();
+
 #endif

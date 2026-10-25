@@ -24,6 +24,25 @@ void testLasker(){
 	free(command);
 }
 
+void testEnglish(){
+	initializeAll();
+	
+	printf("Anglo-Indian defense: r3k2r/pp1bppbp/2n4q/2p5/2P1B3/2B2P2/PPQ3PP/1K1R2NR b kq - 2 14\n");
+	bitboard board;
+	int temp;
+	bool tomove;
+	
+	char* command = calloc(100, sizeof(char));
+	strcpy(command, "position fen r3k2r/pp1bppbp/2n4q/2p5/2P1B3/2B2P2/PPQ3PP/1K1R2NR b kq - 2 14");
+	parsePosition(command, &board, &tomove, &temp, &temp);
+	printBitBoard2d(stdout, board);
+	
+	strcpy(command, "go movetime 15000");
+	parseGo(command, &board, &tomove);
+	
+	free(command);
+}
+
 
 bool bitBoardCompare(const bitboard* const b1, const bitboard* const b2){
 	for (int i = 0; i < 12; i++){

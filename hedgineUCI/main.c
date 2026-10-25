@@ -35,6 +35,9 @@ int main(int argc, char* argv[]){
 		else if (strncmp(argv[1], "testLasker", 10) == 0){
 			testLasker();
 		}
+		else if (strncmp(argv[1], "testEnglish", 12) == 0){
+			testEnglish();
+		}
 	}
 	if (argc >= 3 && strncmp(argv[2], "quit", 4) == 0){
 		goto endEverything;
