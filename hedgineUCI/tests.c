@@ -54,7 +54,7 @@ bool makeMoveTest(){
 				
 		bitboard copy = board;
 		bitMove m = convertMoveToBitMove(&copy, tomove, parseLongAlgebraicNotation(moves[i]));
-		bitUndo u = makeMove(&copy, m);
+		bitUndo u = makeMove(&copy, &m);
 		
 		if (hashPosition(&copy, !tomove) != copy.hashValue){
 			goto hashfail;
@@ -68,7 +68,7 @@ bool makeMoveTest(){
 		}
 		
 		//make the move actually
-		makeMove(&board, m);
+		makeMove(&board, &m);
 		tomove = !tomove;
 		
 		//~ printBitsOfNumber((u64)board.castlerights, 8);
@@ -110,7 +110,7 @@ int perfTest(bitboard* board, bool tomove, int depth){
 		}
 		
 		//~ bitMove temp = legalmoves.array[i];
-		bitUndo u = makeMove(board, legalmoves.array[i]);
+		bitUndo u = makeMove(board, &legalmoves.array[i]);
 		
 		if (bitInCheck(board, tomove)){
 			undoMove(board, legalmoves.array[i], u);

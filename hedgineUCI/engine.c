@@ -81,7 +81,7 @@ move randomBot(bitboard board, bool tomove){
 			continue;
 		}
 
-		bitUndo u = makeMove(&board, legalmoves.array[i]);
+		bitUndo u = makeMove(&board, &legalmoves.array[i]);
 		bool b = bitInCheck(&board, tomove);
 		undoMove(&board, legalmoves.array[i], u);
 		
@@ -190,7 +190,7 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 		if (!isCastlingLegal(&s_searchBoard, tomove, &moves.array[i])){
 			continue;
 		}
-		bitUndo u = makeMove(&s_searchBoard, moves.array[i]);
+		bitUndo u = makeMove(&s_searchBoard, &moves.array[i]);
 		if (bitInCheck(&s_searchBoard, tomove)) {
 			undoMove(&s_searchBoard, moves.array[i], u);
 			if (g_stopSearch) { 
@@ -303,7 +303,7 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 		if (!isCastlingLegal(&s_searchBoard, tomove, currentMove)){
 			continue;
 		}
-		bitUndo u = makeMove(&s_searchBoard, *currentMove);
+		bitUndo u = makeMove(&s_searchBoard, currentMove);
 		if (bitInCheck(&s_searchBoard, tomove)){
 			undoMove(&s_searchBoard, *currentMove, u);
 			continue;

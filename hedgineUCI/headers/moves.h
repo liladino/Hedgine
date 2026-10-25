@@ -45,7 +45,7 @@ void setMailBox(const bitboard* const board);
 
 void printMailBox();
 
-bitUndo makeMove(bitboard* board, bitMove m);
+bitUndo makeMove(bitboard* board, const bitMove* m);
 
 void undoMove(bitboard* board, const bitMove m, const bitUndo u);
 

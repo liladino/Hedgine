@@ -100,7 +100,7 @@ int makeMoveIfLegal(bitboard* board, const bool tomove, const move m){
 	}
 
 	//~ bitUndo u = 
-		makeMove(board, legalmoves.array[x]);	
+		makeMove(board, &legalmoves.array[x]);	
 	
 	legalmoves.size = 0;
 	bitGenerateLegalmoves(&legalmoves, board, !tomove, false);
@@ -365,33 +365,37 @@ static inline void setcastlingrights(bitboard* board, bitMove m, int piece){
 }
 
 
-bitUndo makeMove(bitboard* board, bitMove m){	
-	#define DELETEPIECE_HASH(p, sq)     board->piece[p] &= ~(1LLU << sq);  hashPieceIO(board, sq, p)
+bitUndo makeMove(bitboard* board, const bitMove* m) {
+	#define DELETEPIECE_HASH(p, sq)     board->piece[p] &= ~(1LLU << sq); hashPieceIO(board, sq, p)
 	#define MOVEPIECE_HASH(p, sq1, sq2) board->piece[p] ^= ((1LLU << sq1) | (1LLU << sq2)); hashPieceIO(board, sq1, p); hashPieceIO(board, sq2, p)
 	#define ADDPIECE_HASH(p, sq)        board->piece[p] |= ((1LLU << sq)); hashPieceIO(board, sq, p)
 	#define DELETE_EN_PASSANT_HASH()    hashEnPassantIO(board, 8); board->enpassanttarget = 0
 
 	bitUndo undo;
-	undo = (bitUndo){board->hashValue, (board->enpassanttarget == 0 ? -1 : __builtin_ctzll(board->enpassanttarget)), mailbox[m.to], board->castlerights};
-	
-	const int piece = mailbox[m.from];
-	
-	if (m.flags == 0){
-		MOVEPIECE_HASH(piece, m.from, m.to);
+	undo = (bitUndo){
+		board->hashValue,
+		(board->enpassanttarget == 0 ? -1 : __builtin_ctzll(board->enpassanttarget)),
+		mailbox[m->to],
+		board->castlerights
+	};
+
+	const int piece = mailbox[m->from];
+
+	if (m->flags == 0) {
+		MOVEPIECE_HASH(piece, m->from, m->to);
 		DELETE_EN_PASSANT_HASH();
-		
-		mailbox[m.to] = piece;
+
+		mailbox[m->to] = piece;
 	}
-	else if (m.flags == CASTLE_FLAG) {
-		//		
-		MOVEPIECE_HASH(piece, m.from, m.to);
+	else if (m->flags == CASTLE_FLAG) {
+		MOVEPIECE_HASH(piece, m->from, m->to);
 		DELETE_EN_PASSANT_HASH();
-		
-		mailbox[m.to] = piece;
-				
-		if (m.from == 4){
-			//white
-			if (m.to == 6){
+
+		mailbox[m->to] = piece;
+
+		if (m->from == 4) {
+			// white
+			if (m->to == 6) {
 				MOVEPIECE_HASH(wrook, 5, 7);
 				mailbox[5] = wrook;
 				mailbox[7] = -1;
@@ -403,7 +407,7 @@ bitUndo makeMove(bitboard* board, bitMove m){
 			}
 		}
 		else {
-			if (m.to == 62){
+			if (m->to == 62) {
 				MOVEPIECE_HASH(brook, 61, 63);
 				mailbox[61] = brook;
 				mailbox[63] = -1;
@@ -415,58 +419,63 @@ bitUndo makeMove(bitboard* board, bitMove m){
 			}
 		}
 	}
-	else if (m.flags == PROMOTION_FLAG) {
+	else if (m->flags == PROMOTION_FLAG) {
 		// no capture, just promotion
-		DELETEPIECE_HASH(piece, m.from);
-		ADDPIECE_HASH(m.promotion, m.to);
+		DELETEPIECE_HASH(piece, m->from);
+		ADDPIECE_HASH(m->promotion, m->to);
 		DELETE_EN_PASSANT_HASH();
-		
-		mailbox[m.to] = m.promotion;
+
+		mailbox[m->to] = m->promotion;
 	}
-	else if (m.flags == DOUBLE_PAWNMOVE_FLAG) {
-		MOVEPIECE_HASH(piece, m.from, m.to);
-		hashEnPassantIO(board, m.to % 8);
-		board->enpassanttarget = (1LL << (m.to > 31 ? m.to+8 : m.to-8));
-		
-		mailbox[m.to] = piece;
+	else if (m->flags == DOUBLE_PAWNMOVE_FLAG) {
+		MOVEPIECE_HASH(piece, m->from, m->to);
+		hashEnPassantIO(board, m->to % 8);
+		board->enpassanttarget = (1LL << (m->to > 31 ? m->to + 8 : m->to - 8));
+
+		mailbox[m->to] = piece;
 	}
-	else if ((m.flags & CAPTURE_FLAG)){
+	else if (m->flags & CAPTURE_FLAG) {
 		DELETE_EN_PASSANT_HASH();
-		
-		if ((m.flags & EN_PASSANT_FLAG)){
-			uint8_t enpasssq = (m.to > 31 ? m.to-8 : m.to+8);
+
+		if (m->flags & EN_PASSANT_FLAG) {
+			uint8_t enpasssq = (m->to > 31 ? m->to - 8 : m->to + 8);
 			undo.capturedPiece = mailbox[enpasssq];
-			MOVEPIECE_HASH(piece, m.from, m.to);
+
+			MOVEPIECE_HASH(piece, m->from, m->to);
 			DELETEPIECE_HASH(mailbox[enpasssq], enpasssq);
-			
-			mailbox[enpasssq] = -1;			
-			mailbox[m.to] = piece;
+
+			mailbox[enpasssq] = -1;
+			mailbox[m->to] = piece;
 		}
-		else{
-			undo.capturedPiece = mailbox[m.to];
-			DELETEPIECE_HASH(mailbox[m.to], m.to);
-			
-			if ((m.flags & PROMOTION_FLAG)){
-				DELETEPIECE_HASH(piece, m.from);
-				ADDPIECE_HASH(m.promotion, m.to);
-						
-				mailbox[m.to] = m.promotion;
+		else {
+			undo.capturedPiece = mailbox[m->to];
+			DELETEPIECE_HASH(mailbox[m->to], m->to);
+
+			if (m->flags & PROMOTION_FLAG) {
+				DELETEPIECE_HASH(piece, m->from);
+				ADDPIECE_HASH(m->promotion, m->to);
+
+				mailbox[m->to] = m->promotion;
 			}
 			else {
-				MOVEPIECE_HASH(piece, m.from, m.to);
-				mailbox[m.to] = piece;
+				MOVEPIECE_HASH(piece, m->from, m->to);
+				mailbox[m->to] = piece;
 			}
 		}
 	}
-	
-	setcastlingrights(board, m, piece);
+
+	setcastlingrights(board, *m, piece);
 
 	hashTomove(board);
-	
-	mailbox[m.from] = -1;
-	return undo;
-}
 
+	mailbox[m->from] = -1;
+	return undo;
+
+	#undef DELETEPIECE_HASH
+	#undef MOVEPIECE_HASH
+	#undef ADDPIECE_HASH
+	#undef DELETE_EN_PASSANT_HASH
+}
 
 void undoMove(bitboard* board, const bitMove m, const bitUndo u){
 	#define DELETEPIECE_NO_HASH(p, sq) board->piece[p] &= ~(1LLU << sq); 
