@@ -10,6 +10,10 @@ Date:	Oct 25 2026:
 | Improvement vs. Original       | 1.65% | 7.17% | 11.95%| 8.75% |
 
 	Interestingly, O3 optimization is a touch slower that O2 in this case.
+	These improvements are merged into main. 
+
+	Started the rewrite of the legal move generation. Implemented a basic move
+	picker, that at the moment only works as a wrapper around the old colde.
 
 Date:	Sep 29 2026:
 	Fix token length error in input: couldn't set hash size.
