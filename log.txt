@@ -1,6 +1,20 @@
+Date:	Oct 25 2026:
+	Changed the signature of makeMove and undoMove to accept const pointers 
+	instead of copies. The average times are calculated accross 10 runs:
+
+| Implementation                 | O0    | O1    | O2    | O3    |
+|--------------------------------|-------|-------|-------|-------|
+| Original                       | 0.967 | 0.474 | 0.435 | 0.423 |
+| makeMove with pointers         | 0.969 | 0.460 | 0.403 | 0.405 |
+| makeMove + undoMove pointers   | 0.951 | 0.440 | 0.383 | 0.386 |
+| Improvement vs. Original       | 1.65% | 7.17% | 11.95%| 8.75% |
+
+	Interestingly, O3 optimization is a touch slower that O2 in this case.
+
 Date:	Sep 29 2026:
 	Fix token length error in input: couldn't set hash size.
-	Fix logic error in quiescence search: stop after a fixed number of plies to avoid infinite check sequences, check repetitions, check castling legality.
+	Fix logic error in quiescence search: stop after a fixed number of plies to 
+	avoid infinite check sequences, check repetitions, check castling legality.
 	Fix memory handling error with TT (free).
 	Remove last best flag.
 	Slight optimizations: Remove unnecesary gameend checks.

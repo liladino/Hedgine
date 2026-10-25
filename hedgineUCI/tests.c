@@ -60,7 +60,7 @@ bool makeMoveTest(){
 			goto hashfail;
 		}
 		
-		undoMove(&copy, m, u);
+		undoMove(&copy, &m, &u);
 		if (!bitBoardCompare(&board, &copy)){
 			printBitBoard2d(stdout, board);
 			printBitBoard2d(stdout, copy);
@@ -113,13 +113,13 @@ int perfTest(bitboard* board, bool tomove, int depth){
 		bitUndo u = makeMove(board, &legalmoves.array[i]);
 		
 		if (bitInCheck(board, tomove)){
-			undoMove(board, legalmoves.array[i], u);
+			undoMove(board, &legalmoves.array[i], &u);
 			//~ printBitBoard2d(stdout, *board);
 			continue;
 		}
 		
 		int x = perfTest(board, !tomove, depth-1);
-		undoMove(board, legalmoves.array[i], u);
+		undoMove(board, &legalmoves.array[i], &u);
 		all += x;
 	}
 	

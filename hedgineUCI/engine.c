@@ -83,7 +83,7 @@ move randomBot(bitboard board, bool tomove){
 
 		bitUndo u = makeMove(&board, &legalmoves.array[i]);
 		bool b = bitInCheck(&board, tomove);
-		undoMove(&board, legalmoves.array[i], u);
+		undoMove(&board, &legalmoves.array[i], &u);
 		
 		if (b){ continue; }
 		
@@ -192,7 +192,7 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 		}
 		bitUndo u = makeMove(&s_searchBoard, &moves.array[i]);
 		if (bitInCheck(&s_searchBoard, tomove)) {
-			undoMove(&s_searchBoard, moves.array[i], u);
+			undoMove(&s_searchBoard, &moves.array[i], &u);
 			if (g_stopSearch) { 
 				rmLastRepetition();
 				return 0; 
@@ -202,7 +202,7 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 		legalFound++;
 
 		int eval = -quiescenceSearch(!tomove, -beta, -alpha, depth+1);
-		undoMove(&s_searchBoard, moves.array[i], u);
+		undoMove(&s_searchBoard, &moves.array[i], &u);
 
 		if (eval >= beta) {
 			rmLastRepetition();
@@ -305,7 +305,7 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 		}
 		bitUndo u = makeMove(&s_searchBoard, currentMove);
 		if (bitInCheck(&s_searchBoard, tomove)){
-			undoMove(&s_searchBoard, *currentMove, u);
+			undoMove(&s_searchBoard, currentMove, &u);
 			continue;
 		}
 		
@@ -328,7 +328,7 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 		 * Search
 		 * */
 		eval = -search(!tomove, remainingDepth-1, depth+1, -beta, -alpha);
-		undoMove(&s_searchBoard, *currentMove, u);
+		undoMove(&s_searchBoard, &currentMove, &u);
 		
 		if (g_stopSearch) {
 			rmLastRepetition();

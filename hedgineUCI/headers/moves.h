@@ -47,7 +47,7 @@ void printMailBox();
 
 bitUndo makeMove(bitboard* board, const bitMove* m);
 
-void undoMove(bitboard* board, const bitMove m, const bitUndo u);
+void undoMove(bitboard* board, const bitMove* m, const bitUndo* u);
 
 int attackValue(int from, int to);
 

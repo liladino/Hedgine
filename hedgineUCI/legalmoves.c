@@ -395,7 +395,7 @@ bool hasLegalMove(bitboard *board, bool tomove){
 
         bitUndo u = makeMove(board, &m);
         bool legal = !bitInCheck(board, tomove);
-        undoMove(board, m, u);
+        undoMove(board, &m, &u);
 
         if (legal)
             return true;
@@ -436,7 +436,7 @@ bool isCastlingLegal(bitboard* board, bool tomove, const bitMove* const mv){
 		
 		bitUndo u = makeMove(board, &m);
 		bool con = bitInCheck(board, tomove);
-		undoMove(board, m, u);
+		undoMove(board, &m, &u);
 		
 		if (con) { return false; }
 	}
