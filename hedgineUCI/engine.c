@@ -174,60 +174,30 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 		}
 	}
 
-	movearray moves;
-	if (inCheck) {
-		// could benefit from generating e.g. evasions only
-		bitGenerateLegalmoves(&moves, &s_searchBoard, tomove, false); 
-	} else {
-		bitGenerateLegalmoves(&moves, &s_searchBoard, tomove, true);  
-	}
-
-	int legalFound = 0;
-
 	storeRepetiton(s_searchBoard.hashValue);
+	int actualLegalMoves = 0;
 
-	// MovePicker picker;
-	// initMovePicker(&picker, hint, inCheck, false);
-
-	// bitMove move;
-	// while (nextMove(&picker, &s_searchBoard, tomove, &move)) {
-	// 	if (!isCastlingLegal(&s_searchBoard, tomove, &move))
-	// 		continue;
-
-	// 	bitUndo undo = makeMove(&s_searchBoard, move);
-
-	// 	if (bitInCheck(&s_searchBoard, tomove)) {
-	// 		undoMove(&s_searchBoard, move, undo);
-	// 		continue;
-	// 	}
-
-	// 	++actualLegalMoves;
-
-	// 	int score = -search(
-	// 		!tomove, remainingDepth - 1, depth + 1, -beta, -alpha);
-
-	// 	undoMove(&s_searchBoard, move, undo);
-
-	// 	// Existing stop, cutoff, history, TT, and PV handling.
-	// }
-
-	for (int i = 0; i < moves.size; i++) {
-		if (!isCastlingLegal(&s_searchBoard, tomove, &moves.array[i])){
+	MovePicker picker;
+	initMovePicker(&picker, &NULLBITMOVE, inCheck, true);
+	bitMove currentMove;
+	while (nextMove(&picker, &s_searchBoard, tomove, &currentMove)) {
+		if (!isCastlingLegal(&s_searchBoard, tomove, &currentMove)){
 			continue;
 		}
-		bitUndo u = makeMove(&s_searchBoard, &moves.array[i]);
-		if (bitInCheck(&s_searchBoard, tomove)) {
-			undoMove(&s_searchBoard, &moves.array[i], &u);
+		bitUndo u = makeMove(&s_searchBoard, &currentMove);
+		if (bitInCheck(&s_searchBoard, tomove)){
+			undoMove(&s_searchBoard, &currentMove, &u);
 			if (g_stopSearch) { 
 				rmLastRepetition();
 				return 0; 
 			}
 			continue;
 		}
-		legalFound++;
+
+		++actualLegalMoves;
 
 		int eval = -quiescenceSearch(!tomove, -beta, -alpha, depth+1);
-		undoMove(&s_searchBoard, &moves.array[i], &u);
+		undoMove(&s_searchBoard, &currentMove, &u);
 
 		if (eval >= beta) {
 			rmLastRepetition();
@@ -238,7 +208,7 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 
 	rmLastRepetition();
 	
-	if (0 == legalFound) {
+	if (0 == actualLegalMoves) {
 		if (inCheck){
 			return -(MATE_NOW - depth);
 		}
@@ -254,8 +224,6 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
  * 
  * depth: from the root node, 0: nothing searched yet
  * remainingDepth: decreasing to 0
- * 
- * Credits partially to Sebastian Lague
  * */
 int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){	
 	s_PVlen[depth] = depth;
@@ -287,55 +255,49 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 	}
 
 	/*
-	 * Generate pseudo legal moves
-	 * 
-	 * Check later, whether any of them was actually legal.
-	 * */
-	movearray legalmoves;
-	bitGenerateLegalmoves(&legalmoves, &s_searchBoard, tomove, false);
-	int actualLegalMoves = 0;
-	
-	/*
 	 * Order moves
 	 * */
+	bitMove hint;
 	if (depth == 0){
-		bitMove hint = (s_PVcommitlen > 0) ? s_PVcommit[0] : NULLBITMOVE;
-		orderMoves(&legalmoves, &hint, depth);
+		hint = (s_PVcommitlen > 0) ? s_PVcommit[0] : NULLBITMOVE;
+		// orderMoves(&legalmoves, &hint, depth);
 	}
 	else {
-		bitMove ttMove = probeTTMove(s_searchBoard.hashValue);
-		orderMoves(&legalmoves, &ttMove, depth);
+		hint = probeTTMove(s_searchBoard.hashValue);
+		// orderMoves(&legalmoves, &hint, depth);
 	}
 	
 	/*
 	 * Store repetition
 	 * */
 	storeRepetiton(s_searchBoard.hashValue);
-	
-	evalflag moveFlag = UPPER_BOUND_FLAG;
-	bitMove* bestMove = &legalmoves.array[0];
 
-	for (int i = 0; i < legalmoves.size; i++) { 
-		#ifdef DEBUG
-		if (depth == 0){
-			i++; i--;
-		}
-		#endif
-		
-		bitMove* currentMove = &legalmoves.array[i];
-		
-		//check if legal at all
-		if (!isCastlingLegal(&s_searchBoard, tomove, currentMove)){
+	/*
+	 * Generate pseudo legal moves
+	 * 
+	 * Check later, whether any of them was actually legal.
+	 * */
+	bool inCheck = bitInCheck(&s_searchBoard, tomove);
+	MovePicker picker;
+	initMovePicker(&picker, &hint, inCheck, false);
+	int actualLegalMoves = 0;
+
+	evalflag moveFlag = UPPER_BOUND_FLAG;
+
+	bitMove currentMove;
+	bitMove bestMove = NULLBITMOVE;
+	while (nextMove(&picker, &s_searchBoard, tomove, &currentMove)) {
+		if (!isCastlingLegal(&s_searchBoard, tomove, &currentMove)){
 			continue;
 		}
-		bitUndo u = makeMove(&s_searchBoard, currentMove);
+		bitUndo u = makeMove(&s_searchBoard, &currentMove);
 		if (bitInCheck(&s_searchBoard, tomove)){
-			undoMove(&s_searchBoard, currentMove, &u);
+			undoMove(&s_searchBoard, &currentMove, &u);
 			continue;
 		}
-		
-		actualLegalMoves++;
-		
+
+		++actualLegalMoves;
+
 		/*
 		 * Extension?
 		 * */
@@ -353,8 +315,8 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 		 * Search
 		 * */
 		eval = -search(!tomove, remainingDepth-1, depth+1, -beta, -alpha);
-		undoMove(&s_searchBoard, currentMove, &u);
-		
+		undoMove(&s_searchBoard, &currentMove, &u);
+
 		if (g_stopSearch) {
 			rmLastRepetition();
 			return 0;
@@ -365,23 +327,23 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 		 * */
 		if (eval >= beta) {
 			//the "refutation"
-			storePosTT(s_searchBoard.hashValue, beta, LOWER_BOUND_FLAG, remainingDepth, depth, currentMove); 
+			storePosTT(s_searchBoard.hashValue, beta, LOWER_BOUND_FLAG, remainingDepth, depth, &currentMove); 
 			
 			/*
 			 * Killers and history
 			 * */
-			if (!(currentMove->flags & CAPTURE_FLAG) && !(currentMove->flags & PROMOTION_FLAG)) {
-				if (sameMove(currentMove, &s_killers[1][depth])) {
+			if (!(currentMove.flags & CAPTURE_FLAG) && !(currentMove.flags & PROMOTION_FLAG)) {
+				if (sameMove(&currentMove, &s_killers[1][depth])) {
 					// promote 
 					s_killers[1][depth] = s_killers[0][depth];
-					s_killers[0][depth] = *currentMove;
-				} else if (!sameMove(currentMove, &s_killers[0][depth])) {
+					s_killers[0][depth] = currentMove;
+				} else if (!sameMove(&currentMove, &s_killers[0][depth])) {
 					// new killer
 					s_killers[1][depth] = s_killers[0][depth];
-					s_killers[0][depth] = *currentMove;
+					s_killers[0][depth] = currentMove;
 				}
 				
-				s_history[currentMove->piece][currentMove->to] += depth * depth;
+				s_history[currentMove.piece][currentMove.to] += depth * depth;
 			}
 			
 			rmLastRepetition();
@@ -398,7 +360,7 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 			
 			alpha = eval;
 			
-			s_PVtable[depth][depth] = *currentMove;
+			s_PVtable[depth][depth] = currentMove;
 			int currentLen = (s_PVlen[depth+1] > depth+1) ? s_PVlen[depth+1] : (depth+1);
 			s_PVlen[depth] = currentLen;
 
@@ -429,7 +391,7 @@ go movetime 1
 go movetime 1111
 		 */
 	
-	storePosTT(s_searchBoard.hashValue, alpha, moveFlag, remainingDepth, depth, bestMove);	
+	storePosTT(s_searchBoard.hashValue, alpha, moveFlag, remainingDepth, depth, &bestMove);	
 	
 	if (depth == 0 && !g_stopSearch) {
 		s_PVcommitlen = s_PVlen[0];

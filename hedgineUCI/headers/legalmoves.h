@@ -17,8 +17,6 @@
 #include <unistd.h>
 #include <limits.h>
 
-bool nextMove(MovePicker *picker, const bitboard *board, bool tomove, bitMove *out);
-
 //u64 enemypieces(bitboard board, bool enemy);
 
 static __inline__ __attribute__((always_inline)) u64 enemypieces(const bitboard* const board, bool enemy){
@@ -37,5 +35,9 @@ resultconst gameend(bitboard* board, bool tomove);
 bool hasLegalMove(bitboard *board, bool tomove);
 
 bool isCastlingLegal(bitboard* board, bool tomove, const bitMove* const mv);
+
+void initMovePicker(MovePicker* picker, const bitMove* const hint, bool inCheck, bool quiescence);
+
+bool nextMove(MovePicker *picker, const bitboard *board, bool tomove, bitMove *out);
 
 #endif

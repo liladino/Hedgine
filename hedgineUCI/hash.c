@@ -310,20 +310,12 @@ int getEval(u64 pos){
 }
 
 bitMove probeTTMove(u64 pos){
-	if (!HASHING_ENABLED)
-    	return NULLBITMOVE;  
+	if (!HASHING_ENABLED) return NULLBITMOVE;
+
     TThashentry* entry = &TranspositionTable[pos % TTableSize];
     if (entry->pos == pos) return entry->m;
     return NULLBITMOVE;
 }
-
-//~ void orderMoves(movearray* legalmoves){
-	//~ for (int i = 1; i < legalmoves->size; i++){
-		//~ for (int j = 0; j < legalmoves->size - i; j++){
-			//~ if (getEval(legalmoves->array[j].hashValue) < getEval(legalmoves->boards[j+1].hashValue)) swap(&legalmoves->boards[j], &legalmoves->boards[j+1]);
-		//~ }
-	//~ }
-//~ }
 
 
 /* 

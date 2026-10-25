@@ -110,8 +110,6 @@ bool makeMoveTest(){
 }
 
 int perfTest(bitboard* board, bool tomove, int depth){	
-	movearray legalmoves;
-	
 	//~ if (hashPosition(board, tomove) != board->hashValue){
 		//~ printf("Hashing failed!");
 		//~ return 0;
@@ -121,24 +119,23 @@ int perfTest(bitboard* board, bool tomove, int depth){
 		return 1;
 	}
 	
-	bitGenerateLegalmoves(&legalmoves, board, tomove, false);
 	int all = 0;
-	for (int i = 0; i < legalmoves.size; i++){
-		if (!isCastlingLegal(board, tomove, &legalmoves.array[i])){
+
+	MovePicker picker;
+	initMovePicker(&picker, &NULLBITMOVE, bitInCheck(board, tomove), false);
+	bitMove currentMove;
+	while (nextMove(&picker, board, tomove, &currentMove)) {
+		if (!isCastlingLegal(board, tomove, &currentMove)){
 			continue;
 		}
-		
-		//~ bitMove temp = legalmoves.array[i];
-		bitUndo u = makeMove(board, &legalmoves.array[i]);
-		
+		bitUndo u = makeMove(board, &currentMove);
 		if (bitInCheck(board, tomove)){
-			undoMove(board, &legalmoves.array[i], &u);
-			//~ printBitBoard2d(stdout, *board);
+			undoMove(board, &currentMove, &u);
 			continue;
 		}
-		
+
 		int x = perfTest(board, !tomove, depth-1);
-		undoMove(board, &legalmoves.array[i], &u);
+		undoMove(board, &currentMove, &u);
 		all += x;
 	}
 	

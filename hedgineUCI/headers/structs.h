@@ -119,22 +119,7 @@ typedef struct gameInfo{
 	//~ bool UCI_LimitStrength;
 }gameInfo;
 
-//move generation
-typedef enum {
-    GEN_TACTICAL,  // All captures and all promotions (non capturing too)
-    GEN_QUIET,     // Non-captures, excluding promotions and castling
-    GEN_CASTLING,
-    GEN_EVASIONS   // All candidate responses to check
-} GenMode;
-
-typedef enum {
-    PICK_HINT,
-    PICK_TACTICAL,
-    PICK_QUIET,
-    PICK_DONE
-} PickStage;
-
-typedef struct {
+typedef struct MovePicker {
     PickStage stage;
     bitMove hint;
     bool hintReturned;
