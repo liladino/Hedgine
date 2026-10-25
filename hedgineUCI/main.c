@@ -51,6 +51,17 @@ int main(int argc, char* argv[]){
 	
 	bitboard board;
 
+	#ifdef DEBUG	
+	setboardFEN("4k3/8/8/3p2pP/8/2N4p/2q4P/4K2R w K g6 0 1", &board, &tomove, &fmv, &movenum);
+	printBitBoard2d(stdout, board);
+	movearray moves;
+	bitGenerateLegalmoves(&moves, &board, tomove, false);
+	for (int i = 0; i < moves.size; i++){
+		printBitMove(stdout, moves.array[i]);
+		printf("\n");
+	}
+	#endif
+	
 	//main uci loop
 	UCIloop(&board, &tomove, &fmv, &movenum);
 	
