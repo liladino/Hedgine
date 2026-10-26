@@ -261,9 +261,12 @@ void storePosTT(const u64 hashValue, int eval, evalflag flag, int depthRemaining
 		return;
 	}
 
-	if (entry->depth >= 0 && entry->pos == hashValue && entry->depth > depthRemaining) {
-		return;
-	}
+	// if (entry->flag != TT_EMPTY &&
+	// 	entry->pos == hashValue &&
+	// 	entry->depth > depthRemaining)
+	// {
+	// 	return;
+	// }
 	
 	#ifdef DEBUG
 	if (entry->flag != 0) s_Wcollision++;

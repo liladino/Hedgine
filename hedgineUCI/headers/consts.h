@@ -27,8 +27,8 @@
 #define TT_MIN_SIZE_MB 1
 
 #ifndef DEBUG
-	#define TT_DEF_SIZE_MB 64
-	#define TT_MAX_SIZE_MB 128
+	#define TT_DEF_SIZE_MB 128
+	#define TT_MAX_SIZE_MB 1024
 #else
 	#define TT_DEF_SIZE_MB 4
 	#define TT_MAX_SIZE_MB 4
