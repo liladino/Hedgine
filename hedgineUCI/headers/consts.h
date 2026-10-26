@@ -111,8 +111,8 @@ typedef enum evalflag{
 	// LAST_BEST_EVAL_FLAG = 4
 }evalflag;
 
-//move generation
 typedef enum {
+	GEN_ALL,
     GEN_TACTICAL,  // All captures and all promotions (non capturing too)
     GEN_QUIET,     // Non-captures, including castling, excluding promotions
     GEN_EVASIONS   // All candidate responses to check

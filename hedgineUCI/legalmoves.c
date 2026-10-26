@@ -134,253 +134,297 @@ bool bitInCheck(const bitboard* const board, bool tomove){
 	return false;
 }
 
+static void addSinglePieceMovesHelper(movearray *moves, int from, uint8_t piece, u64 targets, u64 enemy){
+	while (targets) {
+		u64 to = pop_lsb(&targets);
 
-static void addMoves(movearray* moves, int i, bool onlyCaptures, u64 enemy, u64 friendly, uint8_t piece, u64 possiblemoves){
-	bitMove* legalmoves = moves->array;
-	int* array_index = &(moves->size);
-	
-	if (onlyCaptures){
-		u64 possiblecaptures = possiblemoves & enemy;
-		
-		while (possiblecaptures) { 
-			u64 currentmove = pop_lsb(&possiblecaptures); 
-			
-			bitMove m = (bitMove){(size_t)i, __builtin_ctzll(currentmove), piece, -1, CAPTURE_FLAG};
-			legalmoves[(*array_index)++] = m;			
-		}
-	}
-	else {
-		possiblemoves &= ~(enemy | friendly);
-		
-		while (possiblemoves) { 
-			u64 currentmove = pop_lsb(&possiblemoves); 
-			
-			bitMove m = (bitMove){(size_t)i, __builtin_ctzll(currentmove), piece, -1, 0};
-			legalmoves[(*array_index)++] = m;
-		}
+		moves->array[moves->size++] = (bitMove) {
+			(size_t)from, __builtin_ctzll(to), piece, -1, (enemy & to) ? CAPTURE_FLAG : 0
+		};
 	}
 }
 
-static void addBitKnightMoves(movearray* moves, bool tomove, int i, bool onlyCaptures, u64 enemy, u64 friendly){
-	u64 possiblemoves = knightMoves[i];
+static void addSingleKnightMoves(movearray* moves, bool tomove, int from, u64 targets, u64 enemy){
+	targets &= knightMoves[from];
 	uint8_t piece = (tomove != white ? bknight : wknight);
 	
-	addMoves(moves, i, onlyCaptures, enemy, friendly, piece, possiblemoves);
+	addSinglePieceMovesHelper(moves, from, piece, targets, enemy);
 }
 
 
-static void addBitBishopMoves(movearray* moves, bool tomove, int i, bool onlyCaptures, u64 enemy, u64 friendly){
-	u64 possiblemoves = Bmagic(i, enemy | friendly); 
+static void addSingleBishopMoves(movearray* moves, bool tomove, int from, u64 targets, u64 enemy, u64 friendly){
+	targets &= Bmagic(from, enemy | friendly); 
 	uint8_t piece = (tomove != white ? bbishop : wbishop);
 	
-	addMoves(moves, i, onlyCaptures, enemy, friendly, piece, possiblemoves);
+	addSinglePieceMovesHelper(moves, from, piece, targets, enemy);
 }
 	
-static void addBitRookMoves(movearray* moves, bool tomove, int i, bool onlyCaptures, u64 enemy, u64 friendly){
-	u64 possiblemoves = Rmagic(i, enemy | friendly); 
+static void addSingleRookMoves(movearray* moves, bool tomove, int from, u64 targets, u64 enemy, u64 friendly){
+	targets &= Rmagic(from, enemy | friendly); 
 	uint8_t piece = (tomove != white ? brook : wrook);
 	
-	addMoves(moves, i, onlyCaptures, enemy, friendly, piece, possiblemoves);
+	addSinglePieceMovesHelper(moves, from, piece, targets, enemy);
 }
 
-static void addBitQueenMoves(movearray* moves, bool tomove, int i, bool onlyCaptures, u64 enemy, u64 friendly){
-	u64 possiblemoves = (Bmagic(i, enemy | friendly)) | (Rmagic(i, enemy | friendly)); 
+static void addSingleQueenMoves(movearray* moves, bool tomove, int from, u64 targets, u64 enemy, u64 friendly){
+	targets &= (Bmagic(from, enemy | friendly)) | (Rmagic(from, enemy | friendly)); 
 	uint8_t piece = (tomove != white ? bqueen : wqueen);
 	
-	addMoves(moves, i, onlyCaptures, enemy, friendly, piece, possiblemoves);
+	addSinglePieceMovesHelper(moves, from, piece, targets, enemy);
 }
 
-static void addBitKingMoves(movearray* moves, const bitboard* const board, bool tomove, int i, bool onlyCaptures, u64 enemy, u64 friendly){
+static void addNormalKingMoves(movearray* moves, bool tomove, int from, u64 targets, u64 enemy){
+	targets &= kingAttacks[from]; 
+	uint8_t piece = (tomove != white ? bking : wking);
+	
+	addSinglePieceMovesHelper(moves, from, piece, targets, enemy);
+}
+
+static void addCastlingMoves(movearray* moves, const bitboard* const board, bool tomove, u64 enemy, u64 friendly){
 	bitMove* legalmoves = moves->array;
 	int* array_index = &(moves->size);
 	
-	u64 possiblemoves = kingAttacks[i];
 	uint8_t piece = (tomove != white ? bking : wking);
-	
-	addMoves(moves, i, onlyCaptures, enemy, friendly, piece, possiblemoves);
+	int kingIndex = __builtin_ctzll((tomove == white ? board->piece[wking] : board->piece[bking]));
 	
 	u64 allpieces = enemy | friendly;
-	u64 mask = 1LLU << i;
-	if (!onlyCaptures){
-		if (tomove == white && i == 4) {
-			if ((board->castlerights & WKINGSIDE) && ((allpieces & (mask << 1)) == 0) && ((allpieces & (mask << 2)) == 0)) {
-				legalmoves[(*array_index)++] = (bitMove){i, 6, piece, -1, CASTLE_FLAG};
-			}
-			
-			if ((board->castlerights & WQUEENSIDE) && ((allpieces & (mask >> 1)) == 0) && ((allpieces & (mask >> 2)) == 0) && ((allpieces & (mask >> 3)) == 0)) {
-				legalmoves[(*array_index)++] = (bitMove){i, 2, piece, -1, CASTLE_FLAG};
-			}
+	u64 mask = 1LLU << kingIndex;
+	if (tomove == white && kingIndex == 4) {
+		if ((board->castlerights & WKINGSIDE) && ((allpieces & (mask << 1)) == 0) && ((allpieces & (mask << 2)) == 0)) {
+			legalmoves[(*array_index)++] = (bitMove){kingIndex, 6, piece, -1, CASTLE_FLAG};
 		}
-		else if (tomove == black && i == 60) {
-			if ((board->castlerights & BKINGSIDE) && ((allpieces & (mask << 1)) == 0) && ((allpieces & (mask << 2)) == 0)) {
-				legalmoves[(*array_index)++] = (bitMove){i, 62, piece, -1, CASTLE_FLAG};
-			}
-			
-			if ((board->castlerights & BQUEENSIDE) && ((allpieces & (mask >> 1)) == 0) && ((allpieces & (mask >> 2)) == 0) && ((allpieces & (mask >> 3)) == 0)) {
-				legalmoves[(*array_index)++] = (bitMove){i, 58, piece, -1, CASTLE_FLAG};
-			}
+		
+		if ((board->castlerights & WQUEENSIDE) && ((allpieces & (mask >> 1)) == 0) && ((allpieces & (mask >> 2)) == 0) && ((allpieces & (mask >> 3)) == 0)) {
+			legalmoves[(*array_index)++] = (bitMove){kingIndex, 2, piece, -1, CASTLE_FLAG};
+		}
+	}
+	else if (tomove == black && kingIndex == 60) {
+		if ((board->castlerights & BKINGSIDE) && ((allpieces & (mask << 1)) == 0) && ((allpieces & (mask << 2)) == 0)) {
+			legalmoves[(*array_index)++] = (bitMove){kingIndex, 62, piece, -1, CASTLE_FLAG};
+		}
+		
+		if ((board->castlerights & BQUEENSIDE) && ((allpieces & (mask >> 1)) == 0) && ((allpieces & (mask >> 2)) == 0) && ((allpieces & (mask >> 3)) == 0)) {
+			legalmoves[(*array_index)++] = (bitMove){kingIndex, 58, piece, -1, CASTLE_FLAG};
 		}
 	}
 }
 
-static void addBitPawnMoveWhite(movearray* moves, const bitboard* const board, u64 piecemask, int i, bool onlyCaptures, u64 enemy, u64 friendly){	
+static void addTacticalPawnMovesW(movearray* moves, const bitboard* const board, u64 piecemask, size_t i, u64 enemy, u64 friendly){	
 	int *array_index = &(moves->size);
 	bitMove* legalmoves = moves->array;
 		
 	u64 moveforward = piecemask << 8;
 	uint8_t piece = wpawn;
 	
-	/* check if we search for non-captures, and the pawn stands on a square 
-	 * where it can move forward from. */ 
-	if (!onlyCaptures && (piecemask & WPAWN_MOVE_FORWARD) && !(moveforward & (enemy | friendly))){
-		legalmoves[(*array_index)++] = (bitMove){i, i+8, piece, -1, 0};
-		
-		if ((piecemask & WPAWN_HOME) && 0 == ((piecemask << nort*2) & (enemy | friendly))){
-			legalmoves[(*array_index)++] = (bitMove){i, i+16, piece, -1, DOUBLE_PAWNMOVE_FLAG};
+	//promotion
+	if ((piecemask & WPAWN_PROMOTE) && 0 == (moveforward & (enemy | friendly))){
+		for (int prom = wqueen; prom <= wknight; prom++){
+			legalmoves[(*array_index)++] = (bitMove){i, i+8, piece, prom, PROMOTION_FLAG};
 		}
 	}
-	else if (!onlyCaptures){
-		if ((piecemask & WPAWN_PROMOTE) && 0 == (moveforward & (enemy | friendly))){
-			for (int prom = wqueen; prom <= wknight; prom++){
-				legalmoves[(*array_index)++] = (bitMove){i, i+8, piece, prom, PROMOTION_FLAG};
-			}
-		}		
-		return;
-	}
 	
-		
-	if (onlyCaptures){
-		/* Takes / promotion */
-		u64 possiblecaptures = wpawnTakes[i];
-			
-		while (possiblecaptures) { 	
-			u64 currentmove = pop_lsb(&possiblecaptures); 
-			if ((currentmove & enemy) && (piecemask & WPAWN_MOVE_FORWARD)){
-				legalmoves[(*array_index)++] = (bitMove){i, __builtin_ctzll(currentmove), piece, -1, CAPTURE_FLAG};
-			}
-			else if (board->enpassanttarget == currentmove){
-				legalmoves[(*array_index)++] = (bitMove){i, __builtin_ctzll(currentmove), piece, -1, CAPTURE_FLAG | EN_PASSANT_FLAG};
-			}
-			else if ((currentmove & enemy) && (piecemask & WPAWN_PROMOTE)) {				
-				for (int prom = wqueen; prom <= wknight; prom++){
-					legalmoves[(*array_index)++] = (bitMove){i, __builtin_ctzll(currentmove), piece, prom, CAPTURE_FLAG | PROMOTION_FLAG};
-				}
+	//captures and promotions
+	u64 possiblecaptures = wpawnTakes[i] & (board->enpassanttarget | enemy);
+	while (possiblecaptures) { 	
+		u64 currentmove = pop_lsb(&possiblecaptures); 
+		if ((currentmove & enemy) && (piecemask & WPAWN_MOVE_FORWARD)){
+			legalmoves[(*array_index)++] = (bitMove){
+				i, __builtin_ctzll(currentmove), piece, -1, CAPTURE_FLAG
+			};
+		}
+		else if (board->enpassanttarget == currentmove){
+			legalmoves[(*array_index)++] = (bitMove){
+				i, __builtin_ctzll(currentmove), piece, -1, CAPTURE_FLAG | EN_PASSANT_FLAG
+			};
+		}
+		else if ((currentmove & enemy) && (piecemask & WPAWN_PROMOTE)) {				
+			for (int prom = wqueen; prom <= wknight; prom++){
+				legalmoves[(*array_index)++] = (bitMove){
+					i, __builtin_ctzll(currentmove), piece, prom, CAPTURE_FLAG | PROMOTION_FLAG
+				};
 			}
 		}
 	}
 }
 
-static void addBitPawnMoveBlack(movearray* moves, const bitboard* const board, u64 piecemask, size_t i, bool onlyCaptures, u64 enemy, u64 friendly){
+static void addTacticalPawnMovesB(movearray* moves, const bitboard* const board, u64 piecemask, size_t i, u64 enemy, u64 friendly){
 	int *array_index = &(moves->size);
 	bitMove* legalmoves = moves->array;
 	
 	u64 moveforward = piecemask >> 8;
 	uint8_t piece = bpawn;
 	
-	/* check if we search for non-captures, and the pawn stands on a square 
-	 * where it can move forward from. */ 
-	if (!onlyCaptures && (piecemask & BPAWN_MOVE_FORWARD) && !(moveforward & (enemy | friendly))){
-		legalmoves[(*array_index)++] = (bitMove){i, i-8, piece, -1, 0};
-		
-		if ((piecemask & BPAWN_HOME) && 0 == ((piecemask >> sout*2) & (enemy | friendly))){
-			legalmoves[(*array_index)++] = (bitMove){i, i-16, piece, -1, DOUBLE_PAWNMOVE_FLAG};
+	//promotion
+	if ((piecemask & BPAWN_PROMOTE) && 0 == (moveforward & (enemy | friendly))){
+		for (int prom = bqueen; prom <= bknight; prom++){
+			legalmoves[(*array_index)++] = (bitMove){i, i-8, piece, prom, PROMOTION_FLAG};
 		}
-	}
-	else if (!onlyCaptures){
-		if ((piecemask & BPAWN_PROMOTE) && 0 == (moveforward & (enemy | friendly))){
+	}	
+		
+	//captures and promotions
+	u64 possiblecaptures = bpawnTakes[i] & (board->enpassanttarget | enemy);
+	while (possiblecaptures) { 	
+		u64 currentmove = pop_lsb(&possiblecaptures); 
+		if ((currentmove & enemy) && (piecemask & BPAWN_MOVE_FORWARD)){
+			legalmoves[(*array_index)++] = (bitMove){
+				i, __builtin_ctzll(currentmove), piece, -1, CAPTURE_FLAG
+			};
+		}
+		else if (board->enpassanttarget == currentmove){
+			legalmoves[(*array_index)++] = (bitMove){
+				i, __builtin_ctzll(currentmove), piece, -1, CAPTURE_FLAG | EN_PASSANT_FLAG
+			};
+		}
+		else if ((currentmove & enemy) && (piecemask & BPAWN_PROMOTE)) {				
 			for (int prom = bqueen; prom <= bknight; prom++){
-				legalmoves[(*array_index)++] = (bitMove){i, i-8, piece, prom, PROMOTION_FLAG};
-			}
-		}
-		
-		return;
-	}
-	
-		
-	if (onlyCaptures){
-		/* Takes / promotion */
-		u64 possiblecaptures = bpawnTakes[i];
-			
-		while (possiblecaptures) { 	
-			u64 currentmove = pop_lsb(&possiblecaptures); 
-			if ((currentmove & enemy) && (piecemask & BPAWN_MOVE_FORWARD)){
-				legalmoves[(*array_index)++] = (bitMove){i, __builtin_ctzll(currentmove), piece, -1, CAPTURE_FLAG};
-			}
-			else if (board->enpassanttarget == currentmove){
-				legalmoves[(*array_index)++] = (bitMove){i, __builtin_ctzll(currentmove), piece, -1, CAPTURE_FLAG | EN_PASSANT_FLAG};
-			}
-			else if ((currentmove & enemy) && (piecemask & BPAWN_PROMOTE)) {				
-				for (int prom = bqueen; prom <= bknight; prom++){
-					legalmoves[(*array_index)++] = (bitMove){i, __builtin_ctzll(currentmove), piece, prom, CAPTURE_FLAG | PROMOTION_FLAG};
-				}
+				legalmoves[(*array_index)++] = (bitMove){
+					i, __builtin_ctzll(currentmove), piece, prom, CAPTURE_FLAG | PROMOTION_FLAG
+				};
 			}
 		}
 	}
 }
 
-void bitGenerateLegalmoves(movearray* moves, const bitboard* const board, bool tomove, bool onlyCaptures){
+static inline void addPawnMovesHelper(movearray *moves, int from, uint8_t piece, u64 to){
+	int tosq = __builtin_ctzll(to); 
+	moves->array[moves->size++] = (bitMove) {
+		(size_t)from, tosq, piece, -1, abs(from - tosq) != 8 ? DOUBLE_PAWNMOVE_FLAG : 0
+	};
+}
+
+static void addQuietPawnMoveW(movearray* moves, int from, u64 targets){
+    uint8_t piece = wpawn;
+    u64 single = 1ULL << (from + 8);
+
+    if (!(single & targets))
+        return;
+
+    addPawnMovesHelper(moves, from, piece, single);
+
+    if (from / 8 == 1) {
+        u64 doubleMove = 1ULL << (from + 16);
+
+        if (doubleMove & targets) {
+            addPawnMovesHelper(moves, from, piece, doubleMove);
+        }
+    }
+}
+
+static void addQuietPawnMoveB(movearray* moves, int from, u64 targets){
+    uint8_t piece = bpawn;
+    u64 single = 1ULL << (from - 8);
+
+    if (!(single & targets))
+        return;
+
+    addPawnMovesHelper(moves, from, piece, single);
+
+    if (from / 8 == 6) {
+        u64 doubleMove = 1ULL << (from - 16);
+
+        if (doubleMove & targets) {
+            addPawnMovesHelper(moves, from, piece, doubleMove);
+        }
+    }
+}
+
+void generateMovesWithModes(movearray *moves, const bitboard *board, const bool tomove, const GenMode mode) {
+	moves->size = 0;
+	int coloffset = (tomove != white ? 6 : 0);
 	u64 enemy = enemypieces(board, !tomove); 
 	u64 friendly = enemypieces(board, tomove);
-	
-	moves->size = 0; //delete anything that's there
-	
-	int coloffset = (tomove != white ? 6 : 0);
-	
-	movearray quiets;
-	quiets.size = 0;
-	
-	u64 pieces = board->piece[wpawn + coloffset];
-	if (tomove == black){
-		while (pieces) {
-			u64 mask = pop_lsb(&pieces);
-			addBitPawnMoveBlack(moves, board, mask, __builtin_ctzll(mask), true, enemy, friendly);
-			if (!onlyCaptures) addBitPawnMoveBlack(&quiets, board, mask, __builtin_ctzll(mask), false, enemy, friendly);
+	//all squares that we may go to. Need to & with the masks from each piece on a square 
+	u64 possibleTargetSquares; 
+	switch (mode) {
+		case GEN_TACTICAL:
+			//captures
+			possibleTargetSquares = enemy; 
+			break;
+		case GEN_QUIET:
+			//quiet piece moves, pawn moves
+			possibleTargetSquares = ~(enemy | friendly); 
+			break;
+		case GEN_ALL:
+			//capture and quiet moves. Pawn moves and captures require special handling.
+			possibleTargetSquares = ~friendly; 
+			break;
+		default:
+			return;
+	}
+  
+	if (GEN_TACTICAL == mode || GEN_ALL == mode) {
+		//pawn captures and promotions
+		if (white == tomove){
+			u64 pieces = board->piece[wpawn];
+			while (pieces) {
+				u64 mask = pop_lsb(&pieces);
+				addTacticalPawnMovesW(moves, board, mask, __builtin_ctzll(mask), enemy, friendly);
+			}
+		}
+		else {
+			u64 pieces = board->piece[bpawn];
+			while (pieces) {
+				u64 mask = pop_lsb(&pieces);
+				addTacticalPawnMovesB(moves, board, mask, __builtin_ctzll(mask), enemy, friendly);
+			}
 		}
 	}
-	else {
-		while (pieces) {
-			u64 mask = pop_lsb(&pieces);
-			addBitPawnMoveWhite(moves, board, mask, __builtin_ctzll(mask), true, enemy, friendly);
-			if (!onlyCaptures) addBitPawnMoveWhite(&quiets, board, mask, __builtin_ctzll(mask), false, enemy, friendly);
+	
+	if (GEN_QUIET == mode || GEN_ALL == mode){
+		//quiet pawn moves: no promotion
+		if (white == tomove){
+			u64 pieces = board->piece[wpawn] & ~(WPAWN_PROMOTE);
+			while (pieces) {
+				u64 mask = pop_lsb(&pieces);
+				addQuietPawnMoveW(moves, __builtin_ctzll(mask), ~(enemy | friendly));
+			}
 		}
+		else {
+			u64 pieces = board->piece[bpawn] & ~(BPAWN_PROMOTE);
+			while (pieces) {
+				u64 mask = pop_lsb(&pieces);
+				addQuietPawnMoveB(moves, __builtin_ctzll(mask), ~(enemy | friendly));
+			}
+		}
+
+		//add castling
+		addCastlingMoves(moves, board, tomove, enemy, friendly);
 	}
-	pieces = board->piece[wqueen + coloffset];
+
+	u64 pieces = board->piece[wknight + coloffset];
 	while (pieces) {
 		u64 mask = pop_lsb(&pieces);
-		addBitQueenMoves(moves, tomove, __builtin_ctzll(mask), true, enemy, friendly);
-		if (!onlyCaptures) addBitQueenMoves(&quiets, tomove, __builtin_ctzll(mask), false, enemy, friendly);
+		addSingleKnightMoves(moves, tomove, __builtin_ctzll(mask), possibleTargetSquares, enemy);
 	}
 	pieces = board->piece[wbishop + coloffset];
 	while (pieces) {
 		u64 mask = pop_lsb(&pieces);
-		addBitBishopMoves(moves, tomove, __builtin_ctzll(mask), true, enemy, friendly);
-		if (!onlyCaptures) addBitBishopMoves(&quiets, tomove, __builtin_ctzll(mask), false, enemy, friendly);
+		addSingleBishopMoves(moves, tomove, __builtin_ctzll(mask), possibleTargetSquares, enemy, friendly);
 	}
-	pieces = board->piece[wknight + coloffset];
+	pieces = board->piece[wqueen + coloffset];
 	while (pieces) {
 		u64 mask = pop_lsb(&pieces);
-		addBitKnightMoves(moves, tomove, __builtin_ctzll(mask), true, enemy, friendly);
-		if (!onlyCaptures) addBitKnightMoves(&quiets, tomove,  __builtin_ctzll(mask), false, enemy, friendly);
+		addSingleQueenMoves(moves, tomove, __builtin_ctzll(mask), possibleTargetSquares, enemy, friendly);
 	}
 	pieces = board->piece[wrook + coloffset];
 	while (pieces) {
 		u64 mask = pop_lsb(&pieces);
-		addBitRookMoves(moves, tomove, __builtin_ctzll(mask), true, enemy, friendly);
-		if (!onlyCaptures) addBitRookMoves(&quiets, tomove, __builtin_ctzll(mask), false, enemy, friendly);
+		addSingleRookMoves(moves, tomove, __builtin_ctzll(mask), possibleTargetSquares, enemy, friendly);
 	}
 	pieces = board->piece[wking + coloffset];
 	while (pieces) {
 		u64 mask = pop_lsb(&pieces);
-		addBitKingMoves(moves, board, tomove, __builtin_ctzll(mask), true, enemy, friendly);
-		if (!onlyCaptures) addBitKingMoves(&quiets, board, tomove, __builtin_ctzll(mask), false, enemy, friendly);
+		addNormalKingMoves(moves, tomove, __builtin_ctzll(mask), possibleTargetSquares, enemy);
 	}
-	
-	// add quiet moves
-	for (int i = 0; i < quiets.size; i++){
-		moves->array[moves->size ++] = quiets.array[i]; 
+}
+
+void bitGenerateLegalmoves(movearray* moves, const bitboard* const board, bool tomove, bool onlytakes){
+	if (onlytakes){
+		generateMovesWithModes(moves, board, tomove, GEN_TACTICAL);
 	}
-	
-	//~ printf("--%d--\n--%d--\n", sizeof(bitboard), sizeof(movearray));
+	else {
+		generateMovesWithModes(moves, board, tomove, GEN_ALL);
+	}
 }
 
 bool hasLegalMove(bitboard *board, bool tomove){

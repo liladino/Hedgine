@@ -30,6 +30,8 @@ bool bitInCheck(const bitboard* const board, bool tomove);
 
 void bitGenerateLegalmoves(movearray* moves, const bitboard* const board, bool tomove, bool onlytakes);
 
+void generateMovesWithModes(movearray *moves, const bitboard *board, const bool tomove, const GenMode mode);
+
 resultconst gameend(bitboard* board, bool tomove);
 
 bool hasLegalMove(bitboard *board, bool tomove);

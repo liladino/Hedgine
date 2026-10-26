@@ -1,4 +1,5 @@
 Date:	Oct 26 2026:
+	Move generation rewrite to support  stages.
 	
 Date:	Oct 25 2026:
 	Changed the signature of makeMove and undoMove to accept const pointers 

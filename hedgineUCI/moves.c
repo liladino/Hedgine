@@ -73,6 +73,7 @@ bool compareBitMoveToMove(const bitMove bm, const move m){
 bitMove convertMoveToBitMove(const bitboard* const board, bool tomove, const move m) {
 	movearray moves;
 	bitGenerateLegalmoves(&moves, board, tomove, false);
+	// printLegalmoves(moves, *board);
 	for (int i = 0; i < moves.size; i++){
 		if (compareBitMoveToMove(moves.array[i], m)){
 			return moves.array[i];

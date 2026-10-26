@@ -55,6 +55,7 @@ bool bitBoardCompare(const bitboard* const b1, const bitboard* const b2){
 }
 
 bool makeMoveTest(){
+	// return true;
 	bitboard board;
 	bool tomove;
 	int temp;
@@ -112,8 +113,8 @@ bool makeMoveTest(){
 int perfTest(bitboard* board, bool tomove, int depth){	
 	movearray legalmoves;
 	// if (hashPosition(board, tomove) != board->hashValue){
-		// printf("Hashing failed!");
-		// return 0;
+	// 	printf("Hashing failed!");
+	// 	return 0;
 	// }
 	
 	if (depth == 0){
@@ -122,6 +123,7 @@ int perfTest(bitboard* board, bool tomove, int depth){
 	
 	//old, pure move generation logic, so that ordering, etc. doesn't slow it
 	bitGenerateLegalmoves(&legalmoves, board, tomove, false);
+	// printLegalmoves(legalmoves, *board);
 	int all = 0;
 	for (int i = 0; i < legalmoves.size; i++){
 		if (!isCastlingLegal(board, tomove, &legalmoves.array[i])){
@@ -157,7 +159,6 @@ bool makePerfTestsAssert(){
 	bitboard bboard;
 	int temp;
 	bool tomove;
-	
 	{
 		printf("\nPosition 1\n");
 		setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", &bboard, &tomove, &temp, &temp);
@@ -212,11 +213,12 @@ bool makePerfTestsAssert(){
 		printf("\nPosition 4b\n");
 		setboardFEN("r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1 ", &bboard, &tomove, &temp, &temp);
 		//~ setMailBox(&bboard);
+		int posValuesb[] = {1, 6, 264, 9467, 422333};
 		printBitBoard2d(stdout, bboard);
 		for (int i = 0; i < 5; i++){
 			int allmovecount = perfTest(&bboard, tomove, i);
-			printf("%d ply:\nLeaves:\t%d\nExp:\t%d\n\n", i+1, allmovecount, posValues[i]);
-			if (allmovecount != posValues[i]) return false;
+			printf("%d ply:\nLeaves:\t%d\nExp:\t%d\n\n", i+1, allmovecount, posValuesb[i]);
+			if (allmovecount != posValuesb[i]) return false;
 		}
 	}
 	

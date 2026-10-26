@@ -82,11 +82,11 @@ void printBitMove(FILE* ostream, bitMove m) {
 void printLegalmoves(movearray legalmoves, bitboard board){
 	printf("\nLegal moves:\n");
 	for (int i = 0; i < legalmoves.size; i++){
-		printmove(stdout, convertBitMoveToMove(legalmoves.array[i]));
+		printBitMove(stdout, legalmoves.array[i]);
+		printf("\n");
 		bitUndo u = makeMove(&board, &legalmoves.array[i]);
 		// printHashEntry(board.hashValue);
 		undoMove(&board, &legalmoves.array[i], &u);
-		//~ printf("%lf\n", legalmoves.boards[i].eval * 0.01);
 	}
 }
 #endif

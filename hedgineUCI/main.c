@@ -13,9 +13,6 @@ int main(int argc, char* argv[]){
 	if (g_debugOutput == NULL){
 		return 0;
 	}
-	
-	printDebug("qwertyuiop\nasdfghjkl\nzxcvbnm\n%d%c", 100, 'a');
-	printDebug("\n");
 	#endif
 		
 	for (int i = 0; i < argc; i++) {
