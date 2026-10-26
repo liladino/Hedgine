@@ -328,7 +328,7 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 		 * Search
 		 * */
 		eval = -search(!tomove, remainingDepth-1, depth+1, -beta, -alpha);
-		undoMove(&s_searchBoard, &currentMove, &u);
+		undoMove(&s_searchBoard, currentMove, &u);
 		
 		if (g_stopSearch) {
 			rmLastRepetition();
