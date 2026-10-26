@@ -95,59 +95,6 @@ move randomBot(bitboard board, bool tomove){
 }
 
 /*
- * Order moves
- * */
-typedef struct pair {
-	int eval, index;
-} pair;
-
-static void insertionSort(pair a[], int n) {
-	for (int i = 1; i < n; i++) {
-		pair keyy = a[i];
-		int j = i - 1;
-		while (j >= 0 && a[j].eval < keyy.eval) { // DESC
-			a[j + 1] = a[j];
-			j--;
-		}
-		a[j + 1] = keyy;
-	}
-}
-
-static inline bool sameMove(const bitMove* const a, const bitMove* const b) {
-	return a->from == b->from &&
-		   a->to == b->to &&
-		   a->piece == b->piece &&
-		   a->promotion == b->promotion &&
-		   a->flags == b->flags;
-}
-
-static int scoreMove(bitMove* m, bitMove* lastBest, int depth) {
-	static int pieceValue[12] = { 0, 900, 500, 300, 300, 100, 0, 900, 500, 300, 300, 100 };
-	if (sameMove(m, lastBest)) { return 1000000; }
-	if (m->flags & PROMOTION_FLAG) { return 900000 + pieceValue[m->promotion]; }
-	if (m->flags & (CAPTURE_FLAG | EN_PASSANT_FLAG)) { return 800000 + attackValue(m->from, m->to); }
-	
-	if (sameMove(m, &s_killers[0][depth])) return 700000;
-	if (sameMove(m, &s_killers[1][depth])) return 650000;
-	
-	return s_history[m->piece][m->to];
-}
-
-static void orderMoves(movearray* legalmoves, bitMove* lastBest, int depth) {
-	pair moveScores[MAXMOVECOUNT_INPOS];
-	for (int i = 0; i < legalmoves->size; i++) {
-		moveScores[i] = (pair){scoreMove(&legalmoves->array[i], lastBest, depth), i};
-	}
-	insertionSort(moveScores, legalmoves->size);
-	
-	movearray copy = *legalmoves;
-	for (int i = 0; i < legalmoves->size; i++) {
-		legalmoves->array[i] = copy.array[moveScores[i].index];
-	}
-}
-
-
-/*
  * Quiescence search
  * */
 static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
@@ -178,7 +125,15 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 	int actualLegalMoves = 0;
 
 	MovePicker picker;
-	initMovePicker(&picker, &NULLBITMOVE, inCheck, true);
+	initMovePicker(
+		&picker,
+		&NULLBITMOVE,
+		&s_killers[0][depth],
+		&s_killers[1][depth],
+		(const int (*)[64])s_history,
+		inCheck,
+		true
+	);
 	bitMove currentMove;
 	while (nextMove(&picker, &s_searchBoard, tomove, &currentMove)) {
 		if (!isCastlingLegal(&s_searchBoard, tomove, &currentMove)){
@@ -283,7 +238,15 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 	 * */
 	bool inCheck = bitInCheck(&s_searchBoard, tomove);
 	MovePicker picker;
-	initMovePicker(&picker, &hint, inCheck, false);
+	initMovePicker(
+		&picker,
+		&hint,
+		&s_killers[0][depth],
+		&s_killers[1][depth],
+		(const int (*)[64])s_history,
+		inCheck,
+		false
+	);
 	int actualLegalMoves = 0;
 
 	evalflag moveFlag = UPPER_BOUND_FLAG;

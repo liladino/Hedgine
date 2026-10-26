@@ -122,11 +122,13 @@ typedef struct gameInfo{
 typedef struct MovePicker {
     PickStage stage;
     bitMove hint;
+    bitMove killers[2];
     bool hintReturned;
     bool inCheck;
     bool quiescence;
 
-    movearray moves;  // Reuse this buffer between stages
+    const int (*history)[64];
+    movearray moves;
     int next;
 } MovePicker;
 

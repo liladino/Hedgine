@@ -442,38 +442,3 @@ bool isCastlingLegal(bitboard* board, bool tomove, const bitMove* const mv){
 	}
 	return true;
 }
-
-void initMovePicker(MovePicker* picker, const bitMove* const hint, bool inCheck, bool quiescence){
-	picker->stage         = PICK_HINT;
-	picker->hint          = *hint;
-	picker->hintReturned  = false;
-	picker->inCheck       = inCheck;
-	picker->quiescence    = quiescence;
-	picker->moves.size    = 0;
-	picker->next          = 0;
-}
-
-bool nextMove(MovePicker *picker, const bitboard *board, bool tomove, bitMove *out){
-	/*
-	PICK_HINT,
-	GENERATE_TACTICAL,
-	PICK_TACTICAL,
-	GENERATE_QUIET,
-	PICK_QUIET,
-	GENERATE_EVASIONS,
-	PICK_EVASIONS,
-	PICK_DONE
-	*/
-
-	//dummy implementation: no stage behavior
-	
-	if (0 == picker->moves.size) {
-		bool onlyCaptures = picker->quiescence && !picker->inCheck;
-		bitGenerateLegalmoves(&picker->moves, board, tomove, onlyCaptures);
-	}
-	if (picker->next < picker->moves.size){
-		*out = picker->moves.array[picker->next++];
-		return true;
-	}
-	return false;
-}

@@ -3,6 +3,7 @@
 
 #include "structs.h"
 #include "moves.h"
+#include "movepicker.h"
 #include "legalmoves.h"
 #include "hash.h"
 #include "uci.h"

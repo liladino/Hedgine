@@ -36,8 +36,4 @@ bool hasLegalMove(bitboard *board, bool tomove);
 
 bool isCastlingLegal(bitboard* board, bool tomove, const bitMove* const mv);
 
-void initMovePicker(MovePicker* picker, const bitMove* const hint, bool inCheck, bool quiescence);
-
-bool nextMove(MovePicker *picker, const bitboard *board, bool tomove, bitMove *out);
-
 #endif
