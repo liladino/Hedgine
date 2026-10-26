@@ -49,7 +49,7 @@ void printBitPieceAsBoard(u64 piece){
 	printf("\n");
 }
 
-u64 getMaskBlackKing(u64 king, int i){
+u64 getMaskBlackPawn(u64 pawn, int i){
 	u64 mask = 0;
 	
 	char file = 'a' + i%8;
@@ -57,16 +57,16 @@ u64 getMaskBlackKing(u64 king, int i){
 	
 	if (rank > 1){
 		if (file > 'a'){
-			mask |= king >> soWe;
+			mask |= pawn >> soWe;
 		}
 		if (file < 'h'){
-			mask |= king >> soEa;
+			mask |= pawn >> soEa;
 		}
 	}	
 	return mask;
 }
 
-u64 getMaskWhiteKing(u64 king, int i){
+u64 getMaskWhitePawn(u64 pawn, int i){
 	u64 mask = 0;
 	
 	char file = 'a' + i%8;
@@ -74,22 +74,22 @@ u64 getMaskWhiteKing(u64 king, int i){
 	
 	if (rank < 8){
 		if (file > 'a'){
-			mask |= king << noWe;
+			mask |= pawn << noWe;
 		}
 		if (file < 'h'){
-			mask |= king << noEa;
+			mask |= pawn << noEa;
 		}
 	}	
 	return mask;
 }
 
 int main(){
-	u64 king = 1;
+	u64 pawn = 1;
 	u64 wpawnAttacks[64] = {0};
 	u64 bpawnAttacks[64] = {0};
 	for (int i = 0; i < 64; i++){
-		wpawnAttacks[i] = getMaskWhiteKing(king, i);
-		bpawnAttacks[i] = getMaskBlackKing(king, i);
+		wpawnAttacks[i] = getMaskWhitePawn(pawn, i);
+		bpawnAttacks[i] = getMaskBlackPawn(pawn, i);
 		
 		printf("%d:\n", i);
 		printBitPieceAsBoard(wpawnAttacks[i]);
@@ -97,7 +97,7 @@ int main(){
 	
 		//~ char c;
 		//~ scanf("%c", &c);
-		king = king << 1;
+		pawn = pawn << 1;
 	}
 	
 	FILE* f = fopen("pawnAttacks.txt", "w");
