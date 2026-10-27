@@ -1,3 +1,8 @@
+Date:	Oct 27 2026:
+	Evasion move generation added. Initial testing shows that regarding the
+	perft tests it produces slower runs than GEN_ALL. Needs further testing
+	whether it allows for more nps in a search.
+
 Date:	Oct 26 2026:
 	Move generation rewrite to support  stages. Perft results for the new implementation:
 
