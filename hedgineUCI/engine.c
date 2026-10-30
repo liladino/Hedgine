@@ -9,6 +9,7 @@ const bitMove NULLBITMOVE = {0, 0, 0, -1, 0};
 #define NegINF  -2147480000
 #define MATE_NOW WHITEWON //2147400000 much less than infinities
 #define MAXSEARCHDEPTH 40 
+#define HISTORY_MAX 16384 //well below the killer move scores in move picker
 
 /*
  * STATICS & GLOBALS
@@ -43,6 +44,15 @@ static inline int i_min(int a, int b){
 
 static inline int i_abs(int a){
 	return (a < 0 ? -a : a);
+}
+
+/* "History gravity": the closer an entry is to HISTORY_MAX, the less a bonus
+ * moves it, so the values saturate smoothly in [-HISTORY_MAX, HISTORY_MAX]
+ * instead of growing without a bound.
+ * */
+static inline void updateHistory(int *entry, int bonus){
+	bonus = i_max(-HISTORY_MAX, i_min(HISTORY_MAX, bonus));
+	*entry += bonus - *entry * i_abs(bonus) / HISTORY_MAX;
 }
 
 bool isMateScore(int score) {
@@ -197,11 +207,9 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 	bitMove hint;
 	if (depth == 0){
 		hint = (s_PVcommitlen > 0) ? s_PVcommit[0] : NULLBITMOVE;
-		// orderMoves(&legalmoves, &hint, depth);
 	}
 	else {
 		hint = probeTTMove(s_searchBoard.hashValue);
-		// orderMoves(&legalmoves, &hint, depth);
 	}
 	
 	/*
@@ -231,6 +239,9 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 
 	bitMove currentMove;
 	bitMove bestMove = NULLBITMOVE;
+	//quiet moves searched so far, that failed to produce a cutoff (for the history malus)
+	bitMove quietsTried[MAXMOVECOUNT_INPOS];
+	int quietCount = 0;
 	while (nextMove(&picker, &s_searchBoard, tomove, &currentMove)) {
 		if (!isCastlingLegal(&s_searchBoard, tomove, &currentMove)){
 			continue;
@@ -267,6 +278,8 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 			return 0;
 		}
 		
+		bool isQuiet = !(currentMove.flags & CAPTURE_FLAG) && !(currentMove.flags & PROMOTION_FLAG);
+
 		/*
 		 * Pruning
 		 * */
@@ -277,7 +290,7 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 			/*
 			 * Killers and history
 			 * */
-			if (!(currentMove.flags & CAPTURE_FLAG) && !(currentMove.flags & PROMOTION_FLAG)) {
+			if (isQuiet) {
 				if (sameMove(&currentMove, &s_killers[1][depth])) {
 					// promote 
 					s_killers[1][depth] = s_killers[0][depth];
@@ -288,14 +301,25 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 					s_killers[0][depth] = currentMove;
 				}
 				
-				s_history[currentMove.piece][currentMove.to] += depth * depth;
+				//cutoffs higher up in the tree prune more, so they weigh more
+				int bonus = remainingDepth * remainingDepth;
+				updateHistory(&s_history[currentMove.piece][currentMove.to], bonus);
+
+				//malus: the quiets searched before this one should have been ordered later
+				for (int k = 0; k < quietCount; k++){
+					updateHistory(&s_history[quietsTried[k].piece][quietsTried[k].to], -bonus);
+				}
 			}
 			
 			rmLastRepetition();
 
 			return beta;
 		}
-		 
+
+		if (isQuiet){
+			quietsTried[quietCount++] = currentMove;
+		}
+
 		/*
 		 * New best move foud
 		 * */

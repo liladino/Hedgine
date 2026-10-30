@@ -1,4 +1,9 @@
 Date:	Oct 30 2026:
+	Features:
+		- history gravity added: the closer an entry is to HISTORY_MAX, the 
+		  less a bonus moves it, so the values saturate smoothly in
+		- history malus added: the quiets searched before a given quiet move
+		  should have been ordered later
 	Bug fixes:
 		- s_PVcommit[0] and s_PVcommitlen are set back to default values 
 		  when the search restarts to rule out the possibility of returning
