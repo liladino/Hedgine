@@ -103,7 +103,7 @@ move parseLongAlgebraicNotation(char str[]){
 
 int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int *fmv, int *movenum){ 
 	char board[12][12] = {0};
-	int castling[4];
+	int castling[4] = {0};
 	squarenums enpass = {-1, -1};
 	
 	//start pos: rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1
@@ -166,9 +166,6 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int *fmv, int *moven
 		return 1;
 	}
 	
-	*bboard = boardConvert(board, castling, enpass, tomove);
-	setMailBox(bboard);
-	
 	//i++;
 	char* metadata = calloc( (strlen(FEN) + 1), sizeof(char));
 	
@@ -212,9 +209,7 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int *fmv, int *moven
 		return 1;
 	}
 	
-	for (int x = 0; x < 4; x++){
-		castling[x] = 0;
-	}
+	// init castling
 	i = 0;
 	if (castle_str[0] != '-'){
 		while (castle_str[i] != 0){
@@ -261,15 +256,14 @@ int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int *fmv, int *moven
 	}
 	if (sscanf(metadata, "%*s %*s %*s %d %d", fmv, movenum) != 2){
 		fprintf(stderr, "couldn't read move numbers\n");
-		return 1;
 		*fmv = 0;
-		*movenum = 0; 
+		*movenum = 1;
 	}
 	free(metadata);
-	
-	(*bboard) = boardConvert(board, castling, enpass, tomove);
-	
-	bboard->hashValue = hashPosition(bboard, *tomove);
-	
+
+	//boardConvert computes the hash too
+	(*bboard) = boardConvert(board, castling, enpass, *tomove);
+	setMailBox(bboard);
+
 	return 0;
 }

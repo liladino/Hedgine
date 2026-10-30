@@ -30,6 +30,11 @@ void printDebug(
 }
 
 void printmove(FILE* ostream, move m) {
+	if (m.from.file == NULLMOVE.from.file){
+		//UCI null move
+		fprintf(ostream, "0000 ");
+		return;
+	}
 	fprintf(ostream, "%c%d%c%d%c ", m.from.file+'a'-2, m.from.rank-1, m.to.file+'a'-2, m.to.rank-1, (m.promotion >= 'a' && m.promotion <= 'z' ? m.promotion : ' ') );
 }
 

@@ -72,26 +72,12 @@ move randomBot(bitboard board, bool tomove){
 	}
 	
 	movearray legalmoves;
-	bitGenerateLegalmoves(&legalmoves, &board, tomove, false);
-	
-	int legals[MAXMOVECOUNT_INPOS] = {0};
-	int j = 0;
-	for (int i = 0; i < legalmoves.size; i++){
-		if (!isCastlingLegal(&board, tomove, &legalmoves.array[i])){
-			continue;
-		}
+	generateLegalMoves(&legalmoves, &board, tomove);
 
-		bitUndo u = makeMove(&board, &legalmoves.array[i]);
-		bool b = bitInCheck(&board, tomove);
-		undoMove(&board, &legalmoves.array[i], &u);
-		
-		if (b){ continue; }
-		
-		legals[j++] = i;
+	if (legalmoves.size == 0){
+		return NULLMOVE;
 	}
-	
-	int i = legals[rand() % j];
-	return convertBitMoveToMove(legalmoves.array[i]);
+	return convertBitMoveToMove(legalmoves.array[rand() % legalmoves.size]);
 }
 
 /*
@@ -101,8 +87,6 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 	s_searchedNodes++;
 	if (2026 == s_searchedNodes % 2027) { communicate(); }
 	if (g_stopSearch) { return 0; }
-
-	if (isRepetition(s_searchBoard.hashValue)) { return 0; }
 
 	if (depth >= MAXSEARCHDEPTH) {
     	return staticEval(&s_searchBoard, tomove);
@@ -121,7 +105,6 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 		}
 	}
 
-	storeRepetiton(s_searchBoard.hashValue);
 	int actualLegalMoves = 0;
 
 	MovePicker picker;
@@ -143,7 +126,6 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 		if (bitInCheck(&s_searchBoard, tomove)){
 			undoMove(&s_searchBoard, &currentMove, &u);
 			if (g_stopSearch) { 
-				rmLastRepetition();
 				return 0; 
 			}
 			continue;
@@ -154,18 +136,14 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 		int eval = -quiescenceSearch(!tomove, -beta, -alpha, depth+1);
 		undoMove(&s_searchBoard, &currentMove, &u);
 		if (g_stopSearch) { 
-			rmLastRepetition();
 			return 0; 
 		}
 
 		if (eval >= beta) {
-			rmLastRepetition();
 			return beta;
 		}
 		alpha = i_max(alpha, eval);
 	}
-
-	rmLastRepetition();
 	
 	if (0 == actualLegalMoves) {
 		if (inCheck){
@@ -402,6 +380,9 @@ move iterativeDeepening(bitboard board, bool tomove){
 	emptyPVTable();
 	emptyKillers();
 	
+	s_PVcommit[0] = NULLBITMOVE;
+	s_PVcommitlen = 0;
+	
 	#ifdef DEBUG
 	printBitBoard2d(stdout, board);
 	if (info.timeControl) fprintf(g_debugOutput, "thinking time %d\n", info.moveTime);
@@ -421,50 +402,33 @@ move iterativeDeepening(bitboard board, bool tomove){
 		
 		//~ usleep(500);
 		communicate();
-		
-		//~ { /* store the best move */
-			//~ bitUndo u = makeMove(&s_searchBoard, s_PVcommit[0]);
-			//~ nextpos = s_searchBoard.hashValue;
-			//~ undoMove(&s_searchBoard, s_PVcommit[0], u);
-		
-			//~ storePosTT(nextpos, eval, LAST_BEST_EVAL_FLAG, 0, s_maxdepth, &s_PVcommit[0]);
-		//~ }
-			
+					
 		if (g_stopSearch){
-			printf("info depth %d score cp %d\n", i, lastEval);
-			#ifdef DEBUG
-			fprintf(g_debugOutput, "info depth %d score cp %d\n", i, lastEval);
-			#endif
+			//iteration i was cut short, so the last reliable result is from depth i-1
+			if (i > 1){
+				printf("info depth %d score cp %d\n", i-1, lastEval);
+				#ifdef DEBUG
+				fprintf(g_debugOutput, "info depth %d score cp %d\n", i-1, lastEval);
+				#endif
+			}
 			break;
 		}
-		
-		eval *= (tomove == black ? -1 : 1);
+
 		lastEval = eval;
-		
+
 		printf("info depth %d", i);
 		#ifdef DEBUG
 		fprintf(g_debugOutput, "info depth %d", i);
 		#endif
-		
+
 		bool mate = false;
 		if (i_abs(eval) >= WHITEWON-1000){
-			int mateIn = 1e8;
-			if ((tomove == black && eval <= BLACKWON+1000) || (tomove == white && eval >= WHITEWON-1000)){
-				//engine is about to win
-				mateIn = (i_abs(i_abs(eval) - WHITEWON) + 1) / 2;
-				printf(" score mate %d pv ", mateIn);
-				#ifdef DEBUG
-				fprintf(g_debugOutput, " score mate %d pv ", (i_abs(i_abs(eval) - WHITEWON) + 1) / 2);
-				#endif
-			}
-			else{
-				//we are about to win
-				mateIn = (i_abs(i_abs(eval) - WHITEWON) + 1) / 2;
-				printf(" score mate %d pv ", -mateIn);
-				#ifdef DEBUG
-				fprintf(g_debugOutput, " score mate %d pv ", -(i_abs(i_abs(eval) - WHITEWON) + 1) / 2);
-				#endif
-			}
+			//eval is from the engine's perspective: positive => the engine mates
+			int mateIn = (WHITEWON - i_abs(eval) + 1) / 2;
+			printf(" score mate %d pv ", eval > 0 ? mateIn : -mateIn);
+			#ifdef DEBUG
+			fprintf(g_debugOutput, " score mate %d pv ", eval > 0 ? mateIn : -mateIn);
+			#endif
 			if (mateIn * 2 <= i) mate = true;
 		}
 		else{
@@ -500,13 +464,16 @@ move iterativeDeepening(bitboard board, bool tomove){
 		usleep(1000); 
 	}
 	
-	//in case the search returns a nullmove
+	//in case the search was cancelled before the first iteration finished
 	if (nextm.from.file == NULLMOVE.from.file) {
 		movearray legalmoves;
-		bitGenerateLegalmoves(&legalmoves, &board, tomove, false);
-		
+		generateLegalMoves(&legalmoves, &board, tomove);
+
+		if (legalmoves.size == 0){
+			return NULLMOVE;
+		}
 		return convertBitMoveToMove(legalmoves.array[0]);
-	} 
+	}
 	return nextm;
 }
 

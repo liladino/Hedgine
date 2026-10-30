@@ -112,10 +112,12 @@ bool makeMoveTest(){
 
 int perfTest(bitboard* board, bool tomove, int depth){	
 	movearray legalmoves;
-	// if (hashPosition(board, tomove) != board->hashValue){
-	// 	printf("Hashing failed!");
-	// 	return 0;
-	// }
+	#ifdef DEBUG
+	if (hashPosition(board, tomove) != board->hashValue){
+		printf("Hashing failed!");
+		return 0;
+	}
+	#endif
 	
 	if (depth == 0){
 		return 1;

@@ -327,7 +327,8 @@ int g_RTwriteIndex = 0;
 
 // TODO: don't search all the way back to 0 index, only up to the last capture 
 bool isRepetition(const u64 pos){
-	for (int i = (g_RTwriteIndex > REPETITION_TABLE_SIZE ? REPETITION_TABLE_SIZE : g_RTwriteIndex); i >= 0; i--){
+	//scan backwards by full moves, becuase a position is not the same with the side to move changed
+	for (int i = (g_RTwriteIndex > REPETITION_TABLE_SIZE ? REPETITION_TABLE_SIZE-1 : g_RTwriteIndex); i >= 0; i-=2){
 		if (s_RepetitionTable[i] == pos)	return true;
 	}
 	

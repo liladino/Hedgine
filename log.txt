@@ -1,3 +1,34 @@
+Date:	Oct 30 2026:
+	Bug fixes:
+		- s_PVcommit[0] and s_PVcommitlen are set back to default values 
+		  when the search restarts to rule out the possibility of returning
+		  an illegal move if the search if cancelled before deoth 1 is 
+		  finished.
+		- depth numbers were off by 1
+		- eval should be from the engine's perspective
+		- new helper function: generateLegalMoves, which returns LEGAL 
+		  moves instead of pseudo-legals that need to be checked later. Now
+		  random bot, the search fallback and makeMoveIfLegal (UCI) use 
+		  this.
+		- eval counted wrong number of pieces and blending was incorrect
+		- repetition table out of bounds check fixed
+		- fix setBoardFen: castling array was used uninitialized, 
+		  boardConvert was called twice.
+		- remove attackValue function call from en passant captures, it'safer
+		  always 0 there and causes a pieceValue[-1] array indexing error
+		- when loading a position with, now UCI resets the transposition 
+		  table
+		- changed default behaviour of 1234 ms thinking time to no limit
+		- go depth N calls now are correctly clamped into an 1-39 interval
+		- isready UCI command support added during search, now inputs don't
+		  stops the search automatically
+	
+	Search fixes:
+		- quiescence search no longer uses the repetition table, as it makes 
+		  moves that rule out repetitions: captures, promotions
+		- repetition table searches back every second node, because the side
+		  to move matters
+
 Date:	Oct 27 2026:
 	Evasion move generation added. Initial testing shows that regarding the
 	perft tests it produces slower runs than GEN_ALL. Needs further testing
@@ -382,7 +413,7 @@ Date:   Sep 10 2024:
 		black, because it got a non-zero value into tomove (a pointer). For some 
 		(for me) unexplainable reasons this doesn't even gave me a warning.
 	UCI:
-		the sudden illegal moves seemed to stop, tho i have limitid idea what 
+		the sudden illegal moves seemed to stop, tho i have limited idea what 
 		actually caused the bug.
 		Move input:
 			changed the behaviour when an illegal move is recieved:

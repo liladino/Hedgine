@@ -713,6 +713,32 @@ void bitGenerateLegalmoves(movearray* moves, const bitboard* const board, bool t
 	// }
 }
 
+/* Fills moves with the strictly legal moves only. Slow (makes and unmakes
+ * every candidate), so it is meant for the root/UCI side, not for the search.
+ * Requires the mailbox to be in sync with board. board is restored on return.
+ * */
+void generateLegalMoves(movearray* moves, bitboard* board, bool tomove){
+	generateMovesWithModes(moves, board, tomove, GEN_ALL);
+
+	int legalCount = 0;
+	for (int i = 0; i < moves->size; i++){
+		bitMove *m = &moves->array[i];
+
+		if (!isCastlingLegal(board, tomove, m)){
+			continue;
+		}
+
+		bitUndo u = makeMove(board, m);
+		bool legal = !bitInCheck(board, tomove);
+		undoMove(board, m, &u);
+
+		if (legal){
+			moves->array[legalCount++] = *m;
+		}
+	}
+	moves->size = legalCount;
+}
+
 bool hasLegalMove(bitboard *board, bool tomove) {
     movearray moves;
 

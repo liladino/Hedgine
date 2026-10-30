@@ -31,7 +31,8 @@ int scoreMove(bitMove* m, const bitMove* hint, const bitMove killers[2], const i
 	static int pieceValue[12] = { 0, 900, 500, 300, 300, 100, 0, 900, 500, 300, 300, 100 };
 	if (sameMove(m, hint)) { return 1000000; }
 	if (m->flags & PROMOTION_FLAG) { return 900000 + pieceValue[m->promotion]; }
-	if (m->flags & (CAPTURE_FLAG | EN_PASSANT_FLAG)) { return 800000 + attackValue(m->from, m->to); }
+	if (m->flags & (EN_PASSANT_FLAG)) { return 800000; }
+	if (m->flags & (CAPTURE_FLAG)) { return 800000 + attackValue(m->from, m->to); }
 	
 	if (sameMove(m, &killers[0])) return 700000;
 	if (sameMove(m, &killers[1])) return 650000;

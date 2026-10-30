@@ -93,21 +93,17 @@ int isMoveInMoveArray(const movearray* legalmoves, const move m){
 
 int makeMoveIfLegal(bitboard* board, const bool tomove, const move m){
 	movearray legalmoves;
-	bitGenerateLegalmoves(&legalmoves, board, tomove, false);
+	generateLegalMoves(&legalmoves, board, tomove);
 	int x = isMoveInMoveArray(&legalmoves, m);
-	
+
 	if (x == -1){
 		return 1;
 	}
 
-	//~ bitUndo u = 
-		makeMove(board, &legalmoves.array[x]);	
-	
-	legalmoves.size = 0;
-	bitGenerateLegalmoves(&legalmoves, board, !tomove, false);
-	//~ undoMove(board, bm, u);
-	
-	if (legalmoves.size == 0){
+	makeMove(board, &legalmoves.array[x]);
+
+	//checkmate or stalemate
+	if (!hasLegalMove(board, !tomove)){
 		return 2;
 	}
 	
@@ -294,6 +290,13 @@ int8_t mailbox[64] =
 	 
 int attackValue(int from, int to){
 	static int pieceValue[12] = { 0, 900, 500, 300, 300, 100, 0, 900, 500, 300, 300, 100 };
+	#ifdef DEBUG
+	if (mailbox[to] < 0){
+		printf("Error:\nfrom: %2d piece: %d\nto:   %2d piece: %d\n", from, mailbox[from], to, mailbox[to]);
+		printf("pieceValue[mailbox[to]]=%d;", pieceValue[mailbox[to]]);
+		exit(1);
+	}
+	#endif
 	return pieceValue[mailbox[to]] - pieceValue[mailbox[from]];
 }
 
