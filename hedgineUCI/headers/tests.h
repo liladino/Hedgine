@@ -25,6 +25,8 @@ bool testPseudoLegal();
 
 bool testMovePicker();
 
+void testSearchSpeed(int depth);
+
 void testLasker();
 
 void testEnglish();

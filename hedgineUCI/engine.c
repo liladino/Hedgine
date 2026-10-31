@@ -60,6 +60,11 @@ bool isMateScore(int score) {
 	return i_abs(score) > MATE_NOW - MAXSEARCHDEPTH;
 }
 
+//nodes searched by the last iterativeDeepening call (search + quiescence)
+u64 getSearchedNodes() {
+	return s_searchedNodes;
+}
+
 /*
  * UCI comunication
  * */

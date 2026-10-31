@@ -41,6 +41,13 @@ int main(int argc, char* argv[]){
 		else if (strncmp(argv[1], "testMovePicker", 15) == 0){
 			if (!testMovePicker()) { goto endEverything; }
 		}
+		else if (strncmp(argv[1], "testSearch", 11) == 0){
+			//./hedgine testSearch [depth]
+			int depth = (argc >= 3) ? atoi(argv[2]) : 6;
+			if (depth < 1) depth = 4;
+			testSearchSpeed(depth);
+			goto endEverything;
+		}
 		else if (strncmp(argv[1], "testMakeMove", 15) == 0){
 			if (!makeMoveTest()) { goto endEverything; }
 		}
