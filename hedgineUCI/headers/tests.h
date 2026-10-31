@@ -4,6 +4,7 @@
 #include "structs.h"
 #include "moves.h"
 #include "legalmoves.h"
+#include "movepicker.h"
 #include "hash.h"
 #include "uci.h"
 #include "engine.h"
@@ -20,6 +21,12 @@ bool makePerfTestsAssert();
 
 void makePerfTest(bitboard* board, bool tomove);
 
+bool testPseudoLegal();
+
+bool testMovePicker();
+
 void testLasker();
+
+void testEnglish();
 
 #endif

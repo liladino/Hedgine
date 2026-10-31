@@ -22,7 +22,7 @@ mingwall: $(OBJS)
 all: $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $^ 
 
-debug: CFLAGS += -g -DDEBUG
+debug: CFLAGS += -g3 -DDEBUG
 debug: $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $^
 

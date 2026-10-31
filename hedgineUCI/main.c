@@ -13,9 +13,6 @@ int main(int argc, char* argv[]){
 	if (g_debugOutput == NULL){
 		return 0;
 	}
-	
-	printDebug("qwertyuiop\nasdfghjkl\nzxcvbnm\n%d%c", 100, 'a');
-	printDebug("\n");
 	#endif
 		
 	for (int i = 0; i < argc; i++) {
@@ -35,6 +32,15 @@ int main(int argc, char* argv[]){
 		else if (strncmp(argv[1], "testLasker", 10) == 0){
 			testLasker();
 		}
+		else if (strncmp(argv[1], "testEnglish", 12) == 0){
+			testEnglish();
+		}
+		else if (strncmp(argv[1], "testPseudo", 11) == 0){
+			if (!testPseudoLegal()) { goto endEverything; }
+		}
+		else if (strncmp(argv[1], "testMovePicker", 15) == 0){
+			if (!testMovePicker()) { goto endEverything; }
+		}
 	}
 	if (argc >= 3 && strncmp(argv[2], "quit", 4) == 0){
 		goto endEverything;
@@ -48,6 +54,17 @@ int main(int argc, char* argv[]){
 	
 	bitboard board;
 
+	#ifdef DEBUG	
+	setboardFEN("4k3/8/8/3p2pP/8/2N4p/2q4P/4K2R w K g6 0 1", &board, &tomove, &fmv, &movenum);
+	printBitBoard2d(stdout, board);
+	movearray moves;
+	generateLegalMoves(&moves, &board, tomove);
+	for (int i = 0; i < moves.size; i++){
+		printBitMove(stdout, moves.array[i]);
+		printf("\n");
+	}
+	#endif
+	
 	//main uci loop
 	UCIloop(&board, &tomove, &fmv, &movenum);
 	

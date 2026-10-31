@@ -119,6 +119,19 @@ typedef struct gameInfo{
 	//~ bool UCI_LimitStrength;
 }gameInfo;
 
+typedef struct MovePicker {
+    PickStage stage;
+    bitMove hint;
+    const bitMove *killers[2]; // points into the search's killer table, not copied
+    bool hintReturned;
+    bool inCheck;
+    bool quiescence;
+
+    const int (*history)[64];
+    movearray moves;
+    int next;
+} MovePicker;
+
 
 extern const move NULLMOVE;
 extern const bitMove NULLBITMOVE;

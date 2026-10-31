@@ -27,6 +27,8 @@ void printBitPieceAsBoard(u64 piece);
 
 void printmove(FILE* ostream, move m);
 
+void printBitMove(FILE* ostream, bitMove m);
+
 #ifdef DEBUG
 void printLegalmoves(movearray legalmoves, bitboard board);
 #endif

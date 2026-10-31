@@ -35,13 +35,11 @@ bool compareBitMoveToMove(const bitMove bm, const move m);
 
 move convertBitMoveToMove(const bitMove m);
 
-bitMove convertMoveToBitMove(const bitboard* const board, bool tomove, const move m);
+bitMove convertMoveToBitMove(bitboard* board, bool tomove, const move m);
 
-//~ move boardConvertTomove(const bitboard* const board1, const bitboard* const board2, bool tomove);
+bool lastMoveWasCapture(const bitboard* lastboard, const move m, const bool tomove);
 
-bool lastMoveWasCapture(const bitboard* const lastboard, const move m, const bool tomove);
-
-void setMailBox(const bitboard* const board);
+void setMailBox(const bitboard* board);
 
 void printMailBox();
 

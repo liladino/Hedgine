@@ -17,34 +17,6 @@
 #include <unistd.h>
 #include <limits.h>
 
-typedef enum {
-    GEN_TACTICAL,  // All captures and all promotions (non capturing too)
-    GEN_QUIET,     // Non-captures, excluding promotions and castling
-    GEN_CASTLING,
-    GEN_EVASIONS   // All candidate responses to check
-} GenMode;
-
-typedef enum {
-    PICK_HINT,
-    PICK_TACTICAL,
-    PICK_QUIET,
-    PICK_DONE
-} PickStage;
-
-typedef struct {
-    PickStage stage;
-    bitMove hint;
-    bool hintReturned;
-    bool inCheck;
-    bool quiescence;
-
-    movearray moves;  // Reuse this buffer between stages
-    int next;
-} MovePicker;
-
-
-// bool nextMove(MovePicker *picker, const bitboard *board, bool tomove, bitMove *out);
-
 //u64 enemypieces(bitboard board, bool enemy);
 
 static __inline__ __attribute__((always_inline)) u64 enemypieces(const bitboard* const board, bool enemy){
@@ -56,12 +28,18 @@ static __inline__ __attribute__((always_inline)) u64 enemypieces(const bitboard*
 
 bool bitInCheck(const bitboard* const board, bool tomove);
 
-void bitGenerateLegalmoves(movearray* moves, const bitboard* const board, bool tomove, bool onlytakes);
+void generatePseudoLegalMoves(movearray* moves, const bitboard* board, bool tomove);
 
-resultconst gameend(bitboard* board, bool tomove);
+void generateMovesWithModes(movearray *moves, const bitboard *board, const bool tomove, const GenMode mode);
+
+void generateLegalMoves(movearray* moves, bitboard* board, bool tomove);
+
+// resultconst gameend(bitboard* board, bool tomove);
 
 bool hasLegalMove(bitboard *board, bool tomove);
 
-bool isCastlingLegal(bitboard* board, bool tomove, const bitMove* const mv);
+bool isCastlingLegal(bitboard* board, bool tomove, const bitMove* mv);
+
+bool isPseudoLegal(const bitboard* board, bool tomove, const bitMove* m);
 
 #endif

@@ -53,7 +53,11 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 	char *token = jumpToNextToken(command); // after "position"
 	if (!token) return;
 
+	//the whole game history is (re)sent with every position command
+	g_RTwriteIndex = 0;
+#ifdef DEBUG
 	printDebug(token);
+#endif
 	if (compareToken(token, "startpos", 8)) {
 		setboardFEN(STARTPOS, board, tomove, fmv, movenum);
 		token = jumpToNextToken(token);
@@ -143,10 +147,10 @@ posError:
 	#endif
 }
 
-// reset time control variables
+// reset time control variables: no limit unless "go" specifies one
 void resetTimeControl(){
-	info.timeControl = true;
-	info.moveTime = 1234;
+	info.timeControl = false;
+	info.moveTime = -1;
 }
 
 // parse UCI command "go"
@@ -169,7 +173,8 @@ void parseGo(char *command, bitboard* board, bool *tomove) {
 		else if (compareToken(arg, "depth", 5)) {
 			v = jumpToNextToken(arg);
 			if (v) depth = atoi(v);
-			if (depth < 1 || depth > 40) depth = 2;
+			if (depth > 39) depth = 39;
+			if (depth < 1) depth = 1;
 		}
 		else if (compareToken(arg, "movetime", 8)) {
 			v = jumpToNextToken(arg);
@@ -413,10 +418,7 @@ void readInput() {
 	int bytesRead;
 
 	// "listen" to STDIN
-	if (inputWaiting()) {		
-		// Tell engine to stop calculating
-		g_stopSearch = true;
-
+	if (inputWaiting()) {
 		bytesRead = readLineDynamic(&input, 1024);  
 		
 		// If input is available
@@ -427,12 +429,13 @@ void readInput() {
 			}
 			else if (strncmp(input, "stop", 4) == 0) {
 				g_stopSearch = true;
-				//~ info.quit = true;
 			}
 			else if (strncmp(input, "ucinewgame", 10) == 0) {
 				g_stopSearch = true;
 				info.newgame = true;
-				//~ info.quit = true;
+			}
+			else if (strncmp(input, "isready", 7) == 0) {
+				printf("readyok\n");
 			}
 		}
 	}

@@ -127,8 +127,13 @@ int endgamecenter[8][8] = {
  * EVALUATION
  * */
  
-static int max(int a, int b){
+static int i_max(int a, int b){
 	return (a > b ? a : b);
+}
+
+static inline int i_min(int a, int b){
+	if (a < b) return a;
+	return b;
 }
 
 static inline int counter(u64 var){
@@ -142,8 +147,8 @@ int countPieces(const bitboard* const board){
 
 int countFriendlyPieces(const bitboard* const board, bool tomove){
 	u64 all;
-	if (white == tomove) all = (board->piece[wqueen] | board->piece[wbishop] | board->piece[wknight] | board->piece[wpawn]);
-	else all = (board->piece[bpawn] | board->piece[bqueen] | board->piece[bbishop] | board->piece[bknight] | board->piece[brook]);
+	if (white == tomove) all = (board->piece[wpawn] | board->piece[wqueen] | board->piece[wbishop] | board->piece[wknight] | board->piece[wrook]);
+	else                 all = (board->piece[bpawn] | board->piece[bqueen] | board->piece[bbishop] | board->piece[bknight] | board->piece[brook]);
 	return counter(all);
 }
 
@@ -163,8 +168,9 @@ static inline int valueBlender(int value1, int value2, int blendRate, int blendL
 		blendUpperLimit = blendLowerLimit;
 		blendLowerLimit = temp;
 	}
-	if (blendUpperLimit > 14) blendUpperLimit = 14; //if there are more pieces on the board (promotion)
-	blendRate = max(blendLowerLimit, blendRate);
+	//clamp, e.g. there can be more than 14 pieces on the board after promotions
+	blendRate = i_max(blendLowerLimit, blendRate);
+	blendRate = i_min(blendUpperLimit, blendRate);
 	
 	return ((blendUpperLimit - blendRate) * value1 + (blendRate - blendLowerLimit) * value2) / (blendUpperLimit - blendLowerLimit);
 }
@@ -263,16 +269,11 @@ static inline int signum(int x){
 	return 0;
 }
 
-static inline int min(int a, int b){
-	if (a < b) return a;
-	return b;
-}
-
 static inline int kingDist(u64 wk, u64 bk){
 	int w = __builtin_ctzll(wk);
 	int b = __builtin_ctzll(bk);
 	
-	return min(abs(w/8 - b/8), abs((w & 7) - (b & 7)));
+	return i_min(abs(w/8 - b/8), abs((w & 7) - (b & 7)));
 }
 
 int staticEval(bitboard *board, bool tomove)

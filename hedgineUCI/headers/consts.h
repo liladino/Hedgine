@@ -27,8 +27,8 @@
 #define TT_MIN_SIZE_MB 1
 
 #ifndef DEBUG
-	#define TT_DEF_SIZE_MB 64
-	#define TT_MAX_SIZE_MB 128
+	#define TT_DEF_SIZE_MB 128
+	#define TT_MAX_SIZE_MB 1024
 #else
 	#define TT_DEF_SIZE_MB 4
 	#define TT_MAX_SIZE_MB 4
@@ -104,10 +104,25 @@ typedef enum bitMoveFlags{
 } bitMoveFlags;
 
 typedef enum evalflag{
+	TT_EMPTY = 0,
 	EXACT_EVAL_FLAG = 1, 
 	LOWER_BOUND_FLAG = 2, 
 	UPPER_BOUND_FLAG = 3
 	// LAST_BEST_EVAL_FLAG = 4
 }evalflag;
+
+typedef enum {
+	GEN_ALL,
+    GEN_TACTICAL,  // All captures and all promotions (non capturing too)
+    GEN_QUIET,     // Non-captures, including castling, excluding promotions
+    GEN_EVASIONS   // All candidate responses to check
+} GenMode;
+
+typedef enum {
+    PICK_HINT,
+    PICK_TACTICAL,
+    PICK_QUIET,
+    PICK_DONE
+} PickStage;
 
 #endif

@@ -30,18 +30,68 @@ void printDebug(
 }
 
 void printmove(FILE* ostream, move m) {
+	if (m.from.file == NULLMOVE.from.file){
+		//UCI null move
+		fprintf(ostream, "0000 ");
+		return;
+	}
 	fprintf(ostream, "%c%d%c%d%c ", m.from.file+'a'-2, m.from.rank-1, m.to.file+'a'-2, m.to.rank-1, (m.promotion >= 'a' && m.promotion <= 'z' ? m.promotion : ' ') );
+}
+
+void printBitMove(FILE* ostream, bitMove m) {
+    static const char* pieceNames[] = {
+        "wking", "wqueen", "wrook", "wbishop", "wknight", "wpawn",
+        "bking", "bqueen", "brook", "bbishop", "bknight", "bpawn"
+    };
+
+    // Convert square indices (0..63) to algebraic notation (a1..h8).
+    // Assumes a1 = 0, h1 = 7, a8 = 56, h8 = 63.
+    char from[3] = {'a' + (m.from % 8), '1' + (m.from / 8), '\0'};
+    char to[3]   = {'a' + (m.to % 8),   '1' + (m.to / 8),   '\0'};
+
+    fprintf(ostream, "piece %s, from %s, to %s, prom %s, flags ",
+        m.piece < 12 ? pieceNames[m.piece] : "invalid",
+        from,
+        to,
+        (m.promotion >= 0 && m.promotion < 12)
+            ? pieceNames[m.promotion]
+            : "none"
+    );
+
+    if (m.flags == 0) {
+        fprintf(ostream, "NONE");
+    }
+    else {
+        bool first = true;
+
+        #define PRINT_FLAG(flag, name)             \
+            if (m.flags & (flag)) {                \
+                if (!first) fprintf(ostream, "|"); \
+                fprintf(ostream, "%s", (name));    \
+                first = false;                     \
+            }
+
+        PRINT_FLAG(CAPTURE_FLAG, "CAPTURE");
+        PRINT_FLAG(CASTLE_FLAG, "CASTLE");
+        PRINT_FLAG(EN_PASSANT_FLAG, "EN_PASSANT");
+        PRINT_FLAG(PROMOTION_FLAG, "PROMOTION");
+        PRINT_FLAG(DOUBLE_PAWNMOVE_FLAG, "DOUBLE_PAWNMOVE");
+
+        #undef PRINT_FLAG
+    }
+
+    fprintf(ostream, " ");
 }
 
 #ifdef DEBUG
 void printLegalmoves(movearray legalmoves, bitboard board){
 	printf("\nLegal moves:\n");
 	for (int i = 0; i < legalmoves.size; i++){
-		printmove(stdout, convertBitMoveToMove(legalmoves.array[i]));
-		bitUndo u = makeMove(&board, legalmoves.array[i]);
-		printHashEntry(board.hashValue);
-		undoMove(&board, legalmoves.array[i], u);
-		//~ printf("%lf\n", legalmoves.boards[i].eval * 0.01);
+		printBitMove(stdout, legalmoves.array[i]);
+		printf("\n");
+		bitUndo u = makeMove(&board, &legalmoves.array[i]);
+		// printHashEntry(board.hashValue);
+		undoMove(&board, &legalmoves.array[i], &u);
 	}
 }
 #endif
