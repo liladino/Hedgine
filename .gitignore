@@ -60,6 +60,7 @@ hedgineUCI/tests
 *.pgn
 test.txt
 debuglog.txt
+dump.txt
 meta/
 
 #older versions

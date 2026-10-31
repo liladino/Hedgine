@@ -191,7 +191,6 @@ static void loadPerftCase(const perftCase* c, bitboard* board, bool* tomove){
  * */
 bool makePerfTestsAssert(){
 	initializeAll();
-	if (!makeMoveTest()) { return false; }
 
 	bitboard bboard;
 	bool tomove;

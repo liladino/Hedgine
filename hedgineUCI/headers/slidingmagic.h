@@ -6,8 +6,6 @@
 
 /**
  * MODIFIED BY liladino 2025. 03. 11.
- * THIS IS JUST FOR TESTING PURPOSES, I WILL WRITE MY OWN IMPLEMENTATION 
- * (EVENTUALLY).
  * 
  *magicmoves.h
  *

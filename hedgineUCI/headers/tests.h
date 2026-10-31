@@ -29,4 +29,6 @@ void testLasker();
 
 void testEnglish();
 
+bool makeMoveTest();
+
 #endif

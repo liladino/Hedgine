@@ -41,6 +41,9 @@ int main(int argc, char* argv[]){
 		else if (strncmp(argv[1], "testMovePicker", 15) == 0){
 			if (!testMovePicker()) { goto endEverything; }
 		}
+		else if (strncmp(argv[1], "testMakeMove", 15) == 0){
+			if (!makeMoveTest()) { goto endEverything; }
+		}
 	}
 	if (argc >= 3 && strncmp(argv[2], "quit", 4) == 0){
 		goto endEverything;
