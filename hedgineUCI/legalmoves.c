@@ -699,18 +699,8 @@ void generateMovesWithModes(movearray *moves, const bitboard *board, const bool 
 	generateNonSpecialMoves(moves, board, tomove, possibleTargetSquares, enemy, friendly, coloffset);
 }
 
-void bitGenerateLegalmoves(movearray* moves, const bitboard* const board, bool tomove, bool onlytakes){
-	// if (bitInCheck(board, tomove)){
-	// 	generateMovesWithModes(moves, board, tomove, GEN_EVASIONS);
-	// }
-	// else {
-		if (onlytakes){
-			generateMovesWithModes(moves, board, tomove, GEN_TACTICAL);
-		}
-		else {
-			generateMovesWithModes(moves, board, tomove, GEN_ALL);
-		}
-	// }
+void generatePseudoLegalMoves(movearray* moves, const bitboard* const board, bool tomove){
+	generateMovesWithModes(moves, board, tomove, GEN_ALL);
 }
 
 /* Fills moves with the strictly legal moves only. Slow (makes and unmakes
@@ -803,4 +793,64 @@ bool isCastlingLegal(bitboard* board, bool tomove, const bitMove* const mv){
 		if (con) { return false; }
 	}
 	return true;
+}
+
+bool isPseudoLegal(const bitboard* board, bool tomove, const bitMove* m){
+	int off = (tomove == white ? 0 : bking);
+	u64 friendly = enemypieces(board, tomove);
+	u64 enemy = enemypieces(board, !tomove);
+	u64 occ = friendly | enemy;
+	u64 from = 1LLU << m->from, to = 1LLU << m->to;
+
+	if (m->from == m->to || m->piece < off || m->piece > wpawn + off) return false;
+	if (!(board->piece[m->piece] & from) || (friendly & to)) return false;
+
+	const u64* pawnTakes = (tomove == white ? wpawnTakes : bpawnTakes);
+	if (m->flags & EN_PASSANT_FLAG){
+		return m->piece == wpawn + off && m->flags == (CAPTURE_FLAG | EN_PASSANT_FLAG)
+			&& board->enpassanttarget == to && (pawnTakes[m->from] & to);
+	}
+
+	bool isCapture = (enemy & to) != 0;
+	if (((m->flags & CAPTURE_FLAG) != 0) != isCapture) return false;
+
+	if (m->piece == wpawn + off){
+		bool lastRank = (to & 0xFF000000000000FFULL) != 0;
+		if (((m->flags & PROMOTION_FLAG) != 0) != lastRank) return false;
+		if (lastRank && (m->promotion < wqueen + off || m->promotion > wknight + off)) return false;
+		if (isCapture) return (pawnTakes[m->from] & to) != 0;
+
+		int dir = (tomove == white ? 8 : -8);
+		if (m->to == m->from + dir){
+			return !(occ & to) && !(m->flags & DOUBLE_PAWNMOVE_FLAG);
+		}
+		if (m->to == m->from + 2 * dir){
+			return (m->flags & DOUBLE_PAWNMOVE_FLAG)
+				&& (from & (tomove == white ? WPAWN_HOME : BPAWN_HOME))
+				&& !(occ & (to | (1LLU << (m->from + dir))));
+		}
+		return false;
+	}
+	if (m->flags & (PROMOTION_FLAG | DOUBLE_PAWNMOVE_FLAG)) return false;
+
+	if (m->flags & CASTLE_FLAG){
+		//rare, so just reuse the generator
+		movearray castles = { .size = 0 };
+		addCastlingMoves(&castles, board, tomove, enemy, friendly);
+		for (int i = 0; i < castles.size; i++){
+			if (castles.array[i].to == m->to && m->piece == wking + off) return true;
+		}
+		return false;
+	}
+
+	u64 targets;
+	switch (m->piece - off){
+		case wknight: targets = knightMoves[m->from]; break;
+		case wbishop: targets = Bmagic(m->from, occ); break;
+		case wrook:   targets = Rmagic(m->from, occ); break;
+		case wqueen:  targets = Bmagic(m->from, occ) | Rmagic(m->from, occ); break;
+		case wking:   targets = kingAttacks[m->from]; break;
+		default:      return false;
+	}
+	return (targets & to) != 0;
 }

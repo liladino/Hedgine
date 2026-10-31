@@ -28,7 +28,7 @@ static __inline__ __attribute__((always_inline)) u64 enemypieces(const bitboard*
 
 bool bitInCheck(const bitboard* const board, bool tomove);
 
-void bitGenerateLegalmoves(movearray* moves, const bitboard* const board, bool tomove, bool onlytakes);
+void generatePseudoLegalMoves(movearray* moves, const bitboard* board, bool tomove);
 
 void generateMovesWithModes(movearray *moves, const bitboard *board, const bool tomove, const GenMode mode);
 
@@ -38,6 +38,8 @@ void generateLegalMoves(movearray* moves, bitboard* board, bool tomove);
 
 bool hasLegalMove(bitboard *board, bool tomove);
 
-bool isCastlingLegal(bitboard* board, bool tomove, const bitMove* const mv);
+bool isCastlingLegal(bitboard* board, bool tomove, const bitMove* mv);
+
+bool isPseudoLegal(const bitboard* board, bool tomove, const bitMove* m);
 
 #endif

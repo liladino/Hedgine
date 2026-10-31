@@ -70,9 +70,9 @@ bool compareBitMoveToMove(const bitMove bm, const move m){
 	return (curr.from.file == m.from.file && curr.from.rank == m.from.rank && curr.to.file == m.to.file && curr.to.rank == m.to.rank && curr.promotion == m.promotion);
 }
  
-bitMove convertMoveToBitMove(const bitboard* const board, bool tomove, const move m) {
+bitMove convertMoveToBitMove(bitboard* board, bool tomove, const move m) {
 	movearray moves;
-	bitGenerateLegalmoves(&moves, board, tomove, false);
+	generateLegalMoves(&moves, board, tomove);
 	// printLegalmoves(moves, *board);
 	for (int i = 0; i < moves.size; i++){
 		if (compareBitMoveToMove(moves.array[i], m)){

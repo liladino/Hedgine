@@ -122,7 +122,7 @@ typedef struct gameInfo{
 typedef struct MovePicker {
     PickStage stage;
     bitMove hint;
-    bitMove killers[2];
+    const bitMove *killers[2]; // points into the search's killer table, not copied
     bool hintReturned;
     bool inCheck;
     bool quiescence;
