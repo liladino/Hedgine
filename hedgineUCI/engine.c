@@ -5,10 +5,11 @@
  * */
 const move    NULLMOVE = {{-1, -1}, {-1, -1}, 0};
 const bitMove NULLBITMOVE = {0, 0, 0, -1, 0};
+#define MAX_EXTENSIONS 10
 #define PosINF   2147480000  //less than 2^31 to avoid possible overflow
 #define NegINF  -2147480000
 #define MATE_NOW WHITEWON //2147400000 much less than infinities
-#define MAXSEARCHDEPTH 40 
+#define MAXSEARCHDEPTH 64 
 #define HISTORY_MAX 16384 //well below the killer move scores in move picker
 
 /*
@@ -21,8 +22,8 @@ static int      s_searchDepthLimit = MAXSEARCHDEPTH;
 static u64      s_searchedNodes;
 static bitboard s_searchBoard; //the search takes place on this
 //PV
-static bitMove  s_PVtable [MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
-static int      s_PVlen [MAXSEARCHDEPTH+1]; // length of PV line at each depth
+static bitMove  s_PVtable  [MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
+static int      s_PVlen    [MAXSEARCHDEPTH+1]; // length of PV line at each depth
 static bitMove  s_PVcommit [MAXSEARCHDEPTH+1];
 static int      s_PVcommitlen;
 //heuristics
@@ -172,7 +173,11 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
  * depth: from the root node, 0: nothing searched yet
  * remainingDepth: decreasing to 0
  * */
-int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){	
+int search(bool tomove, int remainingDepth, int depth, int alpha, int beta, int numExtensions){	
+	if (depth >= MAXSEARCHDEPTH) {
+		return staticEval(&s_searchBoard, tomove);
+	}
+
 	s_PVlen[depth] = depth;
 	
 	s_searchedNodes++;
@@ -258,8 +263,13 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 		 * Extension?
 		 * */
 		
-		//~ TODO
-		
+		int extension = 0;
+		if (numExtensions < MAX_EXTENSIONS) {
+			if (inCheck) {
+				extension = 1;
+			}
+		}
+
 		/*
 		 * Reduce?
 		 * (not interesting moves, e.g. late in ordering)
@@ -270,7 +280,7 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta){
 		/*
 		 * Search
 		 * */
-		eval = -search(!tomove, remainingDepth-1, depth+1, -beta, -alpha);
+		eval = -search(!tomove, remainingDepth-1+extension, depth+1, -beta, -alpha, numExtensions + extension);
 		undoMove(&s_searchBoard, &currentMove, &u);
 
 		if (g_stopSearch) {
@@ -420,8 +430,7 @@ move iterativeDeepening(bitboard board, bool tomove){
 		ageHistory();
 		s_maxdepth = i;
 		s_searchBoard = board;
-		eval = search(tomove, i, 0, NegINF, PosINF);
-				
+		eval = search(tomove, i, 0, NegINF, PosINF, 0);
 		if (!sameMove(&NULLBITMOVE, &s_PVcommit[0])) nextm = convertBitMoveToMove(s_PVcommit[0]);
 		
 		//~ usleep(500);
