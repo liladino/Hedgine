@@ -1,3 +1,76 @@
+Date:	Oct 31 2026:
+	With some more rigorous testing, one decision from yesterday proved to 
+	be able to result in infinite recursion: "quiescence search no longer 
+	uses the repetition table". Since evasions can too be checks, this was 
+	troublesome. Fix: maximum quiescence search qdepth, and evasions only at
+	nodes where qdepth < 4.
+
+	Search speed test: ./hedgine testSearch N (ucinewgame, position fen,
+	go depth N for every perft test position). Built with -O3 (BENCH=1).
+	Node counts are deterministic, times vary ~20% between runs.
+
+	Depth 6. Before: quiescence capped at MAX_QSEARCH_DEPTH = 16 (without the
+	cap pos 2 never finished). After: quiescence moves ordered by the
+	tactical scores + evasions only while qdepth < 4.
+
+	All measurements in this entry are done on a different machine than anymore
+	written before.
+| Position             | Before (ms) | Before nodes | After (ms) | After nodes |
+|----------------------|-------------|--------------|------------|-------------|
+| Position 1           | 32          | 112 256      | 31         | 96 778      |
+| Position 2           | 80 890      | 239 458 132  | 1 750      | 6 197 241   |
+| Position 3           | 62          | 57 258       | 32         | 55 894      |
+| Position 4           | 21 797      | 42 188 528   | 765        | 2 900 098   |
+| Position 4b          | 20 203      | 57 483 084   | 781        | 3 049 417   |
+| Position 5           | 265         | 657 500      | 110        | 464 030     |
+| Position 6           | 3 203       | 8 640 122    | 313        | 1 254 395   |
+| Position 7           | 47          | 106 757      | 31         | 96 557      |
+| Position 8           | 78          | 285 365      | 78         | 298 255     |
+| Position 9           | 0           | 274          | 0          | 274         |
+| Position 10          | 0           | 232          | 15         | 231         |
+| Position 11 (Lasker) | 0           | 708          | 0          | 708         |
+| Total                | 126 577     | 348 990 216  | 3 906      | 14 413 878  |
+
+	Depth 7. Capture scores in the move ordering (attackValue):
+	gain = victim - attacker, MVV-LVA = 10 * victim - attacker.
+	Same best moves and depth 7 scores in every position.
+
+| Position             | Gain (ms) | Gain nodes  | MVV-LVA (ms) | MVV-LVA nodes | Nodes  |
+|----------------------|-----------|-------------|--------------|---------------|--------|
+| Position 1           | 188       | 803 241     | 171          | 796 704       | -1%    |
+| Position 2           | 3 969     | 14 268 605  | 1 859        | 6 809 943     | -52%   |
+| Position 3           | 47        | 160 458     | 47           | 177 444       | +11%   |
+| Position 4           | 2 063     | 7 856 861   | 891          | 3 628 953     | -54%   |
+| Position 4b          | 1 890     | 7 417 089   | 953          | 3 888 575     | -48%   |
+| Position 5           | 516       | 2 373 433   | 484          | 2 167 528     | -9%    |
+| Position 6           | 1 047     | 4 288 046   | 907          | 3 874 500     | -10%   |
+| Position 7           | 93        | 397 995     | 93           | 396 737       | 0%     |
+| Position 8           | 297       | 1 243 421   | 250          | 1 026 380     | -17%   |
+| Position 9           | 16        | 216         | 0            | 276           |        |
+| Position 10          | 16        | 225         | 15           | 227           |        |
+| Position 11 (Lasker) | 15        | 1 138       | 15           | 1 114         |        |
+| Total                | 10 157    | 38 810 728  | 5 685        | 22 768 381    | -41%   |
+
+	Depth 7. En passant bug fix: a pawn takes pawn capture with MVV-LVA:
+	800000 + 900 instead of 800000 + 0 (it was ordered after every other
+	capture). Same best moves in every position.
+
+| Position             | MVV-LVA nodes | + ep fix (ms) | + ep fix nodes | Nodes  |
+|----------------------|---------------|---------------|----------------|--------|
+| Position 1           | 796 704       | 187           | 796 496        | 0%     |
+| Position 2           | 6 809 943     | 1 844         | 6 806 290      | -0.1%  |
+| Position 3           | 177 444       | 47            | 175 246        | -1.2%  |
+| Position 4           | 3 628 953     | 875           | 3 611 348      | -0.5%  |
+| Position 4b          | 3 888 575     | 968           | 3 867 845      | -0.5%  |
+| Position 5           | 2 167 528     | 500           | 2 167 733      | 0%     |
+| Position 6           | 3 874 500     | 890           | 3 873 979      | 0%     |
+| Position 7           | 396 737       | 94            | 390 666        | -1.5%  |
+| Position 8           | 1 026 380     | 234           | 1 010 519      | -1.5%  |
+| Position 9           | 276           | 16            | 277            |        |
+| Position 10          | 227           | 16            | 227            |        |
+| Position 11 (Lasker) | 1 114         | 15            | 1 044          |        |
+| Total                | 22 768 381    | 5 686         | 22 701 670     | -0.3%  |
+
 Date:	Oct 30 2026:
 	Features:
 		- history gravity added: the closer an entry is to HISTORY_MAX, the 

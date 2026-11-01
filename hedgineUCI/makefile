@@ -51,10 +51,20 @@ profiling: $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $^
 
 clean:
-	rm -f *.o *.d *.out
+	rm -f *.o *.d *.out $(FLAGS_STAMP)
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@ 
+# Rebuild everything only when the flags change (e.g. switching between a debug
+# and a bench build). The stamp is rewritten only if its content differs, so
+# with the same flags make stays incremental. Target specific flags (debug: ...)
+# reach this rule too, because they are inherited by the prerequisites.
+FLAGS_STAMP = .cflags
+$(FLAGS_STAMP): FORCE
+	@echo '$(CFLAGS)' | cmp -s - $@ || echo '$(CFLAGS)' > $@
+FORCE:
+.PHONY: FORCE
+
+%.o: %.c $(FLAGS_STAMP)
+	$(CC) $(CFLAGS) -c $< -o $@
 
 release: CFLAGS += -O3
 release: $(OBJS)

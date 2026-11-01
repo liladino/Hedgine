@@ -27,4 +27,6 @@ bool isMateScore(int score);
 
 move CPU(int cpulvl, bitboard bboard, bool tomove);
 
+u64 getSearchedNodes();
+
 #endif

@@ -53,7 +53,6 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 	char *token = jumpToNextToken(command); // after "position"
 	if (!token) return;
 
-	//the whole game history is (re)sent with every position command
 	g_RTwriteIndex = 0;
 #ifdef DEBUG
 	printDebug(token);

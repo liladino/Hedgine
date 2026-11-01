@@ -297,7 +297,8 @@ int attackValue(int from, int to){
 		exit(1);
 	}
 	#endif
-	return pieceValue[mailbox[to]] - pieceValue[mailbox[from]];
+	//MVV-LVA: the victim decides, the cheaper attacker only breaks the ties
+	return 10 * pieceValue[mailbox[to]] - pieceValue[mailbox[from]];
 }
 
 void setMailBox(const bitboard* const board){

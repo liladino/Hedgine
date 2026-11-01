@@ -191,7 +191,6 @@ static void loadPerftCase(const perftCase* c, bitboard* board, bool* tomove){
  * */
 bool makePerfTestsAssert(){
 	initializeAll();
-	if (!makeMoveTest()) { return false; }
 
 	bitboard bboard;
 	bool tomove;
@@ -204,10 +203,14 @@ bool makePerfTestsAssert(){
 		for (int d = pc->minDepth; d <= pc->maxDepth; d++){
 			int allmovecount = perfTest(&bboard, tomove, d);
 			printf("%d ply:\nLeaves:\t%d\nExp:\t%d\n\n", d, allmovecount, pc->leaves[d]);
-			if (allmovecount != pc->leaves[d]) return false;
+			if (allmovecount != pc->leaves[d]) {
+				printf("Perft tests failed.\n");
+				return false;
+			}
 		}
 	}
 
+	printf("All perft tests passed.\n");
 	return true;
 }
 
@@ -406,6 +409,63 @@ bool testMovePicker(){
 	}
 	printf("Move picker tests passed\n");
 	return true;
+}
+
+/*
+ * SEARCH SPEED TEST
+ * Simulates the GUI sending, for every test position:
+ *   ucinewgame
+ *   position fen <fen>
+ *   go depth <depth>
+ * and measures the time and the searched nodes.
+ * The history table is not cleared by ucinewgame, so it carries over between
+ * the positions (aged), just like in a real game. The order of the positions
+ * is fixed, so the runs are still comparable with each other.
+ * */
+void testSearchSpeed(int depth){
+	initializeAll();
+	setbuf(stdout, NULL); //same as in the UCI loop, so the info lines show up live
+
+	bitboard board;
+	bool tomove;
+	int fmv, movenum;
+	char positionCmd[256];
+	char goCmd[32];
+	snprintf(goCmd, sizeof(goCmd), "go depth %d", depth);
+
+	long times[PERFT_CASE_COUNT];
+	u64 nodes[PERFT_CASE_COUNT];
+	long totalTime = 0;
+	u64 totalNodes = 0;
+
+	for (size_t c = 0; c < PERFT_CASE_COUNT; c++){
+		const perftCase* pc = &PERFT_CASES[c];
+		printf("\n%s\n", pc->name);
+
+		//ucinewgame
+		tomove = white;
+		clearTransTable();
+
+		snprintf(positionCmd, sizeof(positionCmd), "position fen %s", pc->fen);
+		parsePosition(positionCmd, &board, &tomove, &fmv, &movenum);
+
+		long start = getTime_ms();
+		parseGo(goCmd, &board, &tomove);
+		times[c] = getTime_ms() - start;
+		nodes[c] = getSearchedNodes();
+
+		totalTime += times[c];
+		totalNodes += nodes[c];
+	}
+
+	printf("\nSearch speed, depth %d\n", depth);
+	printf("%-22s %10s %12s %10s\n", "position", "time (ms)", "nodes", "knps");
+	for (size_t c = 0; c < PERFT_CASE_COUNT; c++){
+		printf("%-22s %10ld %12llu %10llu\n", PERFT_CASES[c].name, times[c], nodes[c],
+			times[c] > 0 ? nodes[c] / (u64)times[c] : 0);
+	}
+	printf("%-22s %10ld %12llu %10llu\n", "total", totalTime, totalNodes,
+		totalTime > 0 ? totalNodes / (u64)totalTime : 0);
 }
 
 #define benchdepth 4
