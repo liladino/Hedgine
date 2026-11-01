@@ -27,16 +27,33 @@ bool sameMove(const bitMove* const a, const bitMove* const b) {
 		   a->flags == b->flags;
 }
 
-int scoreMove(bitMove* m, const bitMove* const killers[2], const int history[12][64]) {
+/* Promotions, captures and en passant. Quiet moves get 0, so they come after
+ * every tactical move (e.g. the quiet evasions in quiescence).
+ * */
+static int scoreTactical(const bitMove* m) {
 	static int pieceValue[12] = { 0, 900, 500, 300, 300, 100, 0, 900, 500, 300, 300, 100 };
 	if (m->flags & PROMOTION_FLAG) { return 900000 + pieceValue[m->promotion]; }
-	if (m->flags & (EN_PASSANT_FLAG)) { return 800000; }
+	if (m->flags & (EN_PASSANT_FLAG)) { return 800000 + 900; }
 	if (m->flags & (CAPTURE_FLAG)) { return 800000 + attackValue(m->from, m->to); }
-	
+	return 0;
+}
+
+int scoreMove(bitMove* m, const bitMove* const killers[2], const int history[12][64]) {
+	if (m->flags & (PROMOTION_FLAG | EN_PASSANT_FLAG | CAPTURE_FLAG)) { return scoreTactical(m); }
+
 	if (sameMove(m, killers[0])) return 700000;
 	if (sameMove(m, killers[1])) return 650000;
-	
+
 	return history[m->piece][m->to];
+}
+
+static void sortByScores(movearray* moves, pair moveScores[]){
+	insertionSort(moveScores, moves->size);
+
+	movearray copy = *moves;
+	for (int i = 0; i < moves->size; i++) {
+		moves->array[i] = copy.array[moveScores[i].index];
+	}
 }
 
 void orderMoves(movearray* moves, const bitMove* const killers[2], const int history[12][64]){
@@ -44,12 +61,16 @@ void orderMoves(movearray* moves, const bitMove* const killers[2], const int his
 	for (int i = 0; i < moves->size; i++) {
 		moveScores[i] = (pair){scoreMove(&moves->array[i], killers, history), i};
 	}
-	insertionSort(moveScores, moves->size);
-	
-	movearray copy = *moves;
+	sortByScores(moves, moveScores);
+}
+
+//quiescence: no killers and history, only the tactical scores
+static void orderTacticalMoves(movearray* moves){
+	pair moveScores[MAXMOVECOUNT_INPOS];
 	for (int i = 0; i < moves->size; i++) {
-		moves->array[i] = copy.array[moveScores[i].index];
+		moveScores[i] = (pair){scoreTactical(&moves->array[i]), i};
 	}
+	sortByScores(moves, moveScores);
 }
 
 void initMovePicker(
@@ -92,7 +113,10 @@ bool nextMove(MovePicker *picker, const bitboard *board, bool tomove, bitMove *o
 	if (picker->inCheck){
 		if (0 == picker->next) {
 			generateMovesWithModes(&picker->moves, board, tomove, GEN_EVASIONS);
-			if (!picker->quiescence){
+			if (picker->quiescence){
+				orderTacticalMoves(&picker->moves);
+			}
+			else{
 				orderMoves(&picker->moves, picker->killers, picker->history);
 			}
 		}
@@ -113,7 +137,10 @@ bool nextMove(MovePicker *picker, const bitboard *board, bool tomove, bitMove *o
 	if (PICK_TACTICAL == picker->stage) {
 		if (0 == picker->next) {
 			generateMovesWithModes(&picker->moves, board, tomove, GEN_TACTICAL);
-			if (!picker->quiescence){
+			if (picker->quiescence){
+				orderTacticalMoves(&picker->moves);
+			}
+			else{
 				orderMoves(&picker->moves, picker->killers, picker->history);
 			}
 		}

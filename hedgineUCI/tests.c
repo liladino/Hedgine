@@ -203,10 +203,14 @@ bool makePerfTestsAssert(){
 		for (int d = pc->minDepth; d <= pc->maxDepth; d++){
 			int allmovecount = perfTest(&bboard, tomove, d);
 			printf("%d ply:\nLeaves:\t%d\nExp:\t%d\n\n", d, allmovecount, pc->leaves[d]);
-			if (allmovecount != pc->leaves[d]) return false;
+			if (allmovecount != pc->leaves[d]) {
+				printf("Perft tests failed.\n");
+				return false;
+			}
 		}
 	}
 
+	printf("All perft tests passed.\n");
 	return true;
 }
 

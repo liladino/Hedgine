@@ -9,7 +9,9 @@ const bitMove NULLBITMOVE = {0, 0, 0, -1, 0};
 #define PosINF   2147480000  //less than 2^31 to avoid possible overflow
 #define NegINF  -2147480000
 #define MATE_NOW WHITEWON //2147400000 much less than infinities
-#define MAXSEARCHDEPTH 64 
+#define MAXSEARCHDEPTH 64
+#define MAX_QSEARCH_DEPTH 16
+#define MAXPLY (MAXSEARCHDEPTH + MAX_QSEARCH_DEPTH) 
 #define HISTORY_MAX 16384 //well below the killer move scores in move picker
 
 /*
@@ -57,7 +59,7 @@ static inline void updateHistory(int *entry, int bonus){
 }
 
 bool isMateScore(int score) {
-	return i_abs(score) > MATE_NOW - MAXSEARCHDEPTH;
+	return i_abs(score) > MATE_NOW - MAXPLY;
 }
 
 //nodes searched by the last iterativeDeepening call (search + quiescence)
@@ -99,12 +101,12 @@ move randomBot(bitboard board, bool tomove){
 /*
  * Quiescence search
  * */
-static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
+static int quiescenceSearch(bool tomove, int alpha, int beta, int ply, int qdepth){
 	s_searchedNodes++;
 	if (2026 == s_searchedNodes % 2027) { communicate(); }
 	if (g_stopSearch) { return 0; }
 
-	if (depth >= MAXSEARCHDEPTH) {
+	if (qdepth >= MAX_QSEARCH_DEPTH) {
     	return staticEval(&s_searchBoard, tomove);
 	}
 
@@ -127,10 +129,10 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 	initMovePicker(
 		&picker,
 		&NULLBITMOVE,
-		&s_killers[0][depth],
-		&s_killers[1][depth],
+		&NULLBITMOVE,
+		&NULLBITMOVE,
 		(const int (*)[64])s_history,
-		inCheck,
+		qdepth < 4 ? inCheck : false,
 		true
 	);
 	bitMove currentMove;
@@ -149,7 +151,7 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 
 		++actualLegalMoves;
 
-		int eval = -quiescenceSearch(!tomove, -beta, -alpha, depth+1);
+		int eval = -quiescenceSearch(!tomove, -beta, -alpha, ply+1, qdepth+1);
 		undoMove(&s_searchBoard, &currentMove, &u);
 		if (g_stopSearch) { 
 			return 0; 
@@ -163,7 +165,7 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int depth){
 	
 	if (0 == actualLegalMoves) {
 		if (inCheck){
-			return -(MATE_NOW - depth);
+			return -(MATE_NOW - ply);
 		}
 		if (!hasLegalMove(&s_searchBoard, tomove)){
         	return 0;
@@ -208,7 +210,7 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta, int 
 	}
 	
 	if (0 == remainingDepth) {
-		return quiescenceSearch(tomove, alpha, beta, depth);
+		return quiescenceSearch(tomove, alpha, beta, depth, 0);
 	}
 
 	/*
