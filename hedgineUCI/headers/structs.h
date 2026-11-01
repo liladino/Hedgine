@@ -112,7 +112,8 @@ typedef struct gameInfo{
 	bool timeControl;
 	bool quit;
 	int moveTime;
-	
+	int moveOverhead; //ms reserved for GUI/pipe latency, never spent on searching
+
 	bool newgame;
 	//~ bool OwnBook;
 	//~ int UCI_Elo;

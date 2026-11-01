@@ -430,7 +430,6 @@ move iterativeDeepening(bitboard board, bool tomove){
 	#endif
 
 	g_stopSearch = false;
-	info.startTime = getTime_ms();
 	int eval = 0, lastEval = 0;
 	
 	for (int i = 1; i < s_searchDepthLimit + 1; i++){
@@ -500,7 +499,8 @@ move iterativeDeepening(bitboard board, bool tomove){
 	//~ #endif 
 	
 	// if we return the move too quickly, some GUIs don't register it
-	if (!g_stopSearch && getTime_ms() - searchStartTime < 1000) {
+	// (not under time control: on Windows the sleep can last a whole ~15ms scheduler tick)
+	if (!info.timeControl && !g_stopSearch && getTime_ms() - searchStartTime < 1000) {
 		usleep(1000); 
 	}
 	

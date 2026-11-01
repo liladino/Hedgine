@@ -17,6 +17,10 @@
 
 #include "sys/time.h"
 
+#define MOVE_OVERHEAD_DEF 30
+#define MOVE_OVERHEAD_MIN 0
+#define MOVE_OVERHEAD_MAX 5000
+
 extern gameInfo info;
 
 void initializeAll();

@@ -207,7 +207,9 @@ void parseGo(char *command, bitboard* board, bool *tomove) {
 		info.timeControl = false;
 	} else if (movetime >= 0) {
 		info.timeControl = true;
-		info.moveTime = movetime;
+		// the GUI measures go -> bestmove, so stop early enough for the reply to arrive in time
+		info.moveTime = movetime - info.moveOverhead;
+		if (info.moveTime < movetime / 2) info.moveTime = movetime / 2;
 	} else {
 		// time controls
 		int inc = (*tomove == white) ? winc : binc;
@@ -294,6 +296,7 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 			printf("id name Hedgine\n");
 			printf("id author B.M.\n");
 			printf("option name Hash type spin default %d min %d max %d\n", TT_DEF_SIZE_MB, TT_MIN_SIZE_MB, TT_MAX_SIZE_MB);
+			printf("option name Move Overhead type spin default %d min %d max %d\n", MOVE_OVERHEAD_DEF, MOVE_OVERHEAD_MIN, MOVE_OVERHEAD_MAX);
 			printf("uciok\n");
 		}
 		else if (compareToken(input, "setoption", 9)) {
@@ -312,6 +315,16 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 							}
 							
 							printf("info set hash table size to %dMB\n", mb);
+						}
+					}
+				}
+				else if (compareToken(temp, "Move", 4) && compareToken(temp = jumpToNextToken(temp), "Overhead", 8)){
+					if (compareToken(temp = jumpToNextToken(temp), "value", 5)){
+						if ((temp = jumpToNextToken(temp))){
+							int ms = atoi(temp);
+							if(ms < MOVE_OVERHEAD_MIN) ms = MOVE_OVERHEAD_MIN;
+							if(ms > MOVE_OVERHEAD_MAX) ms = MOVE_OVERHEAD_MAX;
+							info.moveOverhead = ms;
 						}
 					}
 				}
@@ -342,6 +355,7 @@ void initializeAll(){
 	//set game info
 	info.quit = false;
 	info.moveTime = -1;
+	info.moveOverhead = MOVE_OVERHEAD_DEF;
 	info.timeControl = false;
 	info.newgame = false;
 
@@ -355,7 +369,16 @@ void initializeAll(){
 // get time in milliseconds
 long int getTime_ms(){
 	#ifdef WIN64
-		return GetTickCount();
+		// GetTickCount only ticks every ~15.6ms, too coarse for short move times
+		static LARGE_INTEGER freq, base;
+		LARGE_INTEGER now;
+		if (freq.QuadPart == 0){
+			QueryPerformanceFrequency(&freq);
+			QueryPerformanceCounter(&base);
+		}
+		QueryPerformanceCounter(&now);
+		// relative to the first call, so it fits in a 32 bit long
+		return (long int)((now.QuadPart - base.QuadPart) * 1000 / freq.QuadPart);
 	#else
 		struct timeval time_value;
 		gettimeofday(&time_value, NULL);
@@ -442,7 +465,20 @@ void readInput() {
 }
 	
 
+static void baseMoveTime(int increment);
+
 void setMoveTime(int increment){
+	baseMoveTime(increment);
+
+	/* The increment is only credited after the move, so the budget must fit
+	 * in what is on the clock now, minus the latency reserve. Never spend
+	 * more than half of it on one move. */
+	int available = info.timeRemaining - info.moveOverhead;
+	if (info.moveTime > available / 2) info.moveTime = available / 2;
+	if (info.moveTime < 1) info.moveTime = 1;
+}
+
+static void baseMoveTime(int increment){
 	#define SECOND 1000
 	info.moveTime = increment - 100;
 	if (info.moveTime < 0) info.moveTime = 0;
