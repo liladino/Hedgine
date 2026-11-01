@@ -281,13 +281,18 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta, int 
 		 * Reduce?
 		 * (not interesting moves, e.g. late in ordering)
 		 * */
-		 
-		//~ TODO
+		bool needsFullSearch = true;
+		if (extension == 0 && remainingDepth >= 3 && actualLegalMoves >= 3 && !(currentMove.flags & CAPTURE_FLAG)) {
+			eval = -search(!tomove, remainingDepth-1-1, depth+1, -alpha-1, -alpha, numExtensions);
+			needsFullSearch = eval > alpha;
+		}
 		
 		/*
 		 * Search
 		 * */
-		eval = -search(!tomove, remainingDepth-1+extension, depth+1, -beta, -alpha, numExtensions + extension);
+		if (needsFullSearch){
+			eval = -search(!tomove, remainingDepth-1+extension, depth+1, -beta, -alpha, numExtensions + extension);
+		}
 		undoMove(&s_searchBoard, &currentMove, &u);
 
 		if (g_stopSearch) {
