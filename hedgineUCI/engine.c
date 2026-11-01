@@ -279,7 +279,6 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta, int 
 
 		/*
 		 * Reduce?
-		 * (not interesting moves, e.g. late in ordering)
 		 * */
 		bool needsFullSearch = true;
 		if (extension == 0 && remainingDepth >= 3 && actualLegalMoves >= 3 && !(currentMove.flags & CAPTURE_FLAG)) {

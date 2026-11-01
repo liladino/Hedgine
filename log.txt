@@ -1,3 +1,9 @@
+Date:	Nov 01 2026:
+	Added search extensions and late move reduction. Fixed the communication:
+	previosuly the engine didn't keav etime for the system to communicate the 
+	moves, resulting in timeouts. The GUI now supports tournament mode, so the
+	variations can be tested against each other in random positions.  
+
 Date:	Oct 31 2026:
 	With some more rigorous testing, one decision from yesterday proved to 
 	be able to result in infinite recursion: "quiescence search no longer 
