@@ -38,8 +38,11 @@ static int scoreTactical(const bitMove* m) {
 	return 0;
 }
 
-int scoreMove(bitMove* m, const int history[12][64]) {
+int scoreMove(bitMove* m, const bitMove* const killers[2], const int history[12][64]) {
 	if (m->flags & (PROMOTION_FLAG | EN_PASSANT_FLAG | CAPTURE_FLAG)) { return scoreTactical(m); }
+
+	if (sameMove(m, killers[0])) return 700000;
+	if (sameMove(m, killers[1])) return 650000;
 
 	return history[m->piece][m->to];
 }
@@ -53,24 +56,10 @@ static void sortByScores(movearray* moves, pair moveScores[]){
 	}
 }
 
-void orderMoves(movearray* moves, const int history[12][64]){
+void orderMoves(movearray* moves, const bitMove* const killers[2], const int history[12][64]){
 	pair moveScores[MAXMOVECOUNT_INPOS];
 	for (int i = 0; i < moves->size; i++) {
-		moveScores[i] = (pair){scoreMove(&moves->array[i], history), i};
-	}
-	sortByScores(moves, moveScores);
-}
-
-static void orderEvasions(movearray* moves, const bitMove* const killers[2], const int history[12][64]){
-	pair moveScores[MAXMOVECOUNT_INPOS];
-	for (int i = 0; i < moves->size; i++) {
-		bitMove* m = &moves->array[i];
-		int score;
-		if (m->flags & (PROMOTION_FLAG | EN_PASSANT_FLAG | CAPTURE_FLAG)) { score = scoreTactical(m); }
-		else if (sameMove(m, killers[0])) { score = 700000; }
-		else if (sameMove(m, killers[1])) { score = 650000; }
-		else { score = history[m->piece][m->to]; }
-		moveScores[i] = (pair){score, i};
+		moveScores[i] = (pair){scoreMove(&moves->array[i], killers, history), i};
 	}
 	sortByScores(moves, moveScores);
 }
@@ -128,7 +117,7 @@ bool nextMove(MovePicker *picker, const bitboard *board, bool tomove, bitMove *o
 				orderTacticalMoves(&picker->moves);
 			}
 			else{
-				orderEvasions(&picker->moves, picker->killers, picker->history);
+				orderMoves(&picker->moves, picker->killers, picker->history);
 			}
 		}
 		
@@ -152,7 +141,7 @@ bool nextMove(MovePicker *picker, const bitboard *board, bool tomove, bitMove *o
 				orderTacticalMoves(&picker->moves);
 			}
 			else{
-				orderMoves(&picker->moves, picker->history);
+				orderMoves(&picker->moves, picker->killers, picker->history);
 			}
 		}
 		
@@ -165,50 +154,25 @@ bool nextMove(MovePicker *picker, const bitboard *board, bool tomove, bitMove *o
 				return true;
 			}
 		}
-		picker->stage = PICK_KILLER1;
+		picker->stage = PICK_QUIET;
 		picker->next = 0;
 		if (picker->quiescence) {
-			picker->stage = PICK_DONE;
 			return false;
 		}
 	}
 
-	if (PICK_KILLER1 == picker->stage){
-		picker->stage = PICK_KILLER2; 
-		
-		if (isPseudoLegal(board, tomove, picker->killers[0])){
-			if (!sameMove(picker->killers[0], &picker->hint)){
-				*out = *picker->killers[0];
-				return true;
-			}
-		}
-	}
-
-	if (PICK_KILLER2 == picker->stage){
-		picker->stage = PICK_QUIET; 
-		
-		if (isPseudoLegal(board, tomove, picker->killers[1])){
-			if (!sameMove(picker->killers[1], &picker->hint)){
-				*out = *picker->killers[1];
-				return true;
-			}
-		}
-	}
-
 	if (PICK_QUIET == picker->stage) {
+		if (picker->quiescence){
+			picker->stage = PICK_DONE;
+			return false;
+		}
 		if (0 == picker->next) {
 			generateMovesWithModes(&picker->moves, board, tomove, GEN_QUIET);
-			orderMoves(&picker->moves, picker->history);
+			orderMoves(&picker->moves, picker->killers, picker->history);
 		}
 		
 		while (picker->next < picker->moves.size){
 			if (sameMove(&picker->moves.array[picker->next], &picker->hint)){
-				picker->next++;
-			}
-			else if (sameMove(&picker->moves.array[picker->next], picker->killers[0])){
-				picker->next++;
-			}
-			else if (sameMove(&picker->moves.array[picker->next], picker->killers[1])){
 				picker->next++;
 			}
 			else{
