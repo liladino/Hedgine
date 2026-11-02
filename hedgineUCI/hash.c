@@ -211,11 +211,13 @@ int correctMateScoreForStorage(int score, int numPlySearched) {
 	return score;
 }
 		
-int readHashEntry(u64 hashValue, int remainingDepth, int depth, int alpha, int beta){
+int readHashEntry(u64 hashValue, int remainingDepth, int depth, int alpha, int beta, TThashentry **out){
 	if (!HASHING_ENABLED) {
 		return NO_HASH_ENTRY;
 	}
-	const TThashentry *entry = findEntry(hashValue);
+	TThashentry* entry = findEntry(hashValue);
+	*out = entry;
+
 	if (!entry){
 		return NO_HASH_ENTRY;
 	}

@@ -28,7 +28,7 @@ TThashentry* lookup(u64 position);
 
 void freeTransTable();
 
-int readHashEntry(u64 hashValue, int remainingDepth, int depth, int alpha, int beta);
+int readHashEntry(u64 hashValue, int remainingDepth, int depth, int alpha, int beta, TThashentry **entry);
 
 //~ move readHashEntryMove(const u64 pos);
 

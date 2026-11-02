@@ -207,7 +207,8 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta, int 
 		}
 	}
 	
-	int eval = readHashEntry(s_searchBoard.hashValue, remainingDepth, depth, alpha, beta);
+	TThashentry *probed = NULL;
+	int eval = readHashEntry(s_searchBoard.hashValue, remainingDepth, depth, alpha, beta, &probed);
 	//~ int eval = NO_HASH_ENTRY;
 	if (NO_HASH_ENTRY != eval && depth > 0){
 		s_PVlen[depth] = depth; 
@@ -222,12 +223,14 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta, int 
 	/*
 	 * Order moves
 	 * */
-	bitMove hint;
+	bitMove hint = NULLBITMOVE;
 	if (depth == 0){
-		hint = (s_PVcommitlen > 0) ? s_PVcommit[0] : NULLBITMOVE;
+		if (s_PVcommitlen > 0){
+			hint = s_PVcommit[0];
+		}
 	}
-	else {
-		hint = probeTTMove(s_searchBoard.hashValue);
+	else if (probed) {
+		hint = probed->m;
 	}
 	
 	/*
