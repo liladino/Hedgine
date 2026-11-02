@@ -2,6 +2,9 @@ Date:	Nov 02 2026:
 	Added better logging in debug mode. 
 	Repetition errors: indexes were off-by-one, and the search starting position 
 	was added twice.
+	Re-added repetition checks in quiescence search. Against the approximation
+	where the engine plays evasions only in the first 4 moves it scored 71 wins 
+	69 draws and 60 losses out of 200 games.
 
 Date:	Nov 01 2026:
 	Added search extensions and late move reduction. Fixed the communication:

@@ -123,6 +123,8 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int ply, int qdept
 		}
 	}
 
+	storeRepetiton(s_searchBoard.hashValue);
+
 	int actualLegalMoves = 0;
 
 	MovePicker picker;
@@ -132,7 +134,7 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int ply, int qdept
 		&NULLBITMOVE,
 		&NULLBITMOVE,
 		(const int (*)[64])s_history,
-		qdepth < 4 ? inCheck : false,
+		inCheck,
 		true
 	);
 	bitMove currentMove;
@@ -144,6 +146,7 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int ply, int qdept
 		if (bitInCheck(&s_searchBoard, tomove)){
 			undoMove(&s_searchBoard, &currentMove, &u);
 			if (g_stopSearch) { 
+				rmLastRepetition();
 				return 0; 
 			}
 			continue;
@@ -154,14 +157,17 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int ply, int qdept
 		int eval = -quiescenceSearch(!tomove, -beta, -alpha, ply+1, qdepth+1);
 		undoMove(&s_searchBoard, &currentMove, &u);
 		if (g_stopSearch) { 
+			rmLastRepetition();
 			return 0; 
 		}
 
 		if (eval >= beta) {
+			rmLastRepetition();
 			return beta;
 		}
 		alpha = i_max(alpha, eval);
 	}
+	rmLastRepetition();
 	
 	if (0 == actualLegalMoves) {
 		if (inCheck){
