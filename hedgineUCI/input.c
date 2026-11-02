@@ -24,10 +24,13 @@ int readLineDynamic(char **str, size_t maxSize) {
 	(*str)[0] = '\0';
 
 	int c = 0;
-	
+
 	while ((c = getc(stdin)) != EOF) {
 		if (c == '\n') {
 			(*str)[0] = '\0';
+			#ifdef DEBUG
+			fprintf(g_debugOutput, "%ld:\t--> \n", getTime_ms() - runStartTime);
+			#endif
 			return 0;
 		}
 		if (c != ' ' && c != '\t') {
@@ -37,6 +40,14 @@ int readLineDynamic(char **str, size_t maxSize) {
 
 	if (c == EOF) {
 		(*str)[0] = '\0';
+		#ifdef DEBUG
+		//only once: the search keeps polling stdin after it is closed
+		static bool eofLogged = false;
+		if (!eofLogged) {
+			fprintf(g_debugOutput, "%ld:\t--> EOF\n", getTime_ms() - runStartTime);
+			eofLogged = true;
+		}
+		#endif
 		return -1;
 	}
 
@@ -52,13 +63,17 @@ int readLineDynamic(char **str, size_t maxSize) {
 	(*str)[size] = '\0';
 
 	// consume the rest of the line
+	bool truncated = false;
 	if (size >= maxSize) {
+		truncated = (c != EOF && c != '\n');
 		while (c != EOF && c != '\n') c = getc(stdin);
 	}
-	
+
 	#ifdef DEBUG
 	//echo input to log
-	if (size > 0) fprintf(g_debugOutput, "--> %s\n", *str);
+	fprintf(g_debugOutput, "%ld:\t--> %s%s\n", getTime_ms() - runStartTime, *str, truncated ? " [truncated]" : "");
+	#else
+	(void)truncated;
 	#endif
 
 	return size;

@@ -4,20 +4,25 @@ FILE* g_debugOutput;
 
 //test run:  ./hedgine test quit
 
+#ifdef DEBUG
+long int runStartTime;
+#endif
+
 int main(int argc, char* argv[]){
 	initmagicmoves();
-	
-	#ifdef DEBUG
-	long int runStartTime = getTime_ms();
+
+	#ifdef DEBUG 
+	runStartTime = getTime_ms();
 	g_debugOutput = fopen("debuglog.txt", "w");
 	if (g_debugOutput == NULL){
 		return 0;
 	}
-	#endif
-		
+
 	for (int i = 0; i < argc; i++) {
         printf("%s\n", argv[i]);
     }
+	#endif
+
 	if (argc >= 2){
 		if (strncmp(argv[1], "test", 5) == 0){
 			if (!makePerfTestsAssert()){
@@ -65,16 +70,16 @@ int main(int argc, char* argv[]){
 	
 	bitboard board;
 
-	#ifdef DEBUG	
-	setboardFEN("4k3/8/8/3p2pP/8/2N4p/2q4P/4K2R w K g6 0 1", &board, &tomove, &fmv, &movenum);
-	printBitBoard2d(stdout, board);
-	movearray moves;
-	generateLegalMoves(&moves, &board, tomove);
-	for (int i = 0; i < moves.size; i++){
-		printBitMove(stdout, moves.array[i]);
-		printf("\n");
-	}
-	#endif
+	// #ifdef DEBUG	
+	// setboardFEN("4k3/8/8/3p2pP/8/2N4p/2q4P/4K2R w K g6 0 1", &board, &tomove, &fmv, &movenum);
+	// printBitBoard2d(stdout, board);
+	// movearray moves;
+	// generateLegalMoves(&moves, &board, tomove);
+	// for (int i = 0; i < moves.size; i++){
+	// 	printBitMove(stdout, moves.array[i]);
+	// 	printf("\n");
+	// }
+	// #endif
 	
 	//main uci loop
 	UCIloop(&board, &tomove, &fmv, &movenum);
@@ -82,7 +87,7 @@ int main(int argc, char* argv[]){
 	endEverything:
 	
 	#ifdef DEBUG
-	printDebug("runtime: %ld\n", getTime_ms() - runStartTime);
+	printf("runtime: %ld\n", getTime_ms() - runStartTime);
 	printCollisionStats();	
 	fclose(g_debugOutput);
 	#endif

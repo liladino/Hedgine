@@ -139,5 +139,11 @@ extern const bitMove NULLBITMOVE;
 
 extern FILE* g_debugOutput;
 
+#ifdef DEBUG
+
+extern long int runStartTime;
+#define printf(...) do { fprintf(g_debugOutput, "%ld:\t", getTime_ms() - runStartTime); fprintf(g_debugOutput, __VA_ARGS__); fprintf(stdout, __VA_ARGS__); } while(0)
+
+#endif
 
 #endif

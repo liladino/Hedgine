@@ -7,12 +7,6 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-void printDebug(
-#ifdef DEBUG
-	const char* log, ...
-#endif
-	);
-	
 void printboardLetters(FILE* ostream, char board[12][12]);
 
 void printBitBoard2d(FILE* ostream, bitboard board);
@@ -24,6 +18,10 @@ void printBitPiece(u64 piece);
 void printBitsOfNumber(u64 number, int numberOfBits);
 
 void printBitPieceAsBoard(u64 piece);
+
+#define MOVESTR_LEN 8 //"e7e8q " + '\0', with some room
+
+int moveToString(char* buf, move m);
 
 void printmove(FILE* ostream, move m);
 

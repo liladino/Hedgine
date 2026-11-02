@@ -1,41 +1,21 @@
 #include "headers/output.h"
 
-/* 
- * my print "wrapper". 
- * usage: printDebug("meow meow %d", 10);
- * result:
- *  printf("meow meow %d", 10);
- *  fprintf(g_debugOutput, "meow meow %d", 10);
- * 
- * stolen code.
+/* Writes the move in UCI format into buf (at least MOVESTR_LEN long), the same
+ * text printmove prints. Returns the number of characters written.
  * */
-void printDebug(
-#ifdef DEBUG
-	const char* log, ...
-#endif
-	) {
-#ifdef DEBUG
-	va_list args1, args2;
-	va_start(args1, log);
-	
-	// Copy args for the second call
-	va_copy(args2, args1);
-
-	vprintf(log, args1); 
-	vfprintf(g_debugOutput, log, args2); 
-
-	va_end(args1);
-	va_end(args2);
-#endif
+int moveToString(char* buf, move m) {
+	if (m.from.file == NULLMOVE.from.file){
+		//UCI null move
+		return snprintf(buf, MOVESTR_LEN, "0000 ");
+	}
+	//ranks as chars: they are single digits, and gcc can't prove that for a %d
+	return snprintf(buf, MOVESTR_LEN, "%c%c%c%c%c ", m.from.file+'a'-2, m.from.rank-1+'0', m.to.file+'a'-2, m.to.rank-1+'0', (m.promotion >= 'a' && m.promotion <= 'z' ? m.promotion : ' ') );
 }
 
 void printmove(FILE* ostream, move m) {
-	if (m.from.file == NULLMOVE.from.file){
-		//UCI null move
-		fprintf(ostream, "0000 ");
-		return;
-	}
-	fprintf(ostream, "%c%d%c%d%c ", m.from.file+'a'-2, m.from.rank-1, m.to.file+'a'-2, m.to.rank-1, (m.promotion >= 'a' && m.promotion <= 'z' ? m.promotion : ' ') );
+	char buf[MOVESTR_LEN];
+	moveToString(buf, m);
+	fprintf(ostream, "%s", buf);
 }
 
 void printBitMove(FILE* ostream, bitMove m) {
@@ -169,7 +149,9 @@ void printBitPiece(u64 piece){
 	for (int i = 63; i >= 0; i--){
 		printf("%lld", (piece & a) >> i);
 		a = a >> 1;
-		if (i % 8 == 0) printf(" ");
+		if (i % 8 == 0) {
+			printf(" ");
+		}
 	}
 	printf("\n");
 }
@@ -180,7 +162,9 @@ void printBitsOfNumber(u64 number, int numberOfBits){
 	for (int i = numberOfBits-1; i >= 0; i--){
 		printf("%lld", (number & a) >> i);
 		a = a >> 1;
-		if (i % 8 == 0) printf(" ");
+		if (i % 8 == 0) {
+			printf(" ");
+		}
 	}
 	printf("\n");
 }

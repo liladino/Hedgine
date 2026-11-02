@@ -103,7 +103,7 @@ move randomBot(bitboard board, bool tomove){
  * */
 static int quiescenceSearch(bool tomove, int alpha, int beta, int ply, int qdepth){
 	s_searchedNodes++;
-	if (2026 == s_searchedNodes % 2027) { communicate(); }
+	if (1026 == s_searchedNodes % 1027) { communicate(); }
 	if (g_stopSearch) { return 0; }
 
 	if (qdepth >= MAX_QSEARCH_DEPTH) {
@@ -429,8 +429,8 @@ move iterativeDeepening(bitboard board, bool tomove){
 	s_PVcommitlen = 0;
 	
 	#ifdef DEBUG
-	printBitBoard2d(stdout, board);
-	if (info.timeControl) fprintf(g_debugOutput, "thinking time %d\n", info.moveTime);
+	// printBitBoard2d(stdout, board);
+	if (info.timeControl) printf("thinking time %d\n", info.moveTime);
 	#endif
 
 	g_stopSearch = false;
@@ -450,48 +450,32 @@ move iterativeDeepening(bitboard board, bool tomove){
 			//iteration i was cut short, so the last reliable result is from depth i-1
 			if (i > 1){
 				printf("info depth %d score cp %d\n", i-1, lastEval);
-				#ifdef DEBUG
-				fprintf(g_debugOutput, "info depth %d score cp %d\n", i-1, lastEval);
-				#endif
 			}
 			break;
 		}
 
 		lastEval = eval;
 
-		printf("info depth %d", i);
-		#ifdef DEBUG
-		fprintf(g_debugOutput, "info depth %d", i);
-		#endif
+		//the whole line is built first, so it is printed with one printf (one timestamp in the debug log)
+		char line[64 + (MAXSEARCHDEPTH+1) * MOVESTR_LEN];
+		int len = snprintf(line, sizeof(line), "info depth %d", i);
 
 		bool mate = false;
 		if (i_abs(eval) >= WHITEWON-1000){
 			//eval is from the engine's perspective: positive => the engine mates
 			int mateIn = (WHITEWON - i_abs(eval) + 1) / 2;
-			printf(" score mate %d pv ", eval > 0 ? mateIn : -mateIn);
-			#ifdef DEBUG
-			fprintf(g_debugOutput, " score mate %d pv ", eval > 0 ? mateIn : -mateIn);
-			#endif
+			len += snprintf(line + len, sizeof(line) - len, " score mate %d pv ", eval > 0 ? mateIn : -mateIn);
 			if (mateIn * 2 <= i) mate = true;
 		}
 		else{
-			printf(" score cp %d pv ", eval);
-			#ifdef DEBUG
-			fprintf(g_debugOutput, " score cp %d pv ", eval);
-			#endif
+			len += snprintf(line + len, sizeof(line) - len, " score cp %d pv ", eval);
 		}
-		
+
 		for (int j = 0; j < s_PVcommitlen && j < i && !g_stopSearch; j++){
-			printmove(stdout, convertBitMoveToMove(s_PVcommit[j]));
-			#ifdef DEBUG
-			printmove(g_debugOutput, convertBitMoveToMove(s_PVtable[0][j]));
-			#endif
+			len += moveToString(line + len, convertBitMoveToMove(s_PVcommit[j]));
 		}
-		printf("\n");
-		#ifdef DEBUG
-		fprintf(g_debugOutput, "\n");
-		#endif
-		
+		printf("%s\n", line);
+
 		if (mate) break;
 	}
 	

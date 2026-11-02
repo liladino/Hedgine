@@ -54,9 +54,7 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 	if (!token) return;
 
 	g_RTwriteIndex = 0;
-#ifdef DEBUG
-	printDebug(token);
-#endif
+	
 	if (compareToken(token, "startpos", 8)) {
 		setboardFEN(STARTPOS, board, tomove, fmv, movenum);
 		token = jumpToNextToken(token);
@@ -134,14 +132,14 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 	
 noMovesGiven:
 	#ifdef DEBUG
-	printDebug( "tomove: %d\tfifty move count: %d\tmove num: %d\n", *tomove, *fmv, *movenum);
+	printf( "tomove: %d\tfifty move count: %d\tmove num: %d\n", *tomove, *fmv, *movenum);
 	#endif
 	return; 
 
 posError:
 	setboardFEN(STARTPOS, board, tomove, fmv, movenum);
 	#ifdef DEBUG
-	printDebug( "error in command, startpos set\n");
+	printf( "error in command, startpos set\n");
 	printBitBoard2d(g_debugOutput, *board);
 	#endif
 }
@@ -225,20 +223,17 @@ void parseGo(char *command, bitboard* board, bool *tomove) {
 	info.startTime = getTime_ms();
 
 	#ifdef DEBUG
-	printDebug( "time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, depth);
-	printBitBoard2d(g_debugOutput, *board);
+	printf( "time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, depth);
+	// printBitBoard2d(g_debugOutput, *board);
 	#endif
 	
 	move m = CPU(depth, *board, *tomove);
-	printf("bestmove ");
-	printmove(stdout, m);
-	printf("\n");
+	char movestr[MOVESTR_LEN];
+	moveToString(movestr, m);
+	printf("bestmove %s\n", movestr);
 	fflush(stdout);
-	
+
 	#ifdef DEBUG
-	fprintf(g_debugOutput, "bestmove: ");
-	printmove(g_debugOutput, m);
-	fprintf(g_debugOutput, "\n");
 	fflush(g_debugOutput);
 	#endif
 }
