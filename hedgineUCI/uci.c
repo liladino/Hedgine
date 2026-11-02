@@ -79,7 +79,7 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 		goto noMovesGiven;
 	}
 	currentmove = jumpToNextToken(currentmove); //skip the "moves" token
-	
+	int movesread = 0;
 	while(currentmove){
 		// parse next move
 		move m = parseLongAlgebraicNotation(currentmove);
@@ -123,13 +123,17 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 			g_RTwriteIndex = 0;
 		}
 		storeRepetiton(board->hashValue);
+		movesread++;
 		
 		if (*tomove == black) (*movenum)++;
 		*tomove = !(*tomove);
 		
 		currentmove = jumpToNextToken(currentmove);
 	}
-	
+	if (movesread){
+		rmLastRepetition();	
+	}
+
 noMovesGiven:
 	#ifdef DEBUG
 	printf( "tomove: %d\tfifty move count: %d\tmove num: %d\n", *tomove, *fmv, *movenum);

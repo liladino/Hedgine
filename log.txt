@@ -1,3 +1,8 @@
+Date:	Nov 02 2026:
+	Added better logging in debug mode. 
+	Repetition errors: indexes were off-by-one, and the search starting position 
+	was added twice.
+
 Date:	Nov 01 2026:
 	Added search extensions and late move reduction. Fixed the communication:
 	previosuly the engine didn't keav etime for the system to communicate the 
@@ -5,14 +10,14 @@ Date:	Nov 01 2026:
 	variations can be tested against each other in random positions.  
 
 Date:	Oct 31 2026:
-	With some more rigorous testing, one decision from yesterday proved to 
-	be able to result in infinite recursion: "quiescence search no longer 
-	uses the repetition table". Since evasions can too be checks, this was 
-	troublesome. Fix: maximum quiescence search qdepth, and evasions only at
-	nodes where qdepth < 4.
+	With some more rigorous testing, one decision from yesterday proved to be 
+	able to result in infinite recursion: "quiescence search no longer uses the
+	repetition table". Since evasions can too be checks, this was troublesome. 
+	Fix: maximum quiescence search qdepth, and evasions only at nodes 
+	where qdepth < 4.
 
-	Search speed test: ./hedgine testSearch N (ucinewgame, position fen,
-	go depth N for every perft test position). Built with -O3 (BENCH=1).
+	Search speed test: ./hedgine testSearch N (ucinewgame, position fen, go 
+	depth N for every perft test position). Built with -O3 (BENCH=1).
 	Node counts are deterministic, times vary ~20% between runs.
 
 	Depth 6. Before: quiescence capped at MAX_QSEARCH_DEPTH = 16 (without the
