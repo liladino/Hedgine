@@ -121,6 +121,8 @@ typedef enum {
 typedef enum {
     PICK_HINT,
     PICK_TACTICAL,
+    PICK_KILLER1,
+    PICK_KILLER2,
     PICK_QUIET,
     PICK_DONE
 } PickStage;
