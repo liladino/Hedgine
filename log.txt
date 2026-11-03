@@ -5,6 +5,8 @@ Date:	Nov 03 2026:
 	Started the testing of different static evaluation heuristics.
 	1. favoring open positions for bishops and rooks - out of 500 games, didn't
 	have a measurable effect.
+	2. Pawn structure bonuses: is a pawn is defended, or has a pawn next to it,
+	it get's a bonus. Against the latest version: 78W 27D 55L,
 
 Date:	Nov 02 2026:
 	Added better logging in debug mode. 
@@ -21,7 +23,7 @@ Date:	Nov 02 2026:
 
 Date:	Nov 01 2026:
 	Added search extensions and late move reduction. Fixed the communication:
-	previosuly the engine didn't keav etime for the system to communicate the 
+	previosuly the engine didn't have time for the system to communicate the 
 	moves, resulting in timeouts. The GUI now supports tournament mode, so the
 	variations can be tested against each other in random positions.  
 
