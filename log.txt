@@ -7,6 +7,9 @@ Date:	Nov 02 2026:
 	69 draws and 60 losses out of 200 games.
 	Added killer stages, but they caused more nodes to be searched and produced
 	inconclusive results when letting the engine play aginst itself.
+	evaluation is now faster, instead of masking all 64 squares, now iterates 
+	throughthe pieces similarly to the legalmoves function. Quick tests show 
+	significant improvement: 33W 29D 18L in 80 games
 
 Date:	Nov 01 2026:
 	Added search extensions and late move reduction. Fixed the communication:

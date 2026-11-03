@@ -373,12 +373,7 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta, int 
 	rmLastRepetition();
 		
 	if (0 == actualLegalMoves){
-		if (bitInCheck(&s_searchBoard, tomove)) {
-			return -(MATE_NOW - depth);
-		}
-		else {
-			return 0;
-		}
+		return inCheck ? -(MATE_NOW - depth) : 0;
 	}
 		
 		/*

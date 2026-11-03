@@ -175,90 +175,94 @@ static inline int valueBlender(int value1, int value2, int blendRate, int blendL
 	return ((blendUpperLimit - blendRate) * value1 + (blendRate - blendLowerLimit) * value2) / (blendUpperLimit - blendLowerLimit);
 }
 
+#define OPENING_PIECE_COUNT 9
+#define MIDDLE_PIECE_COUNT 6
+#define MAX_PIECE_COUNT 14
+
+/* Table bonus of one piece in the current game phase:
+ * opening: blends from the middlegame value into the opening value as pieces grow
+ * middlegame: the middlegame value
+ * endgame: blends from the endgame value into the middlegame value as pieces grow
+ * */
+static inline int phaseValue(int openingValue, int middleValue, int endValue, int pieces, bool opening, bool middlegame){
+	if (opening) {
+		return valueBlender(middleValue, openingValue, pieces, OPENING_PIECE_COUNT, MAX_PIECE_COUNT);
+	}
+	if (middlegame){
+		return middleValue;
+	}
+	return valueBlender(endValue, middleValue, pieces, 1, MIDDLE_PIECE_COUNT);
+}
+
+/* The tables are from white's perspective (row 0 = rank 1),
+ * black's pieces are mirrored vertically.
+ * */
+static inline int tableRow(int square, bool tomove){
+	return (tomove == white ? square / 8 : 7 - square / 8);
+}
+
 static inline int sideEval(const bitboard* const board, bool tomove){
 	int offset = (tomove == white ? 0 : bking);
-	u64 piecemask = 1;
 	int eval = 0;
 	const int pieces = countPieces(board);
-	const int friendlypieces = countFriendlyPieces(board, tomove);
-	
-	#define OPENING_PIECE_COUNT 9
-	#define MIDDLE_PIECE_COUNT 6
-	#define MAX_PIECE_COUNT 14
-	
-	bool opening = (pieces >= 9), middlegame = (pieces >= 6);
-	
-	for (int i = (tomove == white ? 0 : 7); (tomove == white ? i < 8 : i >= 0); i += (tomove == white ? 1 : -1)){
-		for (int j = 0; j < 8; j++){
-			if (board->piece[wpawn + offset] & piecemask){
-				eval += 100;
-				if (opening) {
-					eval += valueBlender(middlepawn[i][j], openingpawn[i][j], pieces, OPENING_PIECE_COUNT, MAX_PIECE_COUNT);
-				}
-				else if (middlegame){
-					eval += middlepawn[i][j];
-				}
-				else {
-					eval += valueBlender(endpawn[i][j], middlepawn[i][j], pieces, 1, MIDDLE_PIECE_COUNT);
-				}
-			}
-			else if (board->piece[wknight + offset] & piecemask){
-				eval += 310;
-				if (opening) {
-					eval += valueBlender(middleknight[i][j], openingknight[i][j], pieces, OPENING_PIECE_COUNT, MAX_PIECE_COUNT);
-				}
-				else if (middlegame){
-					eval += middleknight[i][j];
-				}
-				else {
-					eval += valueBlender(endgamecenter[i][j], middleknight[i][j], pieces, 1, MIDDLE_PIECE_COUNT);
-				}
-			}
-			else if (board->piece[wbishop + offset] & piecemask){
-				eval += 313;
-				if (opening) {
-					eval += valueBlender(middlebishop[i][j], openingbishop[i][j], pieces, OPENING_PIECE_COUNT, MAX_PIECE_COUNT);
-				}
-				else if (middlegame){
-					eval += middlebishop[i][j];
-				}
-				else {
-					eval += valueBlender(endgamecenter[i][j], middlebishop[i][j], pieces, 1, MIDDLE_PIECE_COUNT);
-				}
-			}
-			else if (board->piece[wrook + offset] & piecemask){
-				eval += 500;
-				if (opening) {
-					eval += valueBlender(middlerook[i][j], 0, pieces, OPENING_PIECE_COUNT, MAX_PIECE_COUNT);
-				}
-				else if (middlegame){
-					eval += middlerook[i][j];
-				}
-				else {
-					eval += valueBlender(0, middlerook[i][j], pieces, 1, MIDDLE_PIECE_COUNT);
-				}
-			}
-			else if (board->piece[wking + offset] & piecemask){
-				//a king safety bonus should be implemented
-				if (opening) {
-					eval += valueBlender(middleking[i][j], openingking[i][j], pieces, OPENING_PIECE_COUNT, MAX_PIECE_COUNT);
-				}
-				else if (middlegame){
-					eval += middleking[i][j];
-				}
-				else {
-					eval += valueBlender(endgamecenter[i][j], middleking[i][j], pieces, 2, MIDDLE_PIECE_COUNT) * 2 / (double)(friendlypieces + 1);
-				}
-			}
-			else if (board->piece[wqueen + offset] & piecemask){
-				eval += 900;
-			}
-			piecemask = piecemask << 1;
+
+	bool opening = (pieces >= OPENING_PIECE_COUNT), middlegame = (pieces >= MIDDLE_PIECE_COUNT);
+
+	u64 curr = board->piece[wpawn + offset];
+	while (curr) {
+		int square = __builtin_ctzll(curr);
+		curr &= curr - 1;
+		int i = tableRow(square, tomove), j = square % 8;
+
+		eval += 100 + phaseValue(openingpawn[i][j], middlepawn[i][j], endpawn[i][j], pieces, opening, middlegame);
+	}
+
+	curr = board->piece[wknight + offset];
+	while (curr) {
+		int square = __builtin_ctzll(curr);
+		curr &= curr - 1;
+		int i = tableRow(square, tomove), j = square % 8;
+
+		eval += 310 + phaseValue(openingknight[i][j], middleknight[i][j], endgamecenter[i][j], pieces, opening, middlegame);
+	}
+
+	curr = board->piece[wbishop + offset];
+	while (curr) {
+		int square = __builtin_ctzll(curr);
+		curr &= curr - 1;
+		int i = tableRow(square, tomove), j = square % 8;
+
+		eval += 313 + phaseValue(openingbishop[i][j], middlebishop[i][j], endgamecenter[i][j], pieces, opening, middlegame);
+	}
+
+	curr = board->piece[wrook + offset];
+	while (curr) {
+		int square = __builtin_ctzll(curr);
+		curr &= curr - 1;
+		int i = tableRow(square, tomove), j = square % 8;
+
+		//no opening and endgame tables, those blend to 0
+		eval += 500 + phaseValue(0, middlerook[i][j], 0, pieces, opening, middlegame);
+	}
+
+	eval += 900 * counter(board->piece[wqueen + offset]);
+
+	//a king safety bonus should be implemented
+	curr = board->piece[wking + offset];
+	if (curr) {
+		int square = __builtin_ctzll(curr);
+		int i = tableRow(square, tomove), j = square % 8;
+
+		if (opening || middlegame) {
+			eval += phaseValue(openingking[i][j], middleking[i][j], 0, pieces, opening, middlegame);
+		}
+		else {
+			//the endgame king blends from a lower limit of 2, and is scaled by the friendly pieces
+			const int friendlypieces = countFriendlyPieces(board, tomove);
+			eval += valueBlender(endgamecenter[i][j], middleking[i][j], pieces, 2, MIDDLE_PIECE_COUNT) * 2 / (double)(friendlypieces + 1);
 		}
 	}
-	
-	
-	
+
 	return eval;
 }
 
