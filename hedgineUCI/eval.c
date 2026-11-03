@@ -207,6 +207,7 @@ static inline int sideEval(const bitboard* const board, bool tomove){
 	const int pieces = countPieces(board);
 
 	bool opening = (pieces >= OPENING_PIECE_COUNT), middlegame = (pieces >= MIDDLE_PIECE_COUNT);
+	int pawncount = __builtin_popcountll((board->piece[wpawn] | board->piece[bpawn]));
 
 	u64 curr = board->piece[wpawn + offset];
 	while (curr) {
@@ -223,7 +224,8 @@ static inline int sideEval(const bitboard* const board, bool tomove){
 		curr &= curr - 1;
 		int i = tableRow(square, tomove), j = square % 8;
 
-		eval += 310 + phaseValue(openingknight[i][j], middleknight[i][j], endgamecenter[i][j], pieces, opening, middlegame);
+		eval += 310 + pawncount / 6
+			+ phaseValue(openingknight[i][j], middleknight[i][j], endgamecenter[i][j], pieces, opening, middlegame);
 	}
 
 	curr = board->piece[wbishop + offset];
@@ -232,7 +234,8 @@ static inline int sideEval(const bitboard* const board, bool tomove){
 		curr &= curr - 1;
 		int i = tableRow(square, tomove), j = square % 8;
 
-		eval += 313 + phaseValue(openingbishop[i][j], middlebishop[i][j], endgamecenter[i][j], pieces, opening, middlegame);
+		eval += 318 - pawncount / 3
+			+ phaseValue(openingbishop[i][j], middlebishop[i][j], endgamecenter[i][j], pieces, opening, middlegame);
 	}
 
 	curr = board->piece[wrook + offset];
@@ -242,7 +245,8 @@ static inline int sideEval(const bitboard* const board, bool tomove){
 		int i = tableRow(square, tomove), j = square % 8;
 
 		//no opening and endgame tables, those blend to 0
-		eval += 500 + phaseValue(0, middlerook[i][j], 0, pieces, opening, middlegame);
+		eval += 500 + 16 - pawncount
+			+ phaseValue(0, middlerook[i][j], 0, pieces, opening, middlegame);
 	}
 
 	eval += 900 * counter(board->piece[wqueen + offset]);
