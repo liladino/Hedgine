@@ -1,3 +1,7 @@
+Date:	Nov 03 2026:
+	Improved the move ordering, now it oncrementally orders at each move 
+	request. Tho the gain is not measurable, the code is nicer.
+
 Date:	Nov 02 2026:
 	Added better logging in debug mode. 
 	Repetition errors: indexes were off-by-one, and the search starting position 

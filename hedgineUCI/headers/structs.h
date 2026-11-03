@@ -130,6 +130,7 @@ typedef struct MovePicker {
 
     const int (*history)[64];
     movearray moves;
+	int scores[MAXMOVECOUNT_INPOS];
     int next;
 } MovePicker;
 

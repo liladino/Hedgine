@@ -1,24 +1,5 @@
 #include "headers/movepicker.h"
 
-/*
- * Order moves
- * */
-typedef struct pair {
-	int eval, index;
-} pair;
-
-void insertionSort(pair a[], int n) {
-	for (int i = 1; i < n; i++) {
-		pair keyy = a[i];
-		int j = i - 1;
-		while (j >= 0 && a[j].eval < keyy.eval) { // DESC
-			a[j + 1] = a[j];
-			j--;
-		}
-		a[j + 1] = keyy;
-	}
-}
-
 bool sameMove(const bitMove* const a, const bitMove* const b) {
 	return a->from == b->from &&
 		   a->to == b->to &&
@@ -47,30 +28,43 @@ int scoreMove(bitMove* m, const bitMove* const killers[2], const int history[12]
 	return history[m->piece][m->to];
 }
 
-static void sortByScores(movearray* moves, pair moveScores[]){
-	insertionSort(moveScores, moves->size);
-
-	movearray copy = *moves;
-	for (int i = 0; i < moves->size; i++) {
-		moves->array[i] = copy.array[moveScores[i].index];
+static void scoreMoves(MovePicker* p, bool tacticalOnly) {
+	for (int i = 0; i < p->moves.size; i++) {
+		p->scores[i] = tacticalOnly  
+			? scoreTactical(&p->moves.array[i])
+			: scoreMove(&p->moves.array[i], p->killers, p->history);
 	}
 }
 
-void orderMoves(movearray* moves, const bitMove* const killers[2], const int history[12][64]){
-	pair moveScores[MAXMOVECOUNT_INPOS];
-	for (int i = 0; i < moves->size; i++) {
-		moveScores[i] = (pair){scoreMove(&moves->array[i], killers, history), i};
+/*
+ * Staged selection sort, at each move it selects the best move out of the 
+ * remaining
+ */
+static bool pickNext(MovePicker* p, bitMove* out) {
+	while (p->next < p->moves.size) {
+		int best = p->next;
+		for (int j = p->next + 1; j < p->moves.size; j++) {
+			if (p->scores[j] > p->scores[best]) best = j;
+		}
+		if (best != p->next) {
+			//cascade the best to the front, keeping the order of the rest (stable)
+			int ts = p->scores[best];
+			bitMove tm = p->moves.array[best];
+			for (int j = best; j > p->next; j--) {
+				p->scores[j] = p->scores[j - 1];
+				p->moves.array[j] = p->moves.array[j - 1];
+			}
+			p->scores[p->next] = ts;
+			p->moves.array[p->next] = tm;
+		}
+		const bitMove* m = &p->moves.array[p->next++];
+		if (p->hintReturned && sameMove(m, &p->hint)) {
+			continue;
+		}
+		*out = *m;
+		return true;
 	}
-	sortByScores(moves, moveScores);
-}
-
-//quiescence: no killers and history, only the tactical scores
-static void orderTacticalMoves(movearray* moves){
-	pair moveScores[MAXMOVECOUNT_INPOS];
-	for (int i = 0; i < moves->size; i++) {
-		moveScores[i] = (pair){scoreTactical(&moves->array[i]), i};
-	}
-	sortByScores(moves, moveScores);
+	return false;
 }
 
 void initMovePicker(
@@ -113,47 +107,27 @@ bool nextMove(MovePicker *picker, const bitboard *board, bool tomove, bitMove *o
 	if (picker->inCheck){
 		if (0 == picker->next) {
 			generateMovesWithModes(&picker->moves, board, tomove, GEN_EVASIONS);
-			if (picker->quiescence){
-				orderTacticalMoves(&picker->moves);
-			}
-			else{
-				orderMoves(&picker->moves, picker->killers, picker->history);
-			}
+			scoreMoves(picker, picker->quiescence);
 		}
 		
-		while (picker->next < picker->moves.size){
-			if (picker->hintReturned && sameMove(&picker->moves.array[picker->next], &picker->hint)){
-				picker->next++;
-			}
-			else{
-				*out = picker->moves.array[picker->next++];
-				return true;
-			}
+		if (pickNext(picker, out)) {
+			return true;
 		}
+		
 		picker->stage = PICK_DONE;
 		return false;
 	}
-	
+
 	if (PICK_TACTICAL == picker->stage) {
 		if (0 == picker->next) {
 			generateMovesWithModes(&picker->moves, board, tomove, GEN_TACTICAL);
-			if (picker->quiescence){
-				orderTacticalMoves(&picker->moves);
-			}
-			else{
-				orderMoves(&picker->moves, picker->killers, picker->history);
-			}
+			scoreMoves(picker, true);
 		}
 		
-		while (picker->next < picker->moves.size){
-			if (picker->hintReturned && sameMove(&picker->moves.array[picker->next], &picker->hint)){
-				picker->next++;
-			}
-			else{
-				*out = picker->moves.array[picker->next++];
-				return true;
-			}
+		if (pickNext(picker, out)) {
+			return true;
 		}
+		
 		picker->stage = PICK_QUIET;
 		picker->next = 0;
 		if (picker->quiescence) {
@@ -168,18 +142,13 @@ bool nextMove(MovePicker *picker, const bitboard *board, bool tomove, bitMove *o
 		}
 		if (0 == picker->next) {
 			generateMovesWithModes(&picker->moves, board, tomove, GEN_QUIET);
-			orderMoves(&picker->moves, picker->killers, picker->history);
+			scoreMoves(picker, false);
+		}
+
+		if (pickNext(picker, out)) {
+			return true;
 		}
 		
-		while (picker->next < picker->moves.size){
-			if (sameMove(&picker->moves.array[picker->next], &picker->hint)){
-				picker->next++;
-			}
-			else{
-				*out = picker->moves.array[picker->next++];
-				return true;
-			}
-		}
 		picker->stage = PICK_DONE;
 		return false;
 	}
