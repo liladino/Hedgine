@@ -204,13 +204,18 @@ static inline int tableRow(int square, bool tomove){
 	return (tomove == white ? square / 8 : 7 - square / 8);
 }
 
-static inline int sideEval(const bitboard* const board, bool tomove){
-	int offset = (tomove == white ? 0 : bking);
+static inline int sideEval(
+	const bitboard* const board, 
+	bool tomove, 
+	const u64 pieces,
+	const int pawncount)
+{
+	const int offset = (tomove == white ? 0 : bking);
+	
 	int eval = 0;
-	const int pieces = countPieces(board);
+	const bool opening = (pieces >= OPENING_PIECE_COUNT), 
+			middlegame = (pieces >= MIDDLE_PIECE_COUNT);
 
-	bool opening = (pieces >= OPENING_PIECE_COUNT), middlegame = (pieces >= MIDDLE_PIECE_COUNT);
-	int pawncount = __builtin_popcountll((board->piece[wpawn] | board->piece[bpawn]));
 	static const int connectedBonus[8] = {0, 2, 4, 6, 12, 20, 35, 0};
 
 	u64 curr = board->piece[wpawn + offset];
@@ -298,9 +303,92 @@ static inline int kingDist(u64 wk, u64 bk){
 	return i_min(abs(w/8 - b/8), abs((w & 7) - (b & 7)));
 }
 
+static inline int squareColor(int sq) {
+    return ((sq >> 3) ^ (sq & 7)) & 1;
+}
+
 int staticEval(bitboard *board, bool tomove)
 {
-    int score = sideEval(board, white) - sideEval(board, black);
+	const int pieces = countPieces(board);
+	const int pawncount = __builtin_popcountll((board->piece[wpawn] | board->piece[bpawn]));
+
+	if (0 == pawncount){
+		// if only knight or bishop left, draw
+		if (1 == pieces && ((board->piece[wknight] | board->piece[bknight])
+			|| (board->piece[wbishop] | board->piece[bbishop])	
+		)){
+			return 0;
+		}
+
+		// both KNN-K and KN-KN are likely draws
+		if (2 == pieces && __builtin_popcountll((board->piece[wknight] | board->piece[bknight])) == 2){
+			return 0;
+		}
+
+		// Bare kings
+		if (pieces == 0)
+    		return 0;  
+	} 
+	
+    int score = sideEval(board, white, pieces, pawncount) - sideEval(board, black, pieces, pawncount);
+
+	/* KR vs KB, 
+	 * KR vs KN,
+	 * KRB vs KR, 
+	 * KRN vs KR, 
+	 * KNN vs KR 
+	 * endgames are often draws. This means, if the advantage is less than a rook, 
+	 * and there are no pawns left, the advantage is scaled down. */
+	if (0 == pawncount){
+		if (2 == pieces){
+			if (board->piece[wrook]){
+				if (board->piece[bbishop] | board->piece[bknight]){
+					score /= 8;	
+				}
+			}
+			else if (board->piece[brook]){
+				if (board->piece[wbishop] | board->piece[wknight]){
+					score /= 8;	
+				}
+			}
+		}
+		if (pieces == 3 && !(board->piece[wqueen] | board->piece[bqueen])) {
+			int wr = __builtin_popcountll(board->piece[wrook]);
+			int br = __builtin_popcountll(board->piece[brook]);
+			int wb = __builtin_popcountll(board->piece[wbishop]);
+			int bb = __builtin_popcountll(board->piece[bbishop]);
+			int wn = __builtin_popcountll(board->piece[wknight]);
+			int bn = __builtin_popcountll(board->piece[bknight]);
+
+			// KR + one minor vs KR
+			bool rookMinorVsRook =
+				wr == 1 && br == 1 &&
+				wb + bb + wn + bn == 1;
+
+			// KNN vs KR, either color
+			bool twoKnightsVsRook =
+				(wn == 2 && br == 1) ||
+				(bn == 2 && wr == 1);
+
+			if (rookMinorVsRook || twoKnightsVsRook){
+				score /= 8;
+			}
+		}
+	}
+
+	/* Opposite bishop endgames are often drawish
+	 */
+	// if (pieces == 2 && abs(score) < 200 && 
+	// 	__builtin_popcountll(board->piece[wbishop]) == 1 &&
+	// 	__builtin_popcountll(board->piece[bbishop]) == 1)
+	// {
+	// 	int w = __builtin_ctzll(board->piece[wbishop]);
+	// 	int b = __builtin_ctzll(board->piece[bbishop]);
+
+	// 	if (squareColor(w) != squareColor(b))
+	// 		score /= 2;
+	// }
+	
     return tomove == white ? score : -score;
 	
 	// printBitBoard2d(stdout, *board);
