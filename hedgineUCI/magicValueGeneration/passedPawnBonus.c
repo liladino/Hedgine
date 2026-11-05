@@ -138,8 +138,8 @@ int main(){
 	printf("{");
 	fprintf(f, "{");
 	for (int i = 0; i < 64; i++){
-		printf("%ULLULL", wpawnPassedBonus[i]);
-		fprintf(f, "%ULLULL", wpawnPassedBonus[i]);
+		printf("%lluULL", wpawnPassedBonus[i]);
+		fprintf(f, "%lluULL", wpawnPassedBonus[i]);
 		if (i < 63){
 			printf(", ");
 			fprintf(f, ", ");
@@ -151,8 +151,8 @@ int main(){
 	printf("{");
 	fprintf(f, "{");
 	for (int i = 0; i < 64; i++){
-		printf("%ULLULL", bpawnPassedBonus[i]);
-		fprintf(f, "%ULLULL", bpawnPassedBonus[i]);
+		printf("%lluULL", bpawnPassedBonus[i]);
+		fprintf(f, "%lluULL", bpawnPassedBonus[i]);
 		if (i < 63){
 			printf(", ");
 			fprintf(f, ", ");

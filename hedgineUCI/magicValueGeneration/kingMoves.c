@@ -89,8 +89,8 @@ int main(){
 	printf("{");
 	fprintf(f, "{");
 	for (int i = 0; i < 64 * 8; i++){
-		printf("%ULLULL", kingMoves[i]);
-		fprintf(f, "%ULLULL", kingMoves[i]);
+		printf("%lluULL", kingMoves[i]);
+		fprintf(f, "%lluULL", kingMoves[i]);
 		if (i < 64 * 8 - 1){
 			printf(", ");
 			fprintf(f, ", ");

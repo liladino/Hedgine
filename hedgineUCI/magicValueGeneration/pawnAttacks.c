@@ -104,8 +104,8 @@ int main(){
 	printf("{");
 	fprintf(f, "{");
 	for (int i = 0; i < 64; i++){
-		printf("%ULLULL", wpawnAttacks[i]);
-		fprintf(f, "%ULLULL", wpawnAttacks[i]);
+		printf("%lluULL", wpawnAttacks[i]);
+		fprintf(f, "%lluULL", wpawnAttacks[i]);
 		if (i < 63){
 			printf(", ");
 			fprintf(f, ", ");
@@ -117,8 +117,8 @@ int main(){
 	printf("{");
 	fprintf(f, "{");
 	for (int i = 0; i < 64; i++){
-		printf("%ULLULL", bpawnAttacks[i]);
-		fprintf(f, "%ULLULL", bpawnAttacks[i]);
+		printf("%lluULL", bpawnAttacks[i]);
+		fprintf(f, "%lluULL", bpawnAttacks[i]);
 		if (i < 63){
 			printf(", ");
 			fprintf(f, ", ");

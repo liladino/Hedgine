@@ -9,6 +9,9 @@ Date:	Nov 05 2026:
 	| depth              |     6 |     7 |     8 |     9 |    10 |    11 |
     | first-move cutoffs | 92.8% | 91.5% | 89.1% | 86.6% | 88.0% | 87.9% |
 
+	Added more refined rook bonuses for open files, semi open files, and 
+	activity. Significant gain in 240 games, more than 30 more wins than loss.
+	Estimated 50 Elo gain. against passed pawns version. 
 
 Date:	Nov 04 2026:
 	Further evolving static heuristics.

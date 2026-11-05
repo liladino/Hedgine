@@ -102,14 +102,14 @@ const int endpawn[8][8] = {
 };
 
 const int middlerook[8][8] = {
-	{   0,   0,  30,  40,  40,  30,   0,   0}, //1
-	{   0,   0,  10,  20,  20,  10,   0,   0}, //2
-	{   0,   0,  10,  20,  20,  10,   0,   0}, //3
-	{  10,  10,  10,  30,  30,  10,  10,  10}, //4
-	{  10,  10,  10,  30,  30,  10,  10,  10}, //5
-	{  30,  30,  30,  30,  30,  30,  30,  30}, //6
-	{  40,  40,  40,  40,  40,  40,  40,  40}, //7
-	{  40,  40,  40,  40,  40,  40,  40,  40}, //8
+    {  0,  0,  0,  5,  5,  0,  0,  0}, //1
+    {  0,  0,  0,  5,  5,  0,  0,  0}, //2
+    {  0,  0,  0,  5,  5,  0,  0,  0}, //3
+    {  0,  0,  5, 10, 10,  5,  0,  0}, //4
+    {  0,  0,  5, 10, 10,  5,  0,  0}, //5
+    {  5,  5,  5,  5,  5,  5,  5,  5}, //6
+    { 20, 20, 20, 20, 20, 20, 20, 20}, //7
+    { 10, 10, 10, 10, 10, 10, 10, 10}, //8
 };
 
 const int endgamecenter[8][8] = {
@@ -146,7 +146,7 @@ static inline int i_min(int a, int b){
 }
 
 static inline int counter(u64 var){
-    return __builtin_popcountll(var);  
+	return __builtin_popcountll(var);  
 }
 
 int countPieces(const bitboard* const board){
@@ -162,14 +162,14 @@ int countFriendlyPieces(const bitboard* const board, bool tomove){
 }
 
 /* Provides a transition between two values.
- * E.g. the two values are 10 and 50, the piececunt (the blendRate) is 11, and 
- * the upper and lower limits are 9 and 14. The new value is then 
- * ((14 - 11) * 10 + (11 - 9) *  50) / (14 - 9) 
+ * if blendRate <= blendLowerLimit, return value1
+ * if blendRate >= blendUpperLimit, return value2
+ * otherwise linearly interpolate them:
  * 
- * if belndrRate == blendLowerLimit, it should return value1, and if
- * blendRate == blendUpperLimit, it should return value2.
- * 
- * blendRate should always be in range of the limits.
+ * values: 10, 50
+ * blendRate = 11
+ * limits: 9, 14 
+ * -> return ((14 - 11) * 10 + (11 - 9) *  50) / (14 - 9) 
  * */
 static inline int valueBlender(int value1, int value2, int blendRate, int blendLowerLimit, int blendUpperLimit){
 	if (blendUpperLimit < blendLowerLimit) {
@@ -211,25 +211,48 @@ static inline int tableRow(int square, bool tomove){
 }
 
 // https://chessprogramming.org/Pawn_Fills
+/* fills squares north of the pieces with 1s
+ * input: piece masks
+ */
 u64 nortFill(u64 gen) {
-   gen |= (gen <<  8);
-   gen |= (gen << 16);
-   gen |= (gen << 32);
-   return gen;
+	gen |= (gen <<  8);
+	gen |= (gen << 16);
+	gen |= (gen << 32);
+	return gen;
 }
 
+/* fills squares south of the pieces with 1s
+ * input: piece masks
+ */
 u64 soutFill(u64 gen) {
-   gen |= (gen >>  8);
-   gen |= (gen >> 16);
-   gen |= (gen >> 32);
-   return gen;
+	gen |= (gen >>  8);
+	gen |= (gen >> 16);
+	gen |= (gen >> 32);
+	return gen;
+}
+
+
+/* fills squares north of the piece with 1s
+ * input: square index
+ */
+static inline u64 nortFillSingle(int square) {
+    return 0x0101010101010100ULL << square;
+}
+
+/* fills squares south of the piece with 1s 
+ * input: square index
+ */
+static inline u64 soutFillSingle(int square) {
+    return 0x0080808080808080ULL >> (63 - square);
 }
 
 static inline int sideEval(
 	const bitboard* const board, 
 	bool tomove, 
 	const u64 pieces,
-	const int pawncount)
+	const int pawncount,
+	const u64 friendly,
+	const u64 enemy)
 {
 	const int offset = (tomove == white ? 0 : bking);
 	
@@ -253,7 +276,7 @@ static inline int sideEval(
 			 *  - no friendly pawn in front of it (not a backwards doubled pawn)
 			 */ 
 			if (0 == (board->piece[bpawn] & wPassedPawnMask[square]) &&
-				0 == (board->piece[wpawn] & nortFill(1ULL << square << 8))
+				0 == (board->piece[wpawn] & nortFillSingle(square))
 			){
 				eval += passedBonus[i] * 
 					i_max(MAX_PIECE_COUNT + 2 - pieces, 0) / 
@@ -266,7 +289,7 @@ static inline int sideEval(
 			}
 			
 			if (0 == (board->piece[wpawn] & bPassedPawnMask[square]) &&
-				0 == (board->piece[bpawn] & soutFill(1ULL << square >> 8))
+				0 == (board->piece[bpawn] & soutFillSingle(square))
 			){
 				eval += passedBonus[i] * 
 					i_max(MAX_PIECE_COUNT + 2 - pieces, 0) / 
@@ -304,8 +327,25 @@ static inline int sideEval(
 		int i = tableRow(square, tomove), j = square % 8;
 
 		//no opening and endgame tables, those blend to 0
-		eval += 500 + 16 - pawncount
-			+ phaseValue(0, middlerook[i][j], 0, pieces, opening, middlegame);
+		eval += 500 + phaseValue(0, middlerook[i][j], 0, pieces, opening, middlegame);
+
+		int bonus = 0;
+
+		//open file bonus
+		u64 fileMask = 0x0101010101010101ULL << (square & 7);
+		u64 ownPawns = board->piece[wpawn + offset];
+		u64 opponentPawns = board->piece[tomove == white ? bpawn : wpawn];
+		if (!(fileMask & ownPawns)) {
+			bonus += (fileMask & opponentPawns) ? 8 : 16;
+		}
+
+		//rook mobility bonus
+		u64 attacks = Rmagic(square, enemy | friendly);
+		u64 mobility = attacks & ~friendly;
+		int mobilityCount = __builtin_popcountll(mobility) - 5;
+		bonus += mobilityCount * 7 / 4;
+
+		eval += valueBlender(bonus, 0, pieces, OPENING_PIECE_COUNT, MAX_PIECE_COUNT);
 	}
 
 	eval += 900 * counter(board->piece[wqueen + offset]);
@@ -343,12 +383,12 @@ static inline int kingDist(u64 wk, u64 bk){
 }
 
 static inline int squareColor(int sq) {
-    return ((sq >> 3) ^ (sq & 7)) & 1;
+	return ((sq >> 3) ^ (sq & 7)) & 1;
 }
 
 int staticEval(bitboard *board, bool tomove)
 {
-	const int pieces = countPieces(board);
+	const int pieces = i_min(MAX_PIECE_COUNT, countPieces(board));
 	const int pawncount = __builtin_popcountll((board->piece[wpawn] | board->piece[bpawn]));
 
 	if (0 == pawncount){
@@ -366,10 +406,15 @@ int staticEval(bitboard *board, bool tomove)
 
 		// Bare kings
 		if (pieces == 0)
-    		return 0;  
+			return 0;  
 	} 
+
+	u64 friendly = enemypieces(board, tomove);
+	u64 enemy = enemypieces(board, !tomove);
 	
-    int score = sideEval(board, white, pieces, pawncount) - sideEval(board, black, pieces, pawncount);
+	int score = 
+		sideEval(board, white, pieces, pawncount, friendly, enemy) - 
+		sideEval(board, black, pieces, pawncount, enemy, friendly);
 
 	/* KR vs KB, 
 	 * KR vs KN,
@@ -428,7 +473,7 @@ int staticEval(bitboard *board, bool tomove)
 	// 		score /= 2;
 	// }
 	
-    return tomove == white ? score : -score;
+	return tomove == white ? score : -score;
 	
 	// printBitBoard2d(stdout, *board);
 }

@@ -85,8 +85,8 @@ int main(){
 	printf("{");
 	fprintf(f, "{");
 	for (int i = 0; i < 64; i++){
-		printf("%ULLULL", kingAttacks[i]);
-		fprintf(f, "%ULLULL", kingAttacks[i]);
+		printf("%lluULL", kingAttacks[i]);
+		fprintf(f, "%lluULL", kingAttacks[i]);
 		if (i < 63){
 			printf(", ");
 			fprintf(f, ", ");

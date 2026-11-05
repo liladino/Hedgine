@@ -110,8 +110,8 @@ int main(){
 	printf("{");
 	fprintf(f, "{");
 	for (int i = 0; i < 64; i++){
-		printf("%ULLULL", knightAttacks[i]);
-		fprintf(f, "%ULLULL", knightAttacks[i]);
+		printf("%lluULL", knightAttacks[i]);
+		fprintf(f, "%lluULL", knightAttacks[i]);
 		if (i < 63){
 			printf(", ");
 			fprintf(f, ", ");
