@@ -3,6 +3,13 @@ Date:	Nov 05 2026:
 	further up the board, and mean less when there are more pieces left on the
 	board. Scored 88W 90D 62L against the drawn endgames.
 
+	Tested the number of cutovvs vs number of cutoffs in the first searched 
+	legal move. The results show that the move orderer is "good enough" at 
+	around 88% of beta cutoffs happening in the first move. 
+	| depth              |     6 |     7 |     8 |     9 |    10 |    11 |
+    | first-move cutoffs | 92.8% | 91.5% | 89.1% | 86.6% | 88.0% | 87.9% |
+
+
 Date:	Nov 04 2026:
 	Further evolving static heuristics.
 	Likely drawn endgames, like KR vs KB, KR vs KN, KRB vs KR, KRN vs KR, KNN vs

@@ -31,9 +31,12 @@ static int      s_PVcommitlen;
 //heuristics
 static int      s_history[12][64]; //beta cutoff storing
 static bitMove  s_killers[2][MAXSEARCHDEPTH+1];
+#ifdef DEBUG
+	   u64		s_cutoffs = 0;
+	   u64		s_cutoffsFirst = 0;
+#endif
 //golbals
        bool     g_stopSearch = false;
-
 /*
  * GENERAL HELPER FUNCS
  * */
@@ -314,6 +317,13 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta, int 
 		 * Pruning
 		 * */
 		if (eval >= beta) {
+			#ifdef DEBUG
+			s_cutoffs++;
+			if (actualLegalMoves == 1){
+				s_cutoffsFirst++;
+			}
+			#endif
+
 			//the "refutation"
 			storePosTT(s_searchBoard.hashValue, beta, LOWER_BOUND_FLAG, remainingDepth, depth, &currentMove); 
 			
@@ -441,6 +451,9 @@ move iterativeDeepening(bitboard board, bool tomove){
 	int eval = 0, lastEval = 0;
 	
 	for (int i = 1; i < s_searchDepthLimit + 1; i++){
+		#ifdef DEBUG
+		s_cutoffs = s_cutoffsFirst = 0;
+		#endif
 		ageHistory();
 		s_maxdepth = i;
 		s_searchBoard = board;
@@ -455,6 +468,9 @@ move iterativeDeepening(bitboard board, bool tomove){
 			if (i > 1){
 				printf("info depth %d score cp %d\n", i-1, lastEval);
 			}
+			#ifdef DEBUG
+			printf("cutoffs:\n%llu \tin the first move\n%llu \toverall\n\n", s_cutoffsFirst, s_cutoffs);
+			#endif
 			break;
 		}
 
@@ -479,6 +495,10 @@ move iterativeDeepening(bitboard board, bool tomove){
 			len += moveToString(line + len, convertBitMoveToMove(s_PVcommit[j]));
 		}
 		printf("%s\n", line);
+
+		#ifdef DEBUG
+		printf("cutoffs:\n%llu \tin the first move\n%llu \toverall\n\n", s_cutoffsFirst, s_cutoffs);
+		#endif
 
 		if (mate) break;
 	}

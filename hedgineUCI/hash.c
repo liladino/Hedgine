@@ -170,10 +170,10 @@ u64 s_Writes = 0;
 void printCollisionStats(){
 	//~ printTransTable();
 	printf("TTable reading:\n");
-	printf("Collisions: %ULL\n", s_Rcollision);
+	printf("Collisions: %llu\n", s_Rcollision);
 	printf("Collision ratio: %lf\n\n", (double)s_Rcollision / (s_Reads + 1));
 	printf("Writing:\n");
-	printf("Collisions: %ULL\n", s_Wcollision);
+	printf("Collisions: %llu\n", s_Wcollision);
 	printf("Collision ratio: %lf\n\n", (double)s_Wcollision / (s_Writes + 1));
 	
 	u64 count = 0;
@@ -183,7 +183,7 @@ void printCollisionStats(){
 		}
 	}
 	printf("\nTTable: \n");
-	printf("Filled: %ULL\n", count);
+	printf("Filled: %llu\n", count);
 	printf("All: %lld\n", TTableSize);
 	printf("Ratio to all: %lf\n", (double)count / (TTableSize+1));
 	
