@@ -1,3 +1,8 @@
+Date:	Nov 05 2026:
+	Added past pawn bonuses. Logic: passed pawns worth more when they are 
+	further up the board, and mean less when there are more pieces left on the
+	board. Scored 88W 90D 62L against the drawn endgames.
+
 Date:	Nov 04 2026:
 	Further evolving static heuristics.
 	Likely drawn endgames, like KR vs KB, KR vs KN, KRB vs KR, KRN vs KR, KNN vs
