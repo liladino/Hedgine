@@ -38,7 +38,7 @@ void printBitPieceAsBoard(u64 piece){
 	u64 a = 1;
 	printf("  ");
 	for (int i = 7; i >= 0; i--){
-		a = 1LL << (i * 8);
+		a = 1ULL << (i * 8);
 		for (int j = 0; j < 8; j++){
 			printf("%s%lld ", ((piece & a) >> (i * 8 + j) == 1 ? BG_WHITE TXT_BLACK : BG_BLACK TXT_WHITE), (piece & a) >> (i * 8 + j));
 			//printf("%lld ", (piece & a) >> (i * 8 + j));
@@ -64,7 +64,7 @@ void getmask(u64 king, int i, u64* write){
 				write++;
 				continue;
 			}			
-			*write = 1LLU << ((file + i - 'a') + (rank + j - 1) * 8);
+			*write = 1ULL << ((file + i - 'a') + (rank + j - 1) * 8);
 			write++;
 		}
 	}
@@ -89,8 +89,8 @@ int main(){
 	printf("{");
 	fprintf(f, "{");
 	for (int i = 0; i < 64 * 8; i++){
-		printf("%lluLLU", kingMoves[i]);
-		fprintf(f, "%lluLLU", kingMoves[i]);
+		printf("%ULLULL", kingMoves[i]);
+		fprintf(f, "%ULLULL", kingMoves[i]);
 		if (i < 64 * 8 - 1){
 			printf(", ");
 			fprintf(f, ", ");

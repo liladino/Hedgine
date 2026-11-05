@@ -22,7 +22,7 @@ key Zobrist;
 
 TThashentry* allocTransTable(const unsigned int sizeInMB){	
 	TTableSizeMB = sizeInMB;
-	TTableSize = TTableSizeMB * 1024llu * 1024llu / sizeof(TThashentry);	
+	TTableSize = TTableSizeMB * 1024ULL * 1024ULL / sizeof(TThashentry);	
 	if (sizeInMB == 0){
 		TTableSize++;
 	}
@@ -62,7 +62,7 @@ void hashEnPassantIO(bitboard *board, int file){
 		board->hashValue ^= Zobrist.enpassantfile[file];
 		return;
 	} 
-	u64 mask = 0x0101010101010101LL;
+	u64 mask = 0x0101010101010101ULL;
 	for (int i = 0; i < 8; i++){
 		if (mask & board->enpassanttarget){
 			board->hashValue ^= Zobrist.enpassantfile[i];
@@ -170,10 +170,10 @@ u64 s_Writes = 0;
 void printCollisionStats(){
 	//~ printTransTable();
 	printf("TTable reading:\n");
-	printf("Collisions: %llu\n", s_Rcollision);
+	printf("Collisions: %ULL\n", s_Rcollision);
 	printf("Collision ratio: %lf\n\n", (double)s_Rcollision / (s_Reads + 1));
 	printf("Writing:\n");
-	printf("Collisions: %llu\n", s_Wcollision);
+	printf("Collisions: %ULL\n", s_Wcollision);
 	printf("Collision ratio: %lf\n\n", (double)s_Wcollision / (s_Writes + 1));
 	
 	u64 count = 0;
@@ -183,7 +183,7 @@ void printCollisionStats(){
 		}
 	}
 	printf("\nTTable: \n");
-	printf("Filled: %llu\n", count);
+	printf("Filled: %ULL\n", count);
 	printf("All: %lld\n", TTableSize);
 	printf("Ratio to all: %lf\n", (double)count / (TTableSize+1));
 	

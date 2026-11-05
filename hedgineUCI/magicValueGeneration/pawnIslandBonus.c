@@ -43,7 +43,7 @@ void printBitPieceAsBoard(u64 piece){
 	u64 a = 1;
 	printf("  ");
 	for (int i = 7; i >= 0; i--){
-		a = 1LL << (i * 8);
+		a = 1ULL << (i * 8);
 		for (int j = 0; j < 8; j++){
 			printf("%s%lld ", ((piece & a) >> (i * 8 + j) == 1 ? BG_WHITE TXT_BLACK : BG_BLACK TXT_WHITE), (piece & a) >> (i * 8 + j));
 			//printf("%lld ", (piece & a) >> (i * 8 + j));
@@ -113,8 +113,8 @@ int main(){
 	printf("{");
 	fprintf(f, "{");
 	for (int i = 0; i < 64; i++){
-		printf("%lluLLU", wpawnNeighbors[i]);
-		fprintf(f, "%lluLLU", wpawnNeighbors[i]);
+		printf("%ULLULL", wpawnNeighbors[i]);
+		fprintf(f, "%ULLULL", wpawnNeighbors[i]);
 		if (i < 63){
 			printf(", ");
 			fprintf(f, ", ");
@@ -126,8 +126,8 @@ int main(){
 	printf("{");
 	fprintf(f, "{");
 	for (int i = 0; i < 64; i++){
-		printf("%lluLLU", bpawnNeighbors[i]);
-		fprintf(f, "%lluLLU", bpawnNeighbors[i]);
+		printf("%ULLULL", bpawnNeighbors[i]);
+		fprintf(f, "%ULLULL", bpawnNeighbors[i]);
 		if (i < 63){
 			printf(", ");
 			fprintf(f, ", ");
