@@ -409,12 +409,12 @@ int staticEval(bitboard *board, bool tomove)
 			return 0;  
 	} 
 
-	u64 friendly = enemypieces(board, tomove);
-	u64 enemy = enemypieces(board, !tomove);
+	u64 whitePieces = enemypieces(board, white);
+	u64 blackPieces = enemypieces(board, black);
 	
 	int score = 
-		sideEval(board, white, pieces, pawncount, friendly, enemy) - 
-		sideEval(board, black, pieces, pawncount, enemy, friendly);
+		sideEval(board, white, pieces, pawncount, whitePieces, blackPieces) - 
+		sideEval(board, black, pieces, pawncount, blackPieces, whitePieces);
 
 	/* KR vs KB, 
 	 * KR vs KN,
