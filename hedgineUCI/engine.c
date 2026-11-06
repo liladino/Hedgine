@@ -113,6 +113,10 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int ply, int qdept
     	return staticEval(&s_searchBoard, tomove);
 	}
 
+	if (isRepetition(s_searchBoard.hashValue)){
+		return 0;
+	}
+
 	bool inCheck = bitInCheck(&s_searchBoard, tomove);
 
 	if (!inCheck) {
