@@ -127,7 +127,15 @@ const int endgamecenter[8][8] = {
 #define KNIGHT_ATTACK_WEIGHT 2
 #define BISHOP_ATTACK_WEIGHT 2 
 #define ROOK_ATTACK_WEIGHT 3 
-#define QUEEN_ATTACK_WEIGHT 5 
+#define QUEEN_ATTACK_WEIGHT 5
+
+#define FILE_A 0x0101010101010101ULL
+#define FILE_H 0x8080808080808080ULL
+#define RANK_1 0xFFULL
+#define RANK_8 0xFF00000000000000ULL
+
+#define SHIELD1_BONUS 10
+#define SHIELD2_BONUS 6
 
 static const int SafetyTable[100] = {		
 	  0,   0,   1,   2,   3,   5,   7,   9,  12,  15,
@@ -268,7 +276,7 @@ static inline u64 soutFillSingle(int square) {
 static inline int sideEval(
 	const bitboard* const board, 
 	bool tomove, 
-	const u64 pieces,
+	const int pieces,
 	const int pawncount,
 	const u64 friendly,
 	const u64 enemy)
@@ -282,7 +290,7 @@ static inline int sideEval(
 
 	//king safety
 	const int enemyKingSq = __builtin_ctzll(board->piece[bking - offset]);
-	u64 enemyKingZone = kingAttacks[enemyKingSq] | board->piece[wking + offset];
+	u64 enemyKingZone = kingAttacks[enemyKingSq] | board->piece[bking - offset];
 	enemyKingZone |= (white == tomove) ? (enemyKingZone >> 8) : (enemyKingZone << 8);
 	int attackers = 0, attackWeight = 0;
 
@@ -333,7 +341,7 @@ static inline int sideEval(
 			//attack on king
 			u64 attacks = bpawnTakes[square];
 			if (attacks & enemyKingZone) {
-				attackers++;
+				// attackers++;
 				attackWeight += counter(attacks & enemyKingZone);
 			}
 		}
@@ -429,29 +437,58 @@ static inline int sideEval(
 	}
 
 	//king position
-	curr = board->piece[wking + offset];
-	int square = __builtin_ctzll(curr);
-	int i = tableRow(square, tomove), j = square % 8;
+	{
+		curr = board->piece[wking + offset];
+		int square = __builtin_ctzll(curr);
+		int i = tableRow(square, tomove), j = square % 8;
 
-	if (opening || middlegame) {
-		eval += phaseValue(openingking[i][j], middleking[i][j], 0, pieces, opening, middlegame);
-	}
-	else {
-		//the endgame king blends from a lower limit of 2, and is scaled by the friendly pieces
-		const int friendlypieces = countFriendlyPieces(board, tomove);
-		eval += valueBlender(endgamecenter[i][j], middleking[i][j], pieces, 2, MIDDLE_PIECE_COUNT) * 2 / (double)(friendlypieces + 1);
-	}
-
-	if (attackers >= 2){
-		int safetyBonus = SafetyTable[i_min(attackWeight, 99)];
-		if (0 == queens){
-			safetyBonus /= 2;
+		if (opening || middlegame) {
+			eval += phaseValue(openingking[i][j], middleking[i][j], 0, pieces, opening, middlegame);
+		}
+		else {
+			//the endgame king blends from a lower limit of 2, and is scaled by the friendly pieces
+			const int friendlypieces = countFriendlyPieces(board, tomove);
+			eval += valueBlender(endgamecenter[i][j], middleking[i][j], pieces, 2, MIDDLE_PIECE_COUNT) * 2 / (double)(friendlypieces + 1);
 		}
 
-		safetyBonus = valueBlender(0, safetyBonus, pieces, 2, OPENING_PIECE_COUNT);
-		eval += safetyBonus;
+		//shielding pawns bonus
+		int shield = 0;
+		if (i <= 1) {
+			const u64 ownPawns = board->piece[wpawn + offset];
+
+			const u64 row = curr | ((curr << 1) & ~FILE_A) | ((curr >> 1) & ~FILE_H);
+			const u64 shield1 = (white == tomove) ? row << 8  : row >> 8;
+			const u64 shield2 = (white == tomove) ? row << 16 : row >> 16;
+
+			shield = SHIELD1_BONUS * counter(ownPawns & shield1)
+				   + SHIELD2_BONUS * counter(ownPawns & shield2);
+		}
+
+		//mobilty penalty
+		const u64 ownBackRank = (white == tomove) ? RANK_1 : RANK_8;
+		bool enemyHasQueen = (white == tomove) ? 
+			0 != board->piece[bqueen] : 
+			0 != board->piece[wqueen];
+		shield -= counter(
+				(Bmagic(square, occupied) | Rmagic(square, occupied)) 
+				& ~friendly 
+				& ~ownBackRank) * (enemyHasQueen ? 2 : 1);
+
+		eval += valueBlender(0, shield, pieces, MIDDLE_PIECE_COUNT, OPENING_PIECE_COUNT);
 	}
 
+	//attacking bonus
+	{
+		if (attackers >= 2){
+			int safetyBonus = SafetyTable[i_min(attackWeight, 99)];
+			if (0 == queens){
+				safetyBonus /= 2;
+			}
+
+			safetyBonus = valueBlender(0, safetyBonus, pieces, 2, OPENING_PIECE_COUNT);
+			eval += safetyBonus;
+		}
+	}
 
 	return eval;
 }
