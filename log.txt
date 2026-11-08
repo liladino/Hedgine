@@ -1,3 +1,23 @@
+Date:	Nov 08 2026:
+	Added king safety evaluations:
+		1. Attacking side gets a bonus based on how many important squares are 
+		attacked, and how many pieces are attacking
+		2. king gets a bonus when shielded by pawns
+		3. king gets a penalty based on how many squares a queen could reach 
+		from there.
+	Ran tests against the rook fix:
+	only 1: 287W 212D 251L
+	only 2: 280W 207D 263L
+	1+2:    318W 205D 227L
+	1+2+3:  317W 180D 253L.
+
+	The third and second versions results in detail per 2 games:
+	       LL  DL/LD  WL/LW/DD  WD/DW  WW    Elo
+	1+2    36     59       126     86  68   +42.4
+	1+2+3  47     60       123     72  73   +29.7
+	
+	In conclusion, I won't keep the king mobility penalty.
+
 Date:	Nov 06 2026:
 	Potential issue: the quiescence search did not use the repetitions. because
 	this is a long standing question, whether to use the repetition table there,

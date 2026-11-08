@@ -452,8 +452,8 @@ static inline int sideEval(
 		}
 
 		//shielding pawns bonus
-		int shield = 0;
 		if (i <= 1) {
+			int shield = 0;
 			const u64 ownPawns = board->piece[wpawn + offset];
 
 			const u64 row = curr | ((curr << 1) & ~FILE_A) | ((curr >> 1) & ~FILE_H);
@@ -462,19 +462,9 @@ static inline int sideEval(
 
 			shield = SHIELD1_BONUS * counter(ownPawns & shield1)
 				   + SHIELD2_BONUS * counter(ownPawns & shield2);
+
+			eval += valueBlender(0, shield, pieces, MIDDLE_PIECE_COUNT, OPENING_PIECE_COUNT);
 		}
-
-		//mobilty penalty
-		const u64 ownBackRank = (white == tomove) ? RANK_1 : RANK_8;
-		bool enemyHasQueen = (white == tomove) ? 
-			0 != board->piece[bqueen] : 
-			0 != board->piece[wqueen];
-		shield -= counter(
-				(Bmagic(square, occupied) | Rmagic(square, occupied)) 
-				& ~friendly 
-				& ~ownBackRank) * (enemyHasQueen ? 2 : 1);
-
-		eval += valueBlender(0, shield, pieces, MIDDLE_PIECE_COUNT, OPENING_PIECE_COUNT);
 	}
 
 	//attacking bonus
