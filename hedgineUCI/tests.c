@@ -480,3 +480,39 @@ void makePerfTest(bitboard* board, bool tomove){
 		printf("%d ply:\nLeaves: %d\n\n", i+1, allmovecount);
 	}
 }
+
+
+bool assertEval(){
+	// 
+
+	initializeAll();
+
+	printf("Asert evaluation...\n");
+
+	bitboard bboard;
+	bool tomove;
+
+	loadPerftCase(&PERFT_CASES[0], &bboard, &tomove);
+
+	movearray moves;
+	moves.size = 1;
+	for (int i = 0; i < 80 && moves.size; i++){
+		generateLegalMoves(&moves, &bboard, tomove);
+		if (moves.size){
+			//make random legal move
+			makeMove(&bboard, &moves.array[(i * 179) % moves.size]);
+			tomove = !tomove;
+			
+			if (staticEval(&bboard, white) != -staticEval(&bboard, black)){
+				printf("Evaluations differ.\n");
+				printBitBoard2d(stdout, bboard);
+				return false;	
+			}
+		}
+	}
+
+	// printBitBoard2d(stdout, bboard);
+	printf("Evaluations were symmetric\n");
+
+	return true;
+}

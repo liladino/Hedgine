@@ -52,7 +52,7 @@ int main(int argc, char* argv[]){
 			if (!makeMoveTest()) { goto endEverything; }
 		}
 		else if (strncmp(argv[1], "testAll", 8) == 0){
-			if (!(makeMoveTest() && testMovePicker() && testPseudoLegal() && makePerfTestsAssert())) { 
+			if (!(makeMoveTest() && testMovePicker() && testPseudoLegal() && makePerfTestsAssert() && assertEval())) { 
 				printf("fail, quitting\n");
 				goto endEverything; 
 			}

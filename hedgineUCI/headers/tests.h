@@ -33,4 +33,6 @@ void testEnglish();
 
 bool makeMoveTest();
 
+bool assertEval();
+
 #endif

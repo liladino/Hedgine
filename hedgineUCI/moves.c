@@ -154,7 +154,7 @@ bitboard boardConvert(char board2d[12][12], int castling[4], squarenums enpass, 
 	else{
 		int file = enpass.file - 2;
 		int rank = enpass.rank - 2;
-		board.enpassanttarget = 1LL << (rank * 8 + file);
+		board.enpassanttarget = 1ULL << (rank * 8 + file);
 	}
 	board.hashValue = hashPosition(&board, tomove);
 	return board;
@@ -371,9 +371,9 @@ static inline void setcastlingrights(bitboard* board, bitMove m, int piece){
 
 
 bitUndo makeMove(bitboard* board, const bitMove* m) {
-	#define DELETEPIECE_HASH(p, sq)     board->piece[p] &= ~(1LLU << sq); hashPieceIO(board, sq, p)
-	#define MOVEPIECE_HASH(p, sq1, sq2) board->piece[p] ^= ((1LLU << sq1) | (1LLU << sq2)); hashPieceIO(board, sq1, p); hashPieceIO(board, sq2, p)
-	#define ADDPIECE_HASH(p, sq)        board->piece[p] |= ((1LLU << sq)); hashPieceIO(board, sq, p)
+	#define DELETEPIECE_HASH(p, sq)     board->piece[p] &= ~(1ULL << sq); hashPieceIO(board, sq, p)
+	#define MOVEPIECE_HASH(p, sq1, sq2) board->piece[p] ^= ((1ULL << sq1) | (1ULL << sq2)); hashPieceIO(board, sq1, p); hashPieceIO(board, sq2, p)
+	#define ADDPIECE_HASH(p, sq)        board->piece[p] |= ((1ULL << sq)); hashPieceIO(board, sq, p)
 	#define DELETE_EN_PASSANT_HASH()    hashEnPassantIO(board, 8); board->enpassanttarget = 0
 
 	bitUndo undo;
@@ -435,7 +435,7 @@ bitUndo makeMove(bitboard* board, const bitMove* m) {
 	else if (m->flags == DOUBLE_PAWNMOVE_FLAG) {
 		MOVEPIECE_HASH(piece, m->from, m->to);
 		hashEnPassantIO(board, m->to % 8);
-		board->enpassanttarget = (1LL << (m->to > 31 ? m->to + 8 : m->to - 8));
+		board->enpassanttarget = (1ULL << (m->to > 31 ? m->to + 8 : m->to - 8));
 
 		mailbox[m->to] = piece;
 	}
@@ -483,8 +483,8 @@ bitUndo makeMove(bitboard* board, const bitMove* m) {
 }
 
 void undoMove(bitboard* board, const bitMove* m, const bitUndo* u) {
-	#define DELETEPIECE_NO_HASH(p, sq) board->piece[p] &= ~(1LLU << sq);
-	#define MOVEPIECE_NO_HASH(p, sq1, sq2) board->piece[p] ^= ((1LLU << sq1) | (1LLU << sq2));
+	#define DELETEPIECE_NO_HASH(p, sq) board->piece[p] &= ~(1ULL << sq);
+	#define MOVEPIECE_NO_HASH(p, sq1, sq2) board->piece[p] ^= ((1ULL << sq1) | (1ULL << sq2));
 
 	bool blackMove = mailbox[m->to] >= bking;
 
@@ -494,12 +494,12 @@ void undoMove(bitboard* board, const bitMove* m, const bitUndo* u) {
 		board->enpassanttarget = 0;
 	}
 	else {
-		board->enpassanttarget = 1LLU << u->prevEpSquareIndex;
+		board->enpassanttarget = 1ULL << u->prevEpSquareIndex;
 	}
 
 	if (m->flags & PROMOTION_FLAG) {
 		DELETEPIECE_NO_HASH(m->promotion, m->to);
-		board->piece[blackMove ? bpawn : wpawn] |= 1LLU << m->from;
+		board->piece[blackMove ? bpawn : wpawn] |= 1ULL << m->from;
 
 		mailbox[m->from] = blackMove ? bpawn : wpawn;
 	}
@@ -541,10 +541,10 @@ void undoMove(bitboard* board, const bitMove* m, const bitUndo* u) {
 		if (m->flags & EN_PASSANT_FLAG) {
 			uint8_t enpasssq = (m->to > 31 ? m->to - 8 : m->to + 8);
 			mailbox[enpasssq] = u->capturedPiece;
-			board->piece[u->capturedPiece] |= 1LLU << enpasssq;
+			board->piece[u->capturedPiece] |= 1ULL << enpasssq;
 		}
 		else {
-			board->piece[u->capturedPiece] |= 1LLU << m->to;
+			board->piece[u->capturedPiece] |= 1ULL << m->to;
 			mailbox[m->to] = u->capturedPiece;
 		}
 	}

@@ -42,4 +42,12 @@ bool isCastlingLegal(bitboard* board, bool tomove, const bitMove* mv);
 
 bool isPseudoLegal(const bitboard* board, bool tomove, const bitMove* m);
 
+extern const u64 kingAttacks[64];
+
+extern const u64 wpawnTakes[64];
+
+extern const u64 bpawnTakes[64];
+
+extern const u64 knightMoves[64];
+
 #endif

@@ -1,6 +1,72 @@
+Date:	Nov 08 2026:
+	Added king safety evaluations:
+		1. Attacking side gets a bonus based on how many important squares are 
+		attacked, and how many pieces are attacking
+		2. king gets a bonus when shielded by pawns
+		3. king gets a penalty based on how many squares a queen could reach 
+		from there.
+	Ran tests against the rook fix:
+	only 1: 287W 212D 251L
+	only 2: 280W 207D 263L
+	1+2:    318W 205D 227L
+	1+2+3:  317W 180D 253L.
+
+	The third and second versions results in detail per 2 games:
+	       LL  DL/LD  WL/LW/DD  WD/DW  WW    Elo
+	1+2    36     59       126     86  68   +42.4
+	1+2+3  47     60       123     72  73   +29.7
+	
+	In conclusion, I won't keep the king mobility penalty.
+
+Date:	Nov 06 2026:
+	Potential issue: the quiescence search did not use the repetitions. because
+	this is a long standing question, whether to use the repetition table there,
+	I made a longer test. Out of the 1000 games, the one using repetitions in 
+	quiescence search scored 336W 333D 331L against a version where all store 
+	and remove repetition calls were removed. This test result is inconclusive,
+	but because the no repetition version did not take the lead after the 40th
+	game at all, and at times got to -20 points, I will say that I keep the 
+	repetition checking, as it at least doesn't make the negine weaker.
+
+	A bug in yesterday's code is fixed: the rooks mobility was masked with the
+	wrong color's pawns when calculating black's sideEval. Corrected version 
+	against the original, still very well working rook version: 149W 122D 129L, 
+	coming in at +17 Elo. Added tests for the staticEval function, assuming 
+	staticEval(&board, white) == -staticEval(&board, black).
+	
+Date:	Nov 05 2026:
+	Added past pawn bonuses. Logic: passed pawns worth more when they are 
+	further up the board, and mean less when there are more pieces left on the
+	board. Scored 88W 90D 62L against the drawn endgames.
+
+	Tested the number of cutovvs vs number of cutoffs in the first searched 
+	legal move. The results show that the move orderer is "good enough" at 
+	around 88% of beta cutoffs happening in the first move. 
+	| depth              |     6 |     7 |     8 |     9 |    10 |    11 |
+    | first-move cutoffs | 92.8% | 91.5% | 89.1% | 86.6% | 88.0% | 87.9% |
+
+	Added more refined rook bonuses for open files, semi open files, and 
+	activity. Significant gain in 240 games, more than 30 more wins than loss.
+	Estimated 50 Elo gain. against passed pawns version. 
+
+Date:	Nov 04 2026:
+	Further evolving static heuristics.
+	Likely drawn endgames, like KR vs KB, KR vs KN, KRB vs KR, KRN vs KR, KNN vs
+	KR get a dowscale in value, while exact draws get 0 points. This version
+	scores 76W 58D 66L against the pawn structure update. Opposite colored 
+	bishop endgames however didn't benefit from a similar scaling, it tended to
+	score less points against yesterday's version. TODO: open file for rooks, 
+	passed pawn bonus. 
+
 Date:	Nov 03 2026:
 	Improved the move ordering, now it oncrementally orders at each move 
 	request. Tho the gain is not measurable, the code is nicer.
+
+	Started the testing of different static evaluation heuristics.
+	1. favoring open positions for bishops and rooks - out of 500 games, didn't
+	have a measurable effect.
+	2. Pawn structure bonuses: is a pawn is defended, or has a pawn next to it,
+	it get's a bonus. Against the latest version: 78W 27D 55L,
 
 Date:	Nov 02 2026:
 	Added better logging in debug mode. 
@@ -17,7 +83,7 @@ Date:	Nov 02 2026:
 
 Date:	Nov 01 2026:
 	Added search extensions and late move reduction. Fixed the communication:
-	previosuly the engine didn't keav etime for the system to communicate the 
+	previosuly the engine didn't have time for the system to communicate the 
 	moves, resulting in timeouts. The GUI now supports tournament mode, so the
 	variations can be tested against each other in random positions.  
 
