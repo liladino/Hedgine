@@ -102,8 +102,9 @@ typedef struct TThashentry{
 	u64 pos; //key
 	int eval;
 	evalflag flag;
-	int depth; 
+	int depth;
 	bitMove m;
+	int age; //the search (go command) that stored the entry
 }TThashentry;
 
 typedef struct gameInfo{

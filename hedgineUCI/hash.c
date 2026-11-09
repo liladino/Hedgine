@@ -161,6 +161,15 @@ void clearTransTable(){
 	}
 }
 
+static int s_TTage = 0;
+
+/* Call at the start of every search. Entries stored by earlier searches can
+ * always be replaced, so the deep entries of old positions do not block the table.
+ */
+void newSearchTT(){
+	s_TTage++;
+}
+
 #ifdef DEBUG
 u64 s_Rcollision = 0;
 u64 s_Reads = 0;
@@ -263,13 +272,21 @@ void storePosTT(const u64 hashValue, int eval, evalflag flag, int depthRemaining
 		return;
 	}
 
-	// if (entry->flag != TT_EMPTY &&
-	// 	entry->pos == hashValue &&
-	// 	entry->depth > depthRemaining)
-	// {
-	// 	return;
-	// }
-	
+	// entry of the current search is not replaced by a shallower result
+	if (entry->flag != TT_EMPTY &&
+		entry->age == s_TTage &&
+		entry->depth > depthRemaining)
+	{
+		//the shallower result can still provide a hint for a fail low entry of the same position
+		if (entry->pos == hashValue &&
+			sameMove(&entry->m, &NULLBITMOVE) &&
+			!sameMove(m, &NULLBITMOVE))
+		{
+			entry->m = *m;
+		}
+		return;
+	}
+
 	#ifdef DEBUG
 	if (entry->flag != 0) s_Wcollision++;
 	s_Writes++;
@@ -289,6 +306,7 @@ void storePosTT(const u64 hashValue, int eval, evalflag flag, int depthRemaining
 		entry->m = *m;
 	}
 	entry->flag = flag;
+	entry->age = s_TTage;
 }
 
 //~ static inline void swap(bitboard* a, bitboard* b) { 

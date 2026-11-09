@@ -48,6 +48,8 @@ void printCollisionStats();
 
 void clearTransTable();
 
+void newSearchTT();
+
 //~ void rmBestMoveFlag(u64 pos);
 
 int getEval(u64 pos);
