@@ -275,10 +275,19 @@ void storePosTT(const u64 hashValue, int eval, evalflag flag, int depthRemaining
 	s_Writes++;
 	#endif
 	
-	entry->pos = hashValue; //key 
+	/* a fail low has no best move, keep the move of the same position stored
+	 * before
+	 */
+	bool keepMove = m->from == NULLBITMOVE.from &&
+		   			m->to == NULLBITMOVE.to && 
+					entry->pos == hashValue;
+
+	entry->pos = hashValue; //key
 	entry->eval = correctMateScoreForStorage(eval, depthSearched);
 	entry->depth = depthRemaining;
-	entry->m = *m;
+	if (!keepMove) {
+		entry->m = *m;
+	}
 	entry->flag = flag;
 }
 
