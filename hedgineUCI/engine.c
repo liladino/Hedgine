@@ -293,11 +293,14 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta, int 
 			}
 		}
 
+		bool isQuiet = !(currentMove.flags & (CAPTURE_FLAG | EN_PASSANT_FLAG | PROMOTION_FLAG));
+
 		/*
 		 * Reduce?
 		 * */
 		bool needsFullSearch = true;
-		if (extension == 0 && remainingDepth >= 3 && actualLegalMoves >= 3 && !(currentMove.flags & CAPTURE_FLAG)) {
+		if (!inCheck && extension == 0 && remainingDepth >= 3 && actualLegalMoves >= 3 && isQuiet) {
+			// if (!bitInCheck(&s_searchBoard, !tomove)){ }
 			eval = -search(!tomove, remainingDepth-1-1, depth+1, -alpha-1, -alpha, numExtensions);
 			needsFullSearch = eval > alpha;
 		}
@@ -315,8 +318,6 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta, int 
 			return 0;
 		}
 		
-		bool isQuiet = !(currentMove.flags & CAPTURE_FLAG) && !(currentMove.flags & PROMOTION_FLAG);
-
 		/*
 		 * Pruning
 		 * */

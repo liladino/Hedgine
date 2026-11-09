@@ -1,9 +1,19 @@
 Date:	Nov 09 2026:
 	Added PV null window search yesterday, but in tests it proved to be 
 	disadvantegous with searching more nodes.
-	TT fix: if a replacement comes in witha nullmove, don't throw away the 
+	TT fix: if a replacement comes in with a nullmove, don't throw away the 
 	currently stored move, that may still be effective. This resulted in a big
 	improvement.  
+	
+	New TT strategy: depth aware replacement. 
+
+	                                           LL, LD, WL/DD, WD, WW
+	fixed always replace TT vs original:        2, 19,    39, 23, 17
+	fixed always replace TT + PV vs fixed TT:  10, 24,    40, 21, 5
+	fixed always replace TT vs new TT strategy: 8, 32,    29, 22, 9
+
+	Tinkered with the LMR slightly: removing evasions proved to be beneficial, 
+	but removing checking moves are not, the cost of bitInCheck may be too high.
 
 Date:	Nov 08 2026:
 	Added king safety evaluations:
