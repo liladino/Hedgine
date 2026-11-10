@@ -27,7 +27,7 @@ const int middleking[8][8] = {
 const int openingknight[8][8] = {
 	{   0,   0,   0,   0,   0,   0,   0,   0}, //1
 	{   0,   0,   0,  10,  10,   0,   0,   0}, //2
-	{   0,   3,  15,  10,  10,  15,   3,   0}, //3
+	{   0,   3,  13,  10,  10,  15,   9,   0}, //3
 	{   0,  10,  15,  18,  18,  15,  10,   0}, //4
 	{   3,  10,  15,  18,  18,  15,  10,   3}, //5
 	{   2,   9,  14,  15,  15,  14,   9,   2}, //6
@@ -368,8 +368,10 @@ static inline int sideEval(
 	}
 
 	//bishops
+	int countBishop = 0;
 	curr = board->piece[wbishop + offset];
 	while (curr) {
+		countBishop++;
 		int square = __builtin_ctzll(curr);
 		curr &= curr - 1;
 		int i = tableRow(square, tomove), j = square % 8;
@@ -383,6 +385,10 @@ static inline int sideEval(
 			attackers++;
 			attackWeight += BISHOP_ATTACK_WEIGHT * counter(attacks & enemyKingZone);
 		}
+	}
+	if (countBishop > 1){
+		//bishop pair
+		eval += 10;
 	}
 
 	//rooks

@@ -1,3 +1,11 @@
+Date:	Nov 10 2026:
+	Added a sanity check for the PV line - it should always copy from the stored
+	PV line, when available. Results show that this is identical, and shouldn't 
+	affect the performance.
+
+	Tuned minor piece evaluation: bishop pair bonus, knight positions refined. 
+	Tests showed a 24 Elo increase: 16LL 39LD 76WL/DD 39WD 30WW in 200 games.
+
 Date:	Nov 09 2026:
 	Added PV null window search yesterday, but in tests it proved to be 
 	disadvantegous with searching more nodes.
