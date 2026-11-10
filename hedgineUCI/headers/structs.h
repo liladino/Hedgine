@@ -61,13 +61,14 @@ typedef struct bitboard{
 	u64 enpassanttarget;
 	u64 hashValue;
 		
-	char castlerights; 
+	uint8_t castlerights; 
 	/*
 	* 0000 0101 => 
 	* least signif 4 bit:
 	*   0                1               0                0 (LSB) 
 	*   black queenside, balck kingside, white queenside, white kingside
 	*/
+	uint8_t fmv;
 	
 	//int eval;
 } bitboard;
@@ -90,7 +91,7 @@ typedef struct bitUndo {
 	 *  black queenside, balck kingside, white queenside, white kingside
 	 * */
 	 
-	//~ uint8_t  prevHalfmove;
+	uint8_t  prevFmv;
 } bitUndo;
 
 typedef struct movearray{

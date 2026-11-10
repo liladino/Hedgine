@@ -22,9 +22,6 @@ move initializemove(squarenums from, squarenums to, int promotion);
 void setmove(move *m, square from, square to, int promotion);
 
 //bits:
-
-int updateFiftyMoveCounter(const bitMove* m, int fmv);
-
 int makeMoveIfLegal(bitboard* board, const sidetomove tomove, const move m);
 
 bitboard boardConvert(char board2d[12][12], int castling[4], squarenums enpass, sidetomove tomove);

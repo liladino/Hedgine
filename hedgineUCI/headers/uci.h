@@ -33,7 +33,7 @@ void readInput();
 
 void parsePosition(const char *command, bitboard* bboard, sidetomove *tomove, int* fmv, int* movenum);
 
-void parseGo(const char *command, const bitboard* board, const sidetomove *tomove, int fmv);
+void parseGo(const char *command, const bitboard* board, const sidetomove *tomove);
 
 void UCIloop(bitboard* board, sidetomove *tomove, int* fmv, int* movenum);
 

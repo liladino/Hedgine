@@ -51,8 +51,11 @@ int main(int argc, char* argv[]){
 		else if (strncmp(argv[1], "testMakeMove", 15) == 0){
 			if (!makeMoveTest()) { goto endEverything; }
 		}
+		else if (strncmp(argv[1], "testFifty", 10) == 0){
+			if (!testFiftyMoveCounter()) { goto endEverything; }
+		}
 		else if (strncmp(argv[1], "testAll", 8) == 0){
-			if (!(makeMoveTest() && testMovePicker() && testPseudoLegal() && makePerfTestsAssert() && assertEval())) { 
+			if (!(makeMoveTest() && testMovePicker() && testPseudoLegal() && makePerfTestsAssert() && assertEval() && testFiftyMoveCounter())) {
 				printf("fail, quitting\n");
 				goto endEverything; 
 			}

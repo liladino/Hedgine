@@ -25,7 +25,7 @@ extern bool g_stopSearch;
 
 bool isMateScore(int score);
 
-move CPU(int cpulvl, bitboard bboard, sidetomove tomove, int fmv);
+move CPU(int cpulvl, bitboard bboard, sidetomove tomove);
 
 u64 getSearchedNodes();
 

@@ -62,6 +62,6 @@ void storeRepetiton(const u64 pos);
 
 void rmLastRepetition();
 
-bool isRepetition(const u64 pos);
+bool isRepetition(const u64 pos, int fmv);
 
 #endif
