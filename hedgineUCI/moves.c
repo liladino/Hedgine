@@ -40,7 +40,7 @@ void setmove(move *m, square from, square to, int promotion){
  * BITS
  ******************************************************************************/
 
-int updateFiftyMoveCounter(const bitMove* m, int fmv){
+static inline int updateFiftyMoveCounter(const bitMove* m, int fmv){
 	if (m->flags & (DOUBLE_PAWNMOVE_FLAG | CAPTURE_FLAG | EN_PASSANT_FLAG)){
 		return 0;
 	}
@@ -382,11 +382,14 @@ bitUndo makeMove(bitboard* board, const bitMove* m) {
 
 	bitUndo undo;
 	undo = (bitUndo){
-		board->hashValue,
-		(board->enpassanttarget == 0 ? -1 : __builtin_ctzll(board->enpassanttarget)),
-		mailbox[m->to],
-		board->castlerights
+		.prevHash = board->hashValue,
+		.prevEpSquareIndex = (board->enpassanttarget == 0 ? -1 : __builtin_ctzll(board->enpassanttarget)),
+		.capturedPiece = mailbox[m->to],
+		.prevCastleRights = board->castlerights,
+		.prevFmv = board->fmv
 	};
+
+	board->fmv = updateFiftyMoveCounter(m, board->fmv);
 
 	const int piece = mailbox[m->from];
 
@@ -489,6 +492,8 @@ bitUndo makeMove(bitboard* board, const bitMove* m) {
 void undoMove(bitboard* board, const bitMove* m, const bitUndo* u) {
 	#define DELETEPIECE_NO_HASH(p, sq) board->piece[p] &= ~(1ULL << sq);
 	#define MOVEPIECE_NO_HASH(p, sq1, sq2) board->piece[p] ^= ((1ULL << sq1) | (1ULL << sq2));
+
+	board->fmv = u->prevFmv;
 
 	bool blackMove = mailbox[m->to] >= bking;
 

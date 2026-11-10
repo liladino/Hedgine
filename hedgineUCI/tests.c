@@ -19,7 +19,7 @@ void testLasker(){
 	printBitBoard2d(stdout, board);
 	
 	strcpy(command, "go movetime 15000");
-	parseGo(command, &board, &tomove, 0);	
+	parseGo(command, &board, &tomove);	
 	
 	free(command);
 }
@@ -38,7 +38,7 @@ void testEnglish(){
 	printBitBoard2d(stdout, board);
 	
 	strcpy(command, "go movetime 15000");
-	parseGo(command, &board, &tomove, 2);
+	parseGo(command, &board, &tomove);
 	
 	free(command);
 }
@@ -524,7 +524,7 @@ void testSearchSpeed(int depth){
 		parsePosition(positionCmd, &board, &tomove, &fmv, &movenum);
 
 		long start = getTime_ms();
-		parseGo(goCmd, &board, &tomove, fmv);
+		parseGo(goCmd, &board, &tomove);
 		times[c] = getTime_ms() - start;
 		nodes[c] = getSearchedNodes();
 
@@ -588,5 +588,53 @@ bool assertEval(){
 	// printBitBoard2d(stdout, bboard);
 	printf("Evaluations were symmetric\n");
 
+	return true;
+}
+
+/*
+ * FIFTY MOVE COUNTER TEST
+ * The counter is tracked twice: parsePosition counts it from the move list, 
+ * makeMove keeps it on the board. Both must match the expected value.
+ * */
+typedef struct fmvCase {
+	const char* command;
+	int expected;
+} fmvCase;
+
+static const fmvCase FMV_CASES[] = {
+	//en passant capture, then a capture, then a quiet move
+	{"position startpos moves e2e4 a7a6 e4e5 d7d5 e5d6 c7d6 g1f3", 1},
+	//a quiet reply to a double push (en passant possible, but not played)
+	{"position startpos moves e2e4 a7a6 e4e5 d7d5 g1f3", 1},
+	{"position startpos moves e2e4 a7a6 e4e5 d7d5 g1f3 g8f6 b1c3", 3},
+	//the counter of the FEN is continued
+	{"position fen 4k3/8/8/8/8/8/8/R3K3 w Q - 10 40 moves a1a2 e8d8", 12},
+	{"position fen 4k3/8/8/8/8/8/8/R3K3 w Q - 10 40", 10},
+	//castling does not reset
+	{"position fen r3k2r/8/8/8/8/8/8/R3K2R w KQkq - 5 1 moves e1g1 e8c8", 7},
+	//capture resets
+	{"position fen 4k3/8/8/8/8/8/r7/R3K3 w Q - 30 50 moves a1a2", 0},
+	//promotion resets
+	{"position fen 4k3/P7/8/8/8/8/8/4K3 w - - 20 60 moves a7a8q", 0},
+	{"position fen 4k3/P7/8/8/8/8/8/4K3 w - - 20 60 moves a7a8q e8d7", 1},
+};
+
+bool testFiftyMoveCounter(){
+	initializeAll();
+
+	bitboard board;
+	sidetomove tomove;
+	int fmv, movenum;
+	for (size_t c = 0; c < sizeof(FMV_CASES) / sizeof(FMV_CASES[0]); c++){
+		const fmvCase* fc = &FMV_CASES[c];
+		parsePosition(fc->command, &board, &tomove, &fmv, &movenum);
+
+		if (fmv != fc->expected || board.fmv != fc->expected){
+			printf("%s\nexpected %d, parsed %d, board %d\n", fc->command, fc->expected, fmv, board.fmv);
+			printf("Fifty move counter test failed\n");
+			return false;
+		}
+	}
+	printf("Fifty move counter tests passed\n");
 	return true;
 }

@@ -543,7 +543,7 @@ move iterativeDeepening(bitboard board, sidetomove tomove){
  * CPU
  * recieves a move request, starts the thinking with adequate strength
  * */
-move CPU(int cpulvl, bitboard bboard, sidetomove tomove, int fmv){
+move CPU(int cpulvl, bitboard bboard, sidetomove tomove){
 	squarenums start = {-1, -1};
 	move m = initializemove(start, start, 0);
 	//~ bitboard bboard = boardConvert(board, castling, enpass, tomove);

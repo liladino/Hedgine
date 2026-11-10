@@ -35,4 +35,6 @@ bool makeMoveTest();
 
 bool assertEval();
 
+bool testFiftyMoveCounter();
+
 #endif

@@ -280,6 +280,8 @@ int setboardFEN(const char FEN[], bitboard* bboard, sidetomove *tomove, int *fmv
 
 	//boardConvert computes the hash too
 	(*bboard) = boardConvert(board, castling, enpass, *tomove);
+	//clamped to uint8_t
+	bboard->fmv = (*fmv < 0) ? 0 : (*fmv > 255) ? 255 : *fmv;
 	setMailBox(bboard);
 
 	return 0;

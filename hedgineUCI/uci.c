@@ -121,6 +121,13 @@ void parsePosition(const char* command, bitboard* board, sidetomove* tomove, int
 
 		*fmv = irreversible ? 0 : *fmv + 1;
 
+		#ifdef DEBUG
+		//the board keeps its own counter (updated in makeMove), they must agree
+		if (*fmv != board->fmv){
+			printf("fifty move counter mismatch after %.5s: parsed %d, board %d\n", currentmove, *fmv, board->fmv);
+		}
+		#endif
+
 		if (
 			irreversible ||
 			last.castlerights != board->castlerights ||
@@ -142,9 +149,9 @@ void parsePosition(const char* command, bitboard* board, sidetomove* tomove, int
 
 noMovesGiven:
 	#ifdef DEBUG
-	printf( "tomove: %d\tfifty move count: %d\tmove num: %d\n", *tomove, *fmv, *movenum);
+	printf( "tomove: %d\tfifty move count: %d (board: %d)\tmove num: %d\n", *tomove, *fmv, board->fmv, *movenum);
 	#endif
-	return; 
+	return;
 
 posError:
 	setboardFEN(STARTPOS, board, tomove, fmv, movenum);
@@ -161,7 +168,7 @@ void resetTimeControl(){
 }
 
 // parse UCI command "go"
-void parseGo(const char *command, const bitboard* board, const sidetomove *tomove, const int fmv) {
+void parseGo(const char *command, const bitboard* board, const sidetomove *tomove) {
 	resetTimeControl();
 
 	bool infinite = false;
@@ -237,7 +244,7 @@ void parseGo(const char *command, const bitboard* board, const sidetomove *tomov
 	// printBitBoard2d(g_debugOutput, *board);
 	#endif
 	
-	move m = CPU(depth, *board, *tomove, fmv);
+	move m = CPU(depth, *board, *tomove);
 	char movestr[MOVESTR_LEN];
 	moveToString(movestr, m);
 	printf("bestmove %s\n", movestr);
@@ -292,7 +299,7 @@ void UCIloop(bitboard* board, sidetomove *tomove, int* fmv, int* movenum) {
 			clearTransTable();
 		}
 		else if ((compareToken(input, "go", 2))){
-			parseGo(input, board, tomove, *fmv);
+			parseGo(input, board, tomove);
 		}
 		else if ((compareToken(input, "quit", 4))){
 			info.quit = true;
