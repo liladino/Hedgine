@@ -353,11 +353,9 @@ int g_RTwriteIndex = 0;
  * 
  * The position is considered a DRAW after the FIRST repetition, so the engine
  * avoids previous positions like fire, if it think's it's better. */
-
-// TODO: don't search all the way back to 0 index, only up to the last capture 
-bool isRepetition(const u64 pos){
+bool isRepetition(const u64 pos, int fmv){
 	//scan backwards by full moves, becuase a position is not the same with the side to move changed
-	for (int i = g_RTwriteIndex - 1; i >= 1; i -= 2) {
+	for (int i = g_RTwriteIndex - 1; i >= 1 && fmv >= 2; i -= 2, fmv -= 2) {
 		if (s_RepetitionTable[i] == pos){
 			return true;
 		}

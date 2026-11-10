@@ -110,11 +110,18 @@ static int quiescenceSearch(sidetomove tomove, int alpha, int beta, int ply, int
 	if (1026 == s_searchedNodes % 1027) { communicate(); }
 	if (g_stopSearch) { return 0; }
 
+	if (s_searchBoard.fmv >= 100 &&
+		!(bitInCheck(&s_searchBoard, tomove) 
+		&& !hasLegalMove(&s_searchBoard, tomove))
+	){
+		return 0;
+	}
+
 	if (qdepth >= MAX_QSEARCH_DEPTH) {
     	return staticEval(&s_searchBoard, tomove);
 	}
 
-	if (isRepetition(s_searchBoard.hashValue)){
+	if (isRepetition(s_searchBoard.hashValue, s_searchBoard.fmv)){
 		return 0;
 	}
 
@@ -206,7 +213,13 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 	if (g_stopSearch) { return 0; }
 	
 	if (0 < depth) {
-		if (isRepetition(s_searchBoard.hashValue)) { return 0; }
+		if (s_searchBoard.fmv >= 100 &&
+			!(bitInCheck(&s_searchBoard, tomove) 
+			&& !hasLegalMove(&s_searchBoard, tomove))
+		){
+			return 0;
+		}
+		if (isRepetition(s_searchBoard.hashValue, s_searchBoard.fmv)) { return 0; }
 		
 		alpha = i_max(alpha, -MATE_NOW + depth);
 		beta  = i_min(beta,   MATE_NOW - depth - 1);

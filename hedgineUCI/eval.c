@@ -579,6 +579,17 @@ int staticEval(bitboard *board, sidetomove tomove)
 			}
 		}
 	}
+
+	/* scale near the 50 move rule:
+	 *  (x -  60) / y = 1
+	 *  (x - 100) / y = 1/2
+	 * 
+	 * x = 140
+	 * y = 80
+	 */
+	if (board->fmv > 60) {
+		score = score * (140 - board->fmv) / 80;
+	}
 	
 	return tomove == white ? score : -score;
 	
