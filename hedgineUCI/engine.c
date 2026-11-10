@@ -28,6 +28,7 @@ static bitMove  s_PVtable  [MAXSEARCHDEPTH+1][MAXSEARCHDEPTH+1];
 static int      s_PVlen    [MAXSEARCHDEPTH+1]; // length of PV line at each depth
 static bitMove  s_PVcommit [MAXSEARCHDEPTH+1];
 static int      s_PVcommitlen;
+static bool     s_followPV;
 //heuristics
 static int      s_history[12][64]; //beta cutoff storing
 static bitMove  s_killers[2][MAXSEARCHDEPTH+1];
@@ -228,16 +229,17 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta, int 
 	}
 
 	/*
-	 * Order moves
+	 * Best move hint
 	 * */
 	bitMove hint = NULLBITMOVE;
-	if (depth == 0){
-		if (s_PVcommitlen > 0){
-			hint = s_PVcommit[0];
+	if (s_followPV && depth < s_PVcommitlen) {
+		hint = s_PVcommit[depth];
+	} 
+	else {
+		s_followPV = false;
+		if (depth > 0 && probed) {
+			hint = probed->m;
 		}
-	}
-	else if (probed) {
-		hint = probed->m;
 	}
 	
 	/*
@@ -282,10 +284,14 @@ int search(bool tomove, int remainingDepth, int depth, int alpha, int beta, int 
 
 		++actualLegalMoves;
 
+		//do we follow PV?
+		if (s_followPV && !sameMove(&currentMove, &hint)){
+			s_followPV = false;
+		}
+
 		/*
 		 * Extension?
 		 * */
-		
 		int extension = 0;
 		if (numExtensions < MAX_EXTENSIONS) {
 			if (inCheck) {
@@ -462,10 +468,11 @@ move iterativeDeepening(bitboard board, bool tomove){
 		ageHistory();
 		s_maxdepth = i;
 		s_searchBoard = board;
+		s_followPV = true;
 		eval = search(tomove, i, 0, NegINF, PosINF, 0);
 		if (!sameMove(&NULLBITMOVE, &s_PVcommit[0])) nextm = convertBitMoveToMove(s_PVcommit[0]);
 		
-		//~ usleep(500);
+		// usleep(500);
 		communicate();
 					
 		if (g_stopSearch){
@@ -508,12 +515,10 @@ move iterativeDeepening(bitboard board, bool tomove){
 		if (mate) break;
 	}
 	
-	//~ rmBestMoveFlag(s_nextpos);
-	
-	//~ #ifdef DEBUG
-	//~ printCollisionStats();
-	//~ printf("\n\n");
-	//~ #endif 
+	// #ifdef DEBUG
+	// printCollisionStats();
+	// printf("\n\n");
+	// #endif 
 	
 	// if we return the move too quickly, some GUIs don't register it
 	// (not under time control: on Windows the sleep can last a whole ~15ms scheduler tick)
