@@ -462,6 +462,7 @@ move iterativeDeepening(bitboard board, sidetomove tomove){
 	move nextm = NULLMOVE;
 	emptyPVTable();
 	emptyKillers();
+	newSearchTT();
 	
 	s_PVcommit[0] = NULLBITMOVE;
 	s_PVcommitlen = 0;

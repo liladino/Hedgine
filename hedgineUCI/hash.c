@@ -295,7 +295,8 @@ void storePosTT(const u64 hashValue, int eval, evalflag flag, int depthRemaining
 	/* a fail low has no best move, keep the move of the same position stored
 	 * before
 	 */
-	bool keepMove = m->from == NULLBITMOVE.from &&
+	bool keepMove = entry->flag != TT_EMPTY &&
+					m->from == NULLBITMOVE.from &&
 		   			m->to == NULLBITMOVE.to && 
 					entry->pos == hashValue;
 

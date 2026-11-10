@@ -3,20 +3,27 @@ Date:	Nov 10 2026:
 	PV line, when available. Results show that this is identical, and shouldn't 
 	affect the performance.
 
-	Tuned minor piece evaluation: bishop pair bonus, knight positions refined. 
-	Tests showed a 24 Elo increase: 16LL 39LD 76WL/DD 39WD 30WW in 200 games.
+	Tuned minor piece evaluation: bishop pair bonus, knight positions refined.
 
 	Changed all tomove signatures to sidetomove from bool. This ensures compiler
-	warning when passing pointer as value and vica versa. This made one present
+	warning when passing pointer as value and vice versa. This made one present
 	error visible, when storing in the repetition table.
 
 	Added 50 move rule awareness: the search is terminated at ply 100, the eval
-	is tapered after teh 60th ply, to prioritize deciding moves in the endgame, 
+	is tapered after the 60th ply, to prioritize deciding moves in the endgame,
 	and the repetition table now only searches back until the last capture/pawn
 	move.
 
-	Against the minor piece version: 17LL 30LD 87WW/DD 44WD 22WW, another 
-	approximately 20 Elo gain.
+	TT fix: in each game, age the results (newSearchTT). With 512 MB hash the
+	table is rarely full, so the replacement hardly matters: inconclusive. With
+	1 MB hash the table is under pressure, and the fix is a clear gain.
+
+	Results in game pairs (from the first engine's perspective):
+	                                    pairs  LL  LD  WL/DD  WD  WW   score    Elo   95% CI
+	minor pieces vs previous              200  16  39     76  39  30   53.5%    +24   -3 .. +52
+	50 move rule vs minor pieces          200  17  30     87  44  22   53.0%    +21   -5 .. +47
+	50 move vs TT age fix (512 MB hash)   400  37  74    174  74  41   50.5%     +3  -15 .. +22
+	TT age fix vs 50 move (1 MB)          500  44  83    195 116  62   53.5%    +24   +7 .. +41
 
 Date:	Nov 09 2026:
 	Added PV null window search yesterday, but in tests it proved to be 
