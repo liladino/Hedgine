@@ -65,7 +65,7 @@ int main(int argc, char* argv[]){
 	
 	initializeAll();
 	
-	bool tomove = white;
+	sidetomove tomove = white;
 	int movenum = 1, fmv = 0; //fifty-move rule
 	
 	bitboard board;

@@ -181,7 +181,7 @@ int countPieces(const bitboard* const board){
 	return counter(all); 
 }
 
-int countFriendlyPieces(const bitboard* const board, bool tomove){
+int countFriendlyPieces(const bitboard* const board, sidetomove tomove){
 	u64 all;
 	if (white == tomove) all = (board->piece[wpawn] | board->piece[wqueen] | board->piece[wbishop] | board->piece[wknight] | board->piece[wrook]);
 	else                 all = (board->piece[bpawn] | board->piece[bqueen] | board->piece[bbishop] | board->piece[bknight] | board->piece[brook]);
@@ -233,7 +233,7 @@ static inline int phaseValue(int openingValue, int middleValue, int endValue, in
 /* The tables are from white's perspective (row 0 = rank 1),
  * black's pieces are mirrored vertically.
  * */
-static inline int tableRow(int square, bool tomove){
+static inline int tableRow(int square, sidetomove tomove){
 	return (tomove == white ? square / 8 : 7 - square / 8);
 }
 
@@ -275,7 +275,7 @@ static inline u64 soutFillSingle(int square) {
 
 static inline int sideEval(
 	const bitboard* const board, 
-	bool tomove, 
+	sidetomove tomove, 
 	const int pieces,
 	const int pawncount,
 	const u64 friendly,
@@ -506,7 +506,7 @@ static inline int sideEval(
 // 	return ((sq >> 3) ^ (sq & 7)) & 1;
 // }
 
-int staticEval(bitboard *board, bool tomove)
+int staticEval(bitboard *board, sidetomove tomove)
 {
 	const int pieces = i_min(MAX_PIECE_COUNT, countPieces(board));
 	const int pawncount = counter((board->piece[wpawn] | board->piece[bpawn]));

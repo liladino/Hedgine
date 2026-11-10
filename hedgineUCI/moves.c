@@ -40,6 +40,17 @@ void setmove(move *m, square from, square to, int promotion){
  * BITS
  ******************************************************************************/
 
+int updateFiftyMoveCounter(const bitMove* m, int fmv){
+	if (m->flags & (DOUBLE_PAWNMOVE_FLAG | CAPTURE_FLAG | EN_PASSANT_FLAG)){
+		return 0;
+	}
+	if (wpawn == m->piece || bpawn == m->piece){
+		return 0;
+	}
+
+	return fmv+1;
+}
+
 move convertBitMoveToMove(const bitMove m){
 	int temp;
 	switch (m.promotion) {
@@ -70,7 +81,7 @@ bool compareBitMoveToMove(const bitMove bm, const move m){
 	return (curr.from.file == m.from.file && curr.from.rank == m.from.rank && curr.to.file == m.to.file && curr.to.rank == m.to.rank && curr.promotion == m.promotion);
 }
  
-bitMove convertMoveToBitMove(bitboard* board, bool tomove, const move m) {
+bitMove convertMoveToBitMove(bitboard* board, sidetomove tomove, const move m) {
 	movearray moves;
 	generateLegalMoves(&moves, board, tomove);
 	// printLegalmoves(moves, *board);
@@ -91,7 +102,7 @@ int isMoveInMoveArray(const movearray* legalmoves, const move m){
 	return -1;
 } 
 
-int makeMoveIfLegal(bitboard* board, const bool tomove, const move m){
+int makeMoveIfLegal(bitboard* board, const sidetomove tomove, const move m){
 	movearray legalmoves;
 	generateLegalMoves(&legalmoves, board, tomove);
 	int x = isMoveInMoveArray(&legalmoves, m);
@@ -111,7 +122,7 @@ int makeMoveIfLegal(bitboard* board, const bool tomove, const move m){
 	return 0;
 }
 
-bitboard boardConvert(char board2d[12][12], int castling[4], squarenums enpass, bool tomove){
+bitboard boardConvert(char board2d[12][12], int castling[4], squarenums enpass, sidetomove tomove){
 	/*castling: [3:0] = qkQk
 	* 0000 0101 => 
 	* also 4 bit:
@@ -196,7 +207,7 @@ void boardConvertBack(char board2d[12][12], bitboard board){
 }
 
 
-move boardConvertTomove(const bitboard* const board1, const bitboard* const board2, bool tomove){
+move boardConvertTomove(const bitboard* const board1, const bitboard* const board2, sidetomove tomove){
 	move m = {{-1, -1}, {-1, -1}, 0};
 	int offset = (tomove == white ? 0 : bking);
 	int differences = 0;
@@ -244,7 +255,7 @@ move boardConvertTomove(const bitboard* const board1, const bitboard* const boar
 	return m;
 }
 
-bool lastMoveWasCapture(const bitboard* const lastboard, const move m, const bool tomove){
+bool lastMoveWasCapture(const bitboard* const lastboard, const move m, const sidetomove tomove){
 	u64 targetsquare = 1;
 	targetsquare = targetsquare << (m.to.file - 2 + (m.to.rank - 2) * 8);
 	
@@ -264,18 +275,11 @@ bool lastMoveWasCapture(const bitboard* const lastboard, const move m, const boo
 		return true;
 	}
 	
-	//en passant
-	targetsquare = lastboard->enpassanttarget;
-	if (targetsquare == 0) return false;
-	
-	if (tomove == white) {
-		if (lastboard->piece[bpawn] & (targetsquare >> 8)) return true;
-	}
-	else {
-		if (lastboard->piece[wpawn] & (targetsquare << 8)) return true;
-	}
-	
-	return false;
+	//en passant: a pawn of the mover lands on the en passant target square
+	if (!(lastboard->enpassanttarget & targetsquare)) return false;
+
+	u64 fromsquare = 1ULL << (m.from.file - 2 + (m.from.rank - 2) * 8);
+	return lastboard->piece[tomove == white ? wpawn : bpawn] & fromsquare;
 }
 
 int8_t mailbox[64] = 

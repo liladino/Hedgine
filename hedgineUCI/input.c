@@ -83,7 +83,7 @@ int readLineDynamic(char **str, size_t maxSize) {
 /* moves in the form of e.g. e1g1 or e7e8q
  * expects str to be at least 1 char long and ends with 0
  * */
-move parseLongAlgebraicNotation(char str[]){
+move parseLongAlgebraicNotation(const char str[]){
 	//~ move NULLMOVE = {{-1, -1}, {-1, -1}, 0};
 	move current = {{-1, -1}, {-1, -1}, 0};
 	
@@ -101,12 +101,14 @@ move parseLongAlgebraicNotation(char str[]){
 	if (str[3] > '8' || str[3] < '1') return NULLMOVE;
 	to.rank = str[3] - '0';
 	
-	if (str[4] >= 'A' && str[4] <= 'Z') str[4] += 'a' - 'A'; 
-	
+	char lower = str[4];
+	if (str[4] >= 'A' && str[4] <= 'Z') {
+		lower += 'a' - 'A'; 
+	}
 	char prom = 0;
-	if (str[4] >= 'a' && str[4] <= 'z'){
-		if (str[4] != 'b' && str[4] != 'n' && str[4] != 'r' && str[4] != 'q') return NULLMOVE;
-		prom = str[4];
+	if (lower >= 'a' && lower <= 'z'){
+		if (lower != 'b' && lower != 'n' && lower != 'r' && lower != 'q') return NULLMOVE;
+		prom = lower;
 	} 
 	
 	setmove(&current, from, to, prom);
@@ -116,7 +118,7 @@ move parseLongAlgebraicNotation(char str[]){
 
 // FEN stuff
 
-int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int *fmv, int *movenum){ 
+int setboardFEN(const char FEN[], bitboard* bboard, sidetomove *tomove, int *fmv, int *movenum){ 
 	char board[12][12] = {0};
 	int castling[4] = {0};
 	squarenums enpass = {-1, -1};

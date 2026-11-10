@@ -2,18 +2,18 @@
 
 gameInfo info;
 
-static char *skip_ws(char *str) {
+static const char *skip_ws(const char *str) {
 	while (*str && isspace((unsigned char)*str)) str++;
 	return *str ? str : NULL;
 }
 
-static char *skip_token(char *str) {
+static const char *skip_token(const char *str) {
 	while (*str && !isspace((unsigned char)*str)) str++;
 	return str;
 }
 
 /* Returns start of next token after the current one (or NULL). */
-static char* jumpToNextToken(char *str) {
+static const char* jumpToNextToken(const char *str) {
 	if (!str) return NULL;
 	str = skip_token(str);
 	return skip_ws(str);
@@ -25,7 +25,7 @@ static inline bool compareToken(const char* str1, const char* str2, size_t n){
 	return (strncmp(str1, str2, n) == 0 && (str1[n] == '\0' || isspace((unsigned char)str1[n])));
 }
 
-static char* findToken(char* str, const char* token) {
+static const char* findToken(const char* str, const char* token) {
 	if (!str || !token) return NULL;
 	size_t n = strlen(token);
 
@@ -49,8 +49,8 @@ static char* findToken(char* str, const char* token) {
 // parse UCI "position" command
 // e.g position startpos moves e2e4 e7e5
 //	position fen ... moves ...
-void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* movenum){
-	char *token = jumpToNextToken(command); // after "position"
+void parsePosition(const char* command, bitboard* board, sidetomove* tomove, int* fmv, int* movenum){
+	const char *token = jumpToNextToken(command); // after "position"
 	if (!token) return;
 
 	g_RTwriteIndex = 0;
@@ -74,7 +74,7 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 	//store the start position in the repetition table too
 	storeRepetiton(board->hashValue);
 	
-	char* currentmove = findToken(command, "moves");
+	const char* currentmove = findToken(command, "moves");
 	if (currentmove == NULL){
 		goto noMovesGiven;
 	}
@@ -113,21 +113,27 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 		 * if the move was a capture, castling, a pawn move, or the en 
 		 * passant target square changed(/got deleted), the position can't
 		 * be repeated anymore => the write index can be 0 again */
+		//pawn move or capture: resets the fifty move counter
+		bool irreversible =
+			last.piece[wpawn] != board->piece[wpawn] ||
+			last.piece[bpawn] != board->piece[bpawn] ||
+			lastMoveWasCapture(&last, m, *tomove);
+
+		*fmv = irreversible ? 0 : *fmv + 1;
+
 		if (
-			last.piece[wpawn] != board->piece[wpawn] || 
-			last.piece[bpawn] != board->piece[bpawn] || 
-			last.castlerights != board->castlerights || 
-			last.enpassanttarget != board->enpassanttarget || 
-			lastMoveWasCapture(&last, m, tomove)
+			irreversible ||
+			last.castlerights != board->castlerights ||
+			last.enpassanttarget != board->enpassanttarget
 				){
 			g_RTwriteIndex = 0;
 		}
 		storeRepetiton(board->hashValue);
 		movesread++;
-		
+
 		if (*tomove == black) (*movenum)++;
 		*tomove = !(*tomove);
-		
+
 		currentmove = jumpToNextToken(currentmove);
 	}
 	if (movesread){
@@ -155,7 +161,7 @@ void resetTimeControl(){
 }
 
 // parse UCI command "go"
-void parseGo(char *command, bitboard* board, bool *tomove) {
+void parseGo(const char *command, const bitboard* board, const sidetomove *tomove, const int fmv) {
 	resetTimeControl();
 
 	bool infinite = false;
@@ -165,9 +171,9 @@ void parseGo(char *command, bitboard* board, bool *tomove) {
 	int depth = 40;
 
 	// Start at first token after "go"
-	char *arg = jumpToNextToken(command);
+	const char *arg = jumpToNextToken(command);
 	for (; arg; arg = jumpToNextToken(arg)) {
-		char* v = NULL;
+		const char* v = NULL;
 		if (compareToken(arg, "infinite", 8)) {
 			infinite = true;
 		}
@@ -231,7 +237,7 @@ void parseGo(char *command, bitboard* board, bool *tomove) {
 	// printBitBoard2d(g_debugOutput, *board);
 	#endif
 	
-	move m = CPU(depth, *board, *tomove);
+	move m = CPU(depth, *board, *tomove, fmv);
 	char movestr[MOVESTR_LEN];
 	moveToString(movestr, m);
 	printf("bestmove %s\n", movestr);
@@ -243,7 +249,7 @@ void parseGo(char *command, bitboard* board, bool *tomove) {
 }
 
 // main UCI loop
-void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
+void UCIloop(bitboard* board, sidetomove *tomove, int* fmv, int* movenum) {
 	// reset STDIN & STDOUT buffers
 	setbuf(stdin, NULL);
 	setbuf(stdout, NULL);
@@ -286,7 +292,7 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 			clearTransTable();
 		}
 		else if ((compareToken(input, "go", 2))){
-			parseGo(input, board, tomove);
+			parseGo(input, board, tomove, *fmv);
 		}
 		else if ((compareToken(input, "quit", 4))){
 			info.quit = true;
@@ -299,7 +305,7 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 			printf("uciok\n");
 		}
 		else if (compareToken(input, "setoption", 9)) {
-			char* temp = jumpToNextToken(input);
+			const char* temp = jumpToNextToken(input);
 			if (compareToken(temp, "name", 4)){
 				if (compareToken(temp = jumpToNextToken(temp), "Hash", 4)){
 					if (compareToken(temp = jumpToNextToken(temp), "value", 5)){

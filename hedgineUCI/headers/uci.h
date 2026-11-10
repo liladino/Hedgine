@@ -31,11 +31,11 @@ int inputWaiting();
 
 void readInput();
 
-void parsePosition(char *command, bitboard* bboard, bool *tomove, int* fmv, int* movenum);
+void parsePosition(const char *command, bitboard* bboard, sidetomove *tomove, int* fmv, int* movenum);
 
-void parseGo(char *command, bitboard* board, bool *tomove);
+void parseGo(const char *command, const bitboard* board, const sidetomove *tomove, int fmv);
 
-void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum);
+void UCIloop(bitboard* board, sidetomove *tomove, int* fmv, int* movenum);
 
 void setMoveTime(int increment);
 

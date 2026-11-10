@@ -26,21 +26,21 @@ static __inline__ __attribute__((always_inline)) u64 enemypieces(const bitboard*
 	return (board->piece[wking] | board->piece[wqueen] | board->piece[wbishop] | board->piece[wknight] | board->piece[wpawn] | board->piece[wrook]); 
 }
 
-bool bitInCheck(const bitboard* const board, bool tomove);
+bool bitInCheck(const bitboard* const board, sidetomove tomove);
 
-void generatePseudoLegalMoves(movearray* moves, const bitboard* board, bool tomove);
+void generatePseudoLegalMoves(movearray* moves, const bitboard* board, sidetomove tomove);
 
-void generateMovesWithModes(movearray *moves, const bitboard *board, const bool tomove, const GenMode mode);
+void generateMovesWithModes(movearray *moves, const bitboard *board, const sidetomove tomove, const GenMode mode);
 
-void generateLegalMoves(movearray* moves, bitboard* board, bool tomove);
+void generateLegalMoves(movearray* moves, bitboard* board, sidetomove tomove);
 
-// resultconst gameend(bitboard* board, bool tomove);
+// resultconst gameend(bitboard* board, sidetomove tomove);
 
-bool hasLegalMove(bitboard *board, bool tomove);
+bool hasLegalMove(bitboard *board, sidetomove tomove);
 
-bool isCastlingLegal(bitboard* board, bool tomove, const bitMove* mv);
+bool isCastlingLegal(bitboard* board, sidetomove tomove, const bitMove* mv);
 
-bool isPseudoLegal(const bitboard* board, bool tomove, const bitMove* m);
+bool isPseudoLegal(const bitboard* board, sidetomove tomove, const bitMove* m);
 
 extern const u64 kingAttacks[64];
 

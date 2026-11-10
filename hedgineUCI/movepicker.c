@@ -88,7 +88,7 @@ void initMovePicker(
 	picker->next = 0;
 }
 
-bool nextMove(MovePicker *picker, const bitboard *board, bool tomove, bitMove *out) {
+bool nextMove(MovePicker *picker, const bitboard *board, sidetomove tomove, bitMove *out) {
 	if (picker->stage == PICK_DONE) {
 		return false;
 	}

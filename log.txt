@@ -6,6 +6,10 @@ Date:	Nov 10 2026:
 	Tuned minor piece evaluation: bishop pair bonus, knight positions refined. 
 	Tests showed a 24 Elo increase: 16LL 39LD 76WL/DD 39WD 30WW in 200 games.
 
+	Changed all tomove signatures to sidetomove from bool. This ensures compiler
+	warning when passing pointer as value and vica versa. This made one present
+	error visible, when storing in the repetition table.
+
 Date:	Nov 09 2026:
 	Added PV null window search yesterday, but in tests it proved to be 
 	disadvantegous with searching more nodes.

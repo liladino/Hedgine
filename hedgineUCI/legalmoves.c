@@ -94,7 +94,7 @@ static inline u64 pop_lsb(u64 *var) {
 	return lsb;
 }
 
-bool bitInCheck(const bitboard* const board, bool tomove){
+bool bitInCheck(const bitboard* const board, sidetomove tomove){
 	//~ printBitBoard2d(stdout, *board);
 	
 	int kingIndex = __builtin_ctzll((tomove == white ? board->piece[wking] : board->piece[bking]));
@@ -144,7 +144,7 @@ static void addSinglePieceMovesHelper(movearray *moves, int from, uint8_t piece,
 	}
 }
 
-static void addSingleKnightMoves(movearray* moves, bool tomove, int from, u64 targets, u64 enemy){
+static void addSingleKnightMoves(movearray* moves, sidetomove tomove, int from, u64 targets, u64 enemy){
 	targets &= knightMoves[from];
 	uint8_t piece = (tomove != white ? bknight : wknight);
 	
@@ -152,35 +152,35 @@ static void addSingleKnightMoves(movearray* moves, bool tomove, int from, u64 ta
 }
 
 
-static void addSingleBishopMoves(movearray* moves, bool tomove, int from, u64 targets, u64 enemy, u64 friendly){
+static void addSingleBishopMoves(movearray* moves, sidetomove tomove, int from, u64 targets, u64 enemy, u64 friendly){
 	targets &= Bmagic(from, enemy | friendly); 
 	uint8_t piece = (tomove != white ? bbishop : wbishop);
 	
 	addSinglePieceMovesHelper(moves, from, piece, targets, enemy);
 }
 	
-static void addSingleRookMoves(movearray* moves, bool tomove, int from, u64 targets, u64 enemy, u64 friendly){
+static void addSingleRookMoves(movearray* moves, sidetomove tomove, int from, u64 targets, u64 enemy, u64 friendly){
 	targets &= Rmagic(from, enemy | friendly); 
 	uint8_t piece = (tomove != white ? brook : wrook);
 	
 	addSinglePieceMovesHelper(moves, from, piece, targets, enemy);
 }
 
-static void addSingleQueenMoves(movearray* moves, bool tomove, int from, u64 targets, u64 enemy, u64 friendly){
+static void addSingleQueenMoves(movearray* moves, sidetomove tomove, int from, u64 targets, u64 enemy, u64 friendly){
 	targets &= (Bmagic(from, enemy | friendly)) | (Rmagic(from, enemy | friendly)); 
 	uint8_t piece = (tomove != white ? bqueen : wqueen);
 	
 	addSinglePieceMovesHelper(moves, from, piece, targets, enemy);
 }
 
-static void addNormalKingMoves(movearray* moves, bool tomove, int from, u64 targets, u64 enemy){
+static void addNormalKingMoves(movearray* moves, sidetomove tomove, int from, u64 targets, u64 enemy){
 	targets &= kingAttacks[from]; 
 	uint8_t piece = (tomove != white ? bking : wking);
 	
 	addSinglePieceMovesHelper(moves, from, piece, targets, enemy);
 }
 
-static void addCastlingMoves(movearray* moves, const bitboard* const board, bool tomove, u64 enemy, u64 friendly){
+static void addCastlingMoves(movearray* moves, const bitboard* const board, sidetomove tomove, u64 enemy, u64 friendly){
 	bitMove* legalmoves = moves->array;
 	int* array_index = &(moves->size);
 	
@@ -373,7 +373,7 @@ static void addQuietPawnMoveEvasionsB(movearray* moves, int from, u64 targets, u
 static void generateNonSpecialMoves(
 	movearray *moves, 
 	const bitboard *board, 
-	const bool tomove, 
+	const sidetomove tomove, 
 	u64 possibleTargetSquares, 
 	u64 enemy,
 	u64 friendly,
@@ -406,7 +406,7 @@ static void generateNonSpecialMoves(
 	}
 }
 
-static u64 attackersToKing(const bitboard *board, const bool tomove, const u64 enemy, const u64 friendly, bool* out_slider){
+static u64 attackersToKing(const bitboard *board, const sidetomove tomove, const u64 enemy, const u64 friendly, bool* out_slider){
 	int kingIndex;
 	u64 mask = 0;
 	int coloffset;
@@ -549,7 +549,7 @@ static inline uint64_t segment_mask(size_t a, size_t b){
     return (pattern << lo) & (UINT64_MAX >> (63 - hi));
 }
 
-static void generateEvasions(movearray *moves, const bitboard *board, const bool tomove){
+static void generateEvasions(movearray *moves, const bitboard *board, const sidetomove tomove){
 	int coloffset = (tomove != white ? 6 : 0);
 	u64 enemy = enemypieces(board, !tomove); 
 	u64 friendly = enemypieces(board, tomove);
@@ -628,7 +628,7 @@ static void generateEvasions(movearray *moves, const bitboard *board, const bool
 }
 
 
-void generateMovesWithModes(movearray *moves, const bitboard *board, const bool tomove, const GenMode mode) {
+void generateMovesWithModes(movearray *moves, const bitboard *board, const sidetomove tomove, const GenMode mode) {
 	moves->size = 0;
 	if (GEN_EVASIONS == mode){
 		generateEvasions(moves, board, tomove);
@@ -699,7 +699,7 @@ void generateMovesWithModes(movearray *moves, const bitboard *board, const bool 
 	generateNonSpecialMoves(moves, board, tomove, possibleTargetSquares, enemy, friendly, coloffset);
 }
 
-void generatePseudoLegalMoves(movearray* moves, const bitboard* const board, bool tomove){
+void generatePseudoLegalMoves(movearray* moves, const bitboard* const board, sidetomove tomove){
 	generateMovesWithModes(moves, board, tomove, GEN_ALL);
 }
 
@@ -707,7 +707,7 @@ void generatePseudoLegalMoves(movearray* moves, const bitboard* const board, boo
  * every candidate), so it is meant for the root/UCI side, not for the search.
  * Requires the mailbox to be in sync with board. board is restored on return.
  * */
-void generateLegalMoves(movearray* moves, bitboard* board, bool tomove){
+void generateLegalMoves(movearray* moves, bitboard* board, sidetomove tomove){
 	generateMovesWithModes(moves, board, tomove, GEN_ALL);
 
 	int legalCount = 0;
@@ -729,7 +729,7 @@ void generateLegalMoves(movearray* moves, bitboard* board, bool tomove){
 	moves->size = legalCount;
 }
 
-bool hasLegalMove(bitboard *board, bool tomove) {
+bool hasLegalMove(bitboard *board, sidetomove tomove) {
     movearray moves;
 
     const GenMode stages[] = {GEN_QUIET, GEN_TACTICAL};
@@ -759,7 +759,7 @@ bool hasLegalMove(bitboard *board, bool tomove) {
 /**
  * Not neccessary for search.
  */
-// resultconst gameend(bitboard *board, bool tomove){
+// resultconst gameend(bitboard *board, sidetomove tomove){
 //     if (hasLegalMove(board, tomove))
 //         return ONGOING;
 
@@ -777,7 +777,7 @@ bool hasLegalMove(bitboard *board, bool tomove) {
  * Note: the square we arrive on is not checked, as it would be redundant (that
  * is checked for every move anyway when said move is made) 
  * */
-bool isCastlingLegal(bitboard* board, bool tomove, const bitMove* const mv){
+bool isCastlingLegal(bitboard* board, sidetomove tomove, const bitMove* const mv){
 	if ((mv->flags & CASTLE_FLAG)){
 		if (bitInCheck(board, tomove)) { return false; }
 		
@@ -795,7 +795,7 @@ bool isCastlingLegal(bitboard* board, bool tomove, const bitMove* const mv){
 	return true;
 }
 
-bool isPseudoLegal(const bitboard* board, bool tomove, const bitMove* m){
+bool isPseudoLegal(const bitboard* board, sidetomove tomove, const bitMove* m){
 	int off = (tomove == white ? 0 : bking);
 	u64 friendly = enemypieces(board, tomove);
 	u64 enemy = enemypieces(board, !tomove);

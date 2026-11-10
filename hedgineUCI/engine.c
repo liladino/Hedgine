@@ -86,7 +86,7 @@ void communicate() {
 /* 
  * RANDOM MOVER BOT
  *  */
-move randomBot(bitboard board, bool tomove){
+move randomBot(bitboard board, sidetomove tomove){
 	static bool called = false;
 	if (!called){
 		srand((unsigned) time (NULL));
@@ -105,7 +105,7 @@ move randomBot(bitboard board, bool tomove){
 /*
  * Quiescence search
  * */
-static int quiescenceSearch(bool tomove, int alpha, int beta, int ply, int qdepth){
+static int quiescenceSearch(sidetomove tomove, int alpha, int beta, int ply, int qdepth){
 	s_searchedNodes++;
 	if (1026 == s_searchedNodes % 1027) { communicate(); }
 	if (g_stopSearch) { return 0; }
@@ -194,7 +194,7 @@ static int quiescenceSearch(bool tomove, int alpha, int beta, int ply, int qdept
  * depth: from the root node, 0: nothing searched yet
  * remainingDepth: decreasing to 0
  * */
-int search(bool tomove, int remainingDepth, int depth, int alpha, int beta, int numExtensions){	
+int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta, int numExtensions){	
 	if (depth >= MAXSEARCHDEPTH) {
 		return staticEval(&s_searchBoard, tomove);
 	}
@@ -442,7 +442,7 @@ static inline void ageHistory(){
 	}
 }
 
-move iterativeDeepening(bitboard board, bool tomove){
+move iterativeDeepening(bitboard board, sidetomove tomove){
 	long int searchStartTime = getTime_ms();
 	
 	s_searchedNodes = 0;
@@ -543,7 +543,7 @@ move iterativeDeepening(bitboard board, bool tomove){
  * CPU
  * recieves a move request, starts the thinking with adequate strength
  * */
-move CPU(int cpulvl, bitboard bboard, bool tomove){
+move CPU(int cpulvl, bitboard bboard, sidetomove tomove, int fmv){
 	squarenums start = {-1, -1};
 	move m = initializemove(start, start, 0);
 	//~ bitboard bboard = boardConvert(board, castling, enpass, tomove);

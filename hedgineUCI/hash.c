@@ -99,7 +99,7 @@ void setHashKey(){
 	Zobrist.tomove = rand64();
 }
 
-u64 hashPosition(const bitboard* const board, bool tomove){
+u64 hashPosition(const bitboard* const board, sidetomove tomove){
 	u64 result = 0;
 
     for (int curr = wking; curr <= bpawn; curr++) {

@@ -22,7 +22,7 @@ TThashentry* allocTransTable(const unsigned int sizeInMB);
 
 void setHashKey();
 
-u64 hashPosition(const bitboard* const board, bool tomove);
+u64 hashPosition(const bitboard* const board, sidetomove tomove);
 
 TThashentry* lookup(u64 position);
 

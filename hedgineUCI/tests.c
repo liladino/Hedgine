@@ -11,7 +11,7 @@ void testLasker(){
 	printf("Lasker-Reichhelm position: 8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1\n");
 	bitboard board;
 	int temp;
-	bool tomove;
+	sidetomove tomove;
 	
 	char* command = calloc(100, sizeof(char));
 	strcpy(command, "position fen 8/k7/3p4/p2P1p2/P2P1P2/8/8/K7 w - - 0 1");
@@ -19,7 +19,7 @@ void testLasker(){
 	printBitBoard2d(stdout, board);
 	
 	strcpy(command, "go movetime 15000");
-	parseGo(command, &board, &tomove);	
+	parseGo(command, &board, &tomove, 0);	
 	
 	free(command);
 }
@@ -30,7 +30,7 @@ void testEnglish(){
 	printf("Anglo-Indian defense: r3k2r/pp1bppbp/2n4q/2p5/2P1B3/2B2P2/PPQ3PP/1K1R2NR b kq - 2 14\n");
 	bitboard board;
 	int temp;
-	bool tomove;
+	sidetomove tomove;
 	
 	char* command = calloc(100, sizeof(char));
 	strcpy(command, "position fen r3k2r/pp1bppbp/2n4q/2p5/2P1B3/2B2P2/PPQ3PP/1K1R2NR b kq - 2 14");
@@ -38,7 +38,7 @@ void testEnglish(){
 	printBitBoard2d(stdout, board);
 	
 	strcpy(command, "go movetime 15000");
-	parseGo(command, &board, &tomove);
+	parseGo(command, &board, &tomove, 2);
 	
 	free(command);
 }
@@ -57,7 +57,7 @@ bool bitBoardCompare(const bitboard* const b1, const bitboard* const b2){
 bool makeMoveTest(){
 	// return true;
 	bitboard board;
-	bool tomove;
+	sidetomove tomove;
 	int temp;
 	setboardFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", &board, &tomove, &temp, &temp);
 	printBitBoard2d(stdout, board);
@@ -110,7 +110,7 @@ bool makeMoveTest(){
 	return false;
 }
 
-int perfTest(bitboard* board, bool tomove, int depth){	
+int perfTest(bitboard* board, sidetomove tomove, int depth){	
 	movearray legalmoves;
 	#ifdef DEBUG
 	if (hashPosition(board, tomove) != board->hashValue){
@@ -255,7 +255,7 @@ static const perftCase PERFT_CASES[] = {
 
 #define PERFT_CASE_COUNT (sizeof(PERFT_CASES) / sizeof(PERFT_CASES[0]))
 
-static void loadPerftCase(const perftCase* c, bitboard* board, bool* tomove){
+static void loadPerftCase(const perftCase* c, bitboard* board, sidetomove* tomove){
 	int temp;
 	setboardFEN((char*)c->fen, board, tomove, &temp, &temp);
 }
@@ -267,7 +267,7 @@ bool makePerfTestsAssert(){
 	initializeAll();
 
 	bitboard bboard;
-	bool tomove;
+	sidetomove tomove;
 	for (size_t c = 0; c < PERFT_CASE_COUNT; c++){
 		const perftCase* pc = &PERFT_CASES[c];
 		printf("\n%s\n", pc->name);
@@ -305,7 +305,7 @@ static bool isMoveInList(const movearray* moves, const bitMove* m){
  *    must pass isPseudoLegal if and only if they were generated here too.
  *    These act as hints from a "wrong" position, like a TT collision.
  * */
-static bool pseudoTest(bitboard* board, bool tomove, int depth, const movearray* grandparentMoves, const movearray* parentMoves){
+static bool pseudoTest(bitboard* board, sidetomove tomove, int depth, const movearray* grandparentMoves, const movearray* parentMoves){
 	movearray moves;
 	generatePseudoLegalMoves(&moves, board, tomove);
 
@@ -358,7 +358,7 @@ bool testPseudoLegal(){
 	initializeAll();
 
 	bitboard board;
-	bool tomove;
+	sidetomove tomove;
 	for (size_t c = 0; c < PERFT_CASE_COUNT; c++){
 		printf("%s: %s\n", PERFT_CASES[c].name, PERFT_CASES[c].fen);
 		loadPerftCase(&PERFT_CASES[c], &board, &tomove);
@@ -385,7 +385,7 @@ static const int s_testHistory[12][64] = {{0}};
  * hint: the move the grandparent played before the current line. It is the
  * same side to move, but a different position, so it is valid only sometimes.
  * */
-static long pickerPerft(bitboard* board, bool tomove, int depth, const bitMove* hint, const bitMove* childHint, bool* ok){
+static long pickerPerft(bitboard* board, sidetomove tomove, int depth, const bitMove* hint, const bitMove* childHint, bool* ok){
 	if (depth == 0){
 		return 1;
 	}
@@ -467,7 +467,7 @@ bool testMovePicker(){
 	const perftCase* cases[] = { &PERFT_CASES[1], &PERFT_CASES[3] };
 
 	bitboard board;
-	bool tomove;
+	sidetomove tomove;
 	for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++){
 		const perftCase* pc = cases[i];
 		printf("%s: %s\n", pc->name, pc->fen);
@@ -501,7 +501,7 @@ void testSearchSpeed(int depth){
 	setbuf(stdout, NULL); //same as in the UCI loop, so the info lines show up live
 
 	bitboard board;
-	bool tomove;
+	sidetomove tomove;
 	int fmv, movenum;
 	char positionCmd[256];
 	char goCmd[32];
@@ -524,7 +524,7 @@ void testSearchSpeed(int depth){
 		parsePosition(positionCmd, &board, &tomove, &fmv, &movenum);
 
 		long start = getTime_ms();
-		parseGo(goCmd, &board, &tomove);
+		parseGo(goCmd, &board, &tomove, fmv);
 		times[c] = getTime_ms() - start;
 		nodes[c] = getSearchedNodes();
 
@@ -547,7 +547,7 @@ void testSearchSpeed(int depth){
 /*
  * BENCHMARK
  * */
-void makePerfTest(bitboard* board, bool tomove){
+void makePerfTest(bitboard* board, sidetomove tomove){
 	printLogo();
 	for (int i = 0; i < benchdepth; i++){
 		int allmovecount = perfTest(board, tomove, i);
@@ -564,7 +564,7 @@ bool assertEval(){
 	printf("Asert evaluation...\n");
 
 	bitboard bboard;
-	bool tomove;
+	sidetomove tomove;
 
 	loadPerftCase(&PERFT_CASES[0], &bboard, &tomove);
 

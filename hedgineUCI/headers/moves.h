@@ -23,9 +23,11 @@ void setmove(move *m, square from, square to, int promotion);
 
 //bits:
 
-int makeMoveIfLegal(bitboard* board, const bool tomove, const move m);
+int updateFiftyMoveCounter(const bitMove* m, int fmv);
 
-bitboard boardConvert(char board2d[12][12], int castling[4], squarenums enpass, bool tomove);
+int makeMoveIfLegal(bitboard* board, const sidetomove tomove, const move m);
+
+bitboard boardConvert(char board2d[12][12], int castling[4], squarenums enpass, sidetomove tomove);
 
 void addPieceOnBoard(char board2d[12][12], u64 piece, char piecesymbol);
 
@@ -35,9 +37,9 @@ bool compareBitMoveToMove(const bitMove bm, const move m);
 
 move convertBitMoveToMove(const bitMove m);
 
-bitMove convertMoveToBitMove(bitboard* board, bool tomove, const move m);
+bitMove convertMoveToBitMove(bitboard* board, sidetomove tomove, const move m);
 
-bool lastMoveWasCapture(const bitboard* lastboard, const move m, const bool tomove);
+bool lastMoveWasCapture(const bitboard* lastboard, const move m, const sidetomove tomove);
 
 void setMailBox(const bitboard* board);
 

@@ -10,6 +10,6 @@
 
 #include <stdbool.h>
 
-int staticEval(bitboard *board, bool tomove);
+int staticEval(bitboard *board, sidetomove tomove);
 
 #endif
