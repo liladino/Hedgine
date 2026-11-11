@@ -211,11 +211,12 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 	s_searchedNodes++;
 	if (2026 == s_searchedNodes % 2027) { communicate(); }
 	if (g_stopSearch) { return 0; }
+
+	bool inCheck = bitInCheck(&s_searchBoard, tomove);
 	
 	if (0 < depth) {
 		if (s_searchBoard.fmv >= 100 &&
-			!(bitInCheck(&s_searchBoard, tomove) 
-			&& !hasLegalMove(&s_searchBoard, tomove))
+			!(inCheck && !hasLegalMove(&s_searchBoard, tomove))
 		){
 			return 0;
 		}
@@ -265,7 +266,6 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 	 * 
 	 * Check later, whether any of them was actually legal.
 	 * */
-	bool inCheck = bitInCheck(&s_searchBoard, tomove);
 	MovePicker picker;
 	initMovePicker(
 		&picker,
