@@ -1,3 +1,26 @@
+Date:	Nov 12 2026:
+	Null move pruning: if the side to move passes, and a reduced (R = 3)
+	null window search still fails high, cut off. Skipped when in check, when
+	the side to move has only pawns (zugzwang), and right after a null move.
+
+	Fixes after the first test:
+	 - restore the en passant target after the null search (the hash was
+	   restored, the board was not, so the children got corrupted keys),
+	 - no null move at the root or while following the PV (the null subtree
+	   turned PV following off),
+	 - the zugzwang check only looks at the side to move's pieces,
+	 - the fifty move counter is reset for the null search, so repetitions
+	   are not searched across the null move.
+
+	Results in game pairs (from the new engine's perspective):
+	                            pairs  LL  LD  WL/DD  WD  WW   score    Elo   95% CI
+	null move vs last             200  17  36     79  38  30   53.5%    +24   -3 .. +52
+	null move with fixes vs last  200  20  27     78  39  36   55.5%    +38  +10 .. +68
+
+	The fixed version's interval is entirely positive, so null move pruning
+	is a gain. The two intervals overlap, so the fixes' own share is not
+	measured; they are kept as correctness fixes.
+
 Date:	Nov 10 2026:
 	Added a sanity check for the PV line - it should always copy from the stored
 	PV line, when available. Results show that this is identical, and shouldn't 

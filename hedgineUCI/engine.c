@@ -62,10 +62,18 @@ static inline void updateHistory(int *entry, int bonus){
 	*entry += bonus - *entry * i_abs(bonus) / HISTORY_MAX;
 }
 
-static inline bool isPawnEndgame(){
-	return 0 ==
-		(s_searchBoard.piece[wqueen] | s_searchBoard.piece[wrook] | s_searchBoard.piece[wbishop] | s_searchBoard.piece[wknight] | 
-		 s_searchBoard.piece[bqueen] | s_searchBoard.piece[brook] | s_searchBoard.piece[bbishop] | s_searchBoard.piece[bknight]);
+/* Checks whether the side to move has only pawns left. If yes, we should not 
+ * use the null move pruning heuristics in fear of zugzwangs. 
+ */
+static inline bool isPawnEndgame(const sidetomove tomove){
+	if (white == tomove){
+		return 0 == 
+			(s_searchBoard.piece[wqueen] | s_searchBoard.piece[wrook] | s_searchBoard.piece[wbishop] | s_searchBoard.piece[wknight]);
+	}
+	else {
+		return 0 ==
+			(s_searchBoard.piece[bqueen] | s_searchBoard.piece[brook] | s_searchBoard.piece[bbishop] | s_searchBoard.piece[bknight]);
+	}	
 }
 
 bool isMateScore(int score) {
@@ -254,21 +262,32 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 	storeRepetiton(s_searchBoard.hashValue);
 
 	// null move pruning
-	if (allowNullMove && !inCheck && remainingDepth >= 3 && !isPawnEndgame()){
+	if (allowNullMove && 
+		!s_followPV && 
+		depth > 0 &&
+		!inCheck && 
+		remainingDepth >= 3 
+		&& !isPawnEndgame(tomove)
+	){
 		u64 origHash = s_searchBoard.hashValue;
+		u64 origEp   = s_searchBoard.enpassanttarget;
+		int origFmv  = s_searchBoard.fmv;
+		s_searchBoard.fmv = 0;
 		hashNullMove(&s_searchBoard);
 
 		eval = -search(!tomove, remainingDepth -1 -3, depth+1, -beta, -beta+1, numExtensions, false);
 		s_searchBoard.hashValue = origHash;
+		s_searchBoard.enpassanttarget = origEp;
+		s_searchBoard.fmv = origFmv;
 
 		if (g_stopSearch){
 			rmLastRepetition();
-            return 0;
+			return 0;
 		}
 
 		if (eval >= beta){
 			rmLastRepetition();
-            return beta;
+			return beta;
 		}
 	}
 
@@ -434,7 +453,7 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 	if (0 == actualLegalMoves){
 		return inCheck ? -(MATE_NOW - depth) : 0;
 	}
-		
+
 		/*
 position fen rnbqkbnr/pppp1ppp/4p3/8/5PP1/8/PPPPP2P/RNBQKBNR b KQkq - 0 2
 go infinite
