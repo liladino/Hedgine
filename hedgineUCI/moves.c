@@ -373,6 +373,14 @@ static inline void setcastlingrights(bitboard* board, bitMove m, int piece){
 	}
 }
 
+void hashNullMove(bitboard* board) {
+	#define DELETE_EN_PASSANT_HASH()    hashEnPassantIO(board, 8); board->enpassanttarget = 0
+
+	DELETE_EN_PASSANT_HASH();
+	hashTomove(board);
+
+	#undef DELETE_EN_PASSANT_HASH
+}
 
 bitUndo makeMove(bitboard* board, const bitMove* m) {
 	#define DELETEPIECE_HASH(p, sq)     board->piece[p] &= ~(1ULL << sq); hashPieceIO(board, sq, p)

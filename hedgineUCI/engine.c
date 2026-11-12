@@ -62,6 +62,12 @@ static inline void updateHistory(int *entry, int bonus){
 	*entry += bonus - *entry * i_abs(bonus) / HISTORY_MAX;
 }
 
+static inline bool isPawnEndgame(){
+	return 0 ==
+		(s_searchBoard.piece[wqueen] | s_searchBoard.piece[wrook] | s_searchBoard.piece[wbishop] | s_searchBoard.piece[wknight] | 
+		 s_searchBoard.piece[bqueen] | s_searchBoard.piece[brook] | s_searchBoard.piece[bbishop] | s_searchBoard.piece[bknight]);
+}
+
 bool isMateScore(int score) {
 	return i_abs(score) > MATE_NOW - MAXPLY;
 }
@@ -201,7 +207,7 @@ static int quiescenceSearch(sidetomove tomove, int alpha, int beta, int ply, int
  * depth: from the root node, 0: nothing searched yet
  * remainingDepth: decreasing to 0
  * */
-int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta, int numExtensions){	
+int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta, int numExtensions, bool allowNullMove){	
 	if (depth >= MAXSEARCHDEPTH) {
 		return staticEval(&s_searchBoard, tomove);
 	}
@@ -238,8 +244,32 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 		return eval;
 	}
 	
-	if (0 == remainingDepth) {
+	if (0 >= remainingDepth) {
 		return quiescenceSearch(tomove, alpha, beta, depth, 0);
+	}
+
+	/*
+	 * Store repetition
+	 * */
+	storeRepetiton(s_searchBoard.hashValue);
+
+	// null move pruning
+	if (allowNullMove && !inCheck && remainingDepth >= 3 && !isPawnEndgame()){
+		u64 origHash = s_searchBoard.hashValue;
+		hashNullMove(&s_searchBoard);
+
+		eval = -search(!tomove, remainingDepth -1 -3, depth+1, -beta, -beta+1, numExtensions, false);
+		s_searchBoard.hashValue = origHash;
+
+		if (g_stopSearch){
+			rmLastRepetition();
+            return 0;
+		}
+
+		if (eval >= beta){
+			rmLastRepetition();
+            return beta;
+		}
 	}
 
 	/*
@@ -255,11 +285,6 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 			hint = probed->m;
 		}
 	}
-	
-	/*
-	 * Store repetition
-	 * */
-	storeRepetiton(s_searchBoard.hashValue);
 
 	/*
 	 * Generate pseudo legal moves
@@ -320,7 +345,7 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 		bool needsFullSearch = true;
 		if (!inCheck && extension == 0 && remainingDepth >= 3 && actualLegalMoves >= 3 && isQuiet) {
 			// if (!bitInCheck(&s_searchBoard, !tomove)){ }
-			eval = -search(!tomove, remainingDepth-1-1, depth+1, -alpha-1, -alpha, numExtensions);
+			eval = -search(!tomove, remainingDepth-1-1, depth+1, -alpha-1, -alpha, numExtensions, true);
 			needsFullSearch = eval > alpha;
 		}
 		
@@ -328,7 +353,7 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 		 * Search
 		 * */
 		if (needsFullSearch){
-			eval = -search(!tomove, remainingDepth-1+extension, depth+1, -beta, -alpha, numExtensions + extension);
+			eval = -search(!tomove, remainingDepth-1+extension, depth+1, -beta, -alpha, numExtensions + extension, true);
 		}
 		undoMove(&s_searchBoard, &currentMove, &u);
 
@@ -483,7 +508,7 @@ move iterativeDeepening(bitboard board, sidetomove tomove){
 		s_maxdepth = i;
 		s_searchBoard = board;
 		s_followPV = true;
-		eval = search(tomove, i, 0, NegINF, PosINF, 0);
+		eval = search(tomove, i, 0, NegINF, PosINF, 0, true);
 		if (!sameMove(&NULLBITMOVE, &s_PVcommit[0])) nextm = convertBitMoveToMove(s_PVcommit[0]);
 		
 		// usleep(500);
