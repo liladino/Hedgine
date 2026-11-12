@@ -266,8 +266,10 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 		!s_followPV && 
 		depth > 0 &&
 		!inCheck && 
-		remainingDepth >= 3 
-		&& !isPawnEndgame(tomove)
+		remainingDepth >= 3 &&
+		!isMateScore(beta) && 
+		!isPawnEndgame(tomove) &&
+		staticEval(&s_searchBoard, tomove) >= beta
 	){
 		u64 origHash = s_searchBoard.hashValue;
 		u64 origEp   = s_searchBoard.enpassanttarget;
@@ -285,7 +287,7 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 			return 0;
 		}
 
-		if (eval >= beta){
+		if (eval >= beta && !isMateScore(eval)){
 			rmLastRepetition();
 			return beta;
 		}
