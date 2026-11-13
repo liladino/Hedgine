@@ -277,7 +277,7 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 
 	// null move pruning
 	if (allowNullMove && 
-		!s_followPV &&
+		beta == alpha + 1 && 
 		depth > 0 &&
 		!inCheck && 
 		remainingDepth >= 3 &&
@@ -360,21 +360,22 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 
 		bool isQuiet = !(currentMove.flags & (CAPTURE_FLAG | EN_PASSANT_FLAG | PROMOTION_FLAG));
 
-		/*
-		 * Reduce?
-		 * */
-		bool needsFullSearch = true;
-		if (!inCheck && extension == 0 && remainingDepth >= 3 && actualLegalMoves >= 3 && isQuiet) {
-			// if (!bitInCheck(&s_searchBoard, !tomove)){ }
-			eval = -search(!tomove, remainingDepth-1-1, depth+1, -alpha-1, -alpha, numExtensions, true);
-			needsFullSearch = eval > alpha;
-		}
-
-		/*
-		 * Search
-		 * */
-		if (needsFullSearch){
+		if (1 == actualLegalMoves){
 			eval = -search(!tomove, remainingDepth-1+extension, depth+1, -beta, -alpha, numExtensions + extension, true);
+		}
+		else {
+			bool needsFullSearch = true;
+			if (!inCheck && extension == 0 && remainingDepth >= 3 && actualLegalMoves >= 3 && isQuiet) {
+				eval = -search(!tomove, remainingDepth-1-1, depth+1, -alpha-1, -alpha, numExtensions, true);
+				needsFullSearch = eval > alpha;
+			}
+			else {
+				eval = -search(!tomove, remainingDepth-1+extension, depth+1, -alpha-1, -alpha, numExtensions + extension, true);
+				needsFullSearch = alpha < eval && eval < beta;
+			}
+			if (needsFullSearch && !g_stopSearch){
+				eval = -search(!tomove, remainingDepth-1+extension, depth+1, -beta, -alpha, numExtensions + extension, true);
+			}
 		}
 
 		undoMove(&s_searchBoard, &currentMove, &u);
