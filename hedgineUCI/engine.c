@@ -225,12 +225,10 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 	s_searchedNodes++;
 	if (2026 == s_searchedNodes % 2027) { communicate(); }
 	if (g_stopSearch) { return 0; }
-
-	bool inCheck = bitInCheck(&s_searchBoard, tomove);
 	
 	if (0 < depth) {
 		if (s_searchBoard.fmv >= 100 &&
-			!(inCheck && !hasLegalMove(&s_searchBoard, tomove))
+			!(bitInCheck(&s_searchBoard, tomove) && !hasLegalMove(&s_searchBoard, tomove))
 		){
 			return 0;
 		}
@@ -257,13 +255,29 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 	}
 
 	/*
+	 * Best move hint
+	 * */
+	bitMove hint = NULLBITMOVE;
+	if (s_followPV && depth < s_PVcommitlen) {
+		hint = s_PVcommit[depth];
+	} 
+	else {
+		s_followPV = false;
+		if (depth > 0 && probed) {
+			hint = probed->m;
+		}
+	}
+
+	/*
 	 * Store repetition
 	 * */
 	storeRepetiton(s_searchBoard.hashValue);
 
+	bool inCheck = bitInCheck(&s_searchBoard, tomove);
+
 	// null move pruning
 	if (allowNullMove && 
-		!s_followPV && 
+		!s_followPV &&
 		depth > 0 &&
 		!inCheck && 
 		remainingDepth >= 3 &&
@@ -290,20 +304,6 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 		if (eval >= beta && !isMateScore(eval)){
 			rmLastRepetition();
 			return beta;
-		}
-	}
-
-	/*
-	 * Best move hint
-	 * */
-	bitMove hint = NULLBITMOVE;
-	if (s_followPV && depth < s_PVcommitlen) {
-		hint = s_PVcommit[depth];
-	} 
-	else {
-		s_followPV = false;
-		if (depth > 0 && probed) {
-			hint = probed->m;
 		}
 	}
 
@@ -369,13 +369,14 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 			eval = -search(!tomove, remainingDepth-1-1, depth+1, -alpha-1, -alpha, numExtensions, true);
 			needsFullSearch = eval > alpha;
 		}
-		
+
 		/*
 		 * Search
 		 * */
 		if (needsFullSearch){
 			eval = -search(!tomove, remainingDepth-1+extension, depth+1, -beta, -alpha, numExtensions + extension, true);
 		}
+
 		undoMove(&s_searchBoard, &currentMove, &u);
 
 		if (g_stopSearch) {
