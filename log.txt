@@ -1,3 +1,22 @@
+Date:	Nov 13 2026:
+	Played around with PV search again. With it it's easier to tell whether we 
+	are on a PV node, so it seemed reasonable to use it with null move pruning.
+	With search extensions limited to 5, tests showed no measurable difference
+	compared with commit "fixes". The commit "search inCheck refactor" was a 
+	mistake, that little refactor made the search ever so slightly slower.
+	Comparing the fixes and PVsearch with an in-between, fix+max 5 extensions 
+	version yielded undecisive results.
+	
+	Result against baseline tt_fix:
+	fixes vs tt_fix: 27 68 139 87 66          +44
+	PV_max5 vs tt_fix: 25 53 135 103 70       +64
+
+	directly:
+	PV_max5 vs fixes: 41 66 166 81 46         +11
+	
+	fixes_max5 vs fixes: 49 113 202 91 45     −10
+	fixes_max5 vs PV_max5: 46 95 204 116 39    +2
+
 Date:	Nov 12 2026:
 	Null move pruning: if the side to move passes, and a reduced (R = 3)
 	null window search still fails high, cut off. Skipped when in check, when
