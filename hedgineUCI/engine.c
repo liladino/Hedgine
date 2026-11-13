@@ -5,7 +5,7 @@
  * */
 const move    NULLMOVE = {{-1, -1}, {-1, -1}, 0};
 const bitMove NULLBITMOVE = {0, 0, 0, -1, 0};
-#define MAX_EXTENSIONS 10
+#define MAX_EXTENSIONS 5
 #define PosINF   2147480000  //less than 2^31 to avoid possible overflow
 #define NegINF  -2147480000
 #define MATE_NOW WHITEWON //2147400000 much less than infinities
