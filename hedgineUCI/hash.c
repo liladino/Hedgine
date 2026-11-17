@@ -22,7 +22,7 @@ key Zobrist;
 
 TThashentry* allocTransTable(const unsigned int sizeInMB){	
 	TTableSizeMB = sizeInMB;
-	TTableSize = TTableSizeMB * 1024llu * 1024llu / sizeof(TThashentry);	
+	TTableSize = TTableSizeMB * 1024ULL * 1024ULL / sizeof(TThashentry);	
 	if (sizeInMB == 0){
 		TTableSize++;
 	}
@@ -33,8 +33,8 @@ TThashentry* allocTransTable(const unsigned int sizeInMB){
 	clearTransTable();
 	
 	#ifdef DEBUG
-	printDebug( "Transposition Table:\t%lld MB, %lld entry\n", TTableSizeMB, TTableSize);
-	printDebug( "Repetition Table:\t%lf kB, %d entry\n", (double) REPETITION_TABLE_SIZE * sizeof(u64) / 1024, REPETITION_TABLE_SIZE);
+	printf( "Transposition Table:\t%lld MB, %lld entry\n", TTableSizeMB, TTableSize);
+	printf( "Repetition Table:\t%lf kB, %d entry\n", (double) REPETITION_TABLE_SIZE * sizeof(u64) / 1024, REPETITION_TABLE_SIZE);
 	#endif
 	return TranspositionTable;
 }
@@ -62,7 +62,7 @@ void hashEnPassantIO(bitboard *board, int file){
 		board->hashValue ^= Zobrist.enpassantfile[file];
 		return;
 	} 
-	u64 mask = 0x0101010101010101LL;
+	u64 mask = 0x0101010101010101ULL;
 	for (int i = 0; i < 8; i++){
 		if (mask & board->enpassanttarget){
 			board->hashValue ^= Zobrist.enpassantfile[i];
@@ -99,7 +99,7 @@ void setHashKey(){
 	Zobrist.tomove = rand64();
 }
 
-u64 hashPosition(const bitboard* const board, bool tomove){
+u64 hashPosition(const bitboard* const board, sidetomove tomove){
 	u64 result = 0;
 
     for (int curr = wking; curr <= bpawn; curr++) {
@@ -161,6 +161,15 @@ void clearTransTable(){
 	}
 }
 
+static int s_TTage = 0;
+
+/* Call at the start of every search. Entries stored by earlier searches can
+ * always be replaced, so the deep entries of old positions do not block the table.
+ */
+void newSearchTT(){
+	s_TTage++;
+}
+
 #ifdef DEBUG
 u64 s_Rcollision = 0;
 u64 s_Reads = 0;
@@ -211,11 +220,13 @@ int correctMateScoreForStorage(int score, int numPlySearched) {
 	return score;
 }
 		
-int readHashEntry(u64 hashValue, int remainingDepth, int depth, int alpha, int beta){
+int readHashEntry(u64 hashValue, int remainingDepth, int depth, int alpha, int beta, TThashentry **out){
 	if (!HASHING_ENABLED) {
 		return NO_HASH_ENTRY;
 	}
-	const TThashentry *entry = findEntry(hashValue);
+	TThashentry* entry = findEntry(hashValue);
+	*out = entry;
+
 	if (!entry){
 		return NO_HASH_ENTRY;
 	}
@@ -261,23 +272,42 @@ void storePosTT(const u64 hashValue, int eval, evalflag flag, int depthRemaining
 		return;
 	}
 
-	// if (entry->flag != TT_EMPTY &&
-	// 	entry->pos == hashValue &&
-	// 	entry->depth > depthRemaining)
-	// {
-	// 	return;
-	// }
-	
+	// entry of the current search is not replaced by a shallower result
+	if (entry->flag != TT_EMPTY &&
+		entry->age == s_TTage &&
+		entry->depth > depthRemaining)
+	{
+		//the shallower result can still provide a hint for a fail low entry of the same position
+		if (entry->pos == hashValue &&
+			sameMove(&entry->m, &NULLBITMOVE) &&
+			!sameMove(m, &NULLBITMOVE))
+		{
+			entry->m = *m;
+		}
+		return;
+	}
+
 	#ifdef DEBUG
 	if (entry->flag != 0) s_Wcollision++;
 	s_Writes++;
 	#endif
 	
-	entry->pos = hashValue; //key 
+	/* a fail low has no best move, keep the move of the same position stored
+	 * before
+	 */
+	bool keepMove = entry->flag != TT_EMPTY &&
+					m->from == NULLBITMOVE.from &&
+		   			m->to == NULLBITMOVE.to && 
+					entry->pos == hashValue;
+
+	entry->pos = hashValue; //key
 	entry->eval = correctMateScoreForStorage(eval, depthSearched);
 	entry->depth = depthRemaining;
-	entry->m = *m;
+	if (!keepMove) {
+		entry->m = *m;
+	}
 	entry->flag = flag;
+	entry->age = s_TTage;
 }
 
 //~ static inline void swap(bitboard* a, bitboard* b) { 
@@ -324,14 +354,14 @@ int g_RTwriteIndex = 0;
  * 
  * The position is considered a DRAW after the FIRST repetition, so the engine
  * avoids previous positions like fire, if it think's it's better. */
-
-// TODO: don't search all the way back to 0 index, only up to the last capture 
-bool isRepetition(const u64 pos){
+bool isRepetition(const u64 pos, int fmv){
 	//scan backwards by full moves, becuase a position is not the same with the side to move changed
-	for (int i = (g_RTwriteIndex > REPETITION_TABLE_SIZE ? REPETITION_TABLE_SIZE-1 : g_RTwriteIndex); i >= 0; i-=2){
-		if (s_RepetitionTable[i] == pos)	return true;
+	for (int i = g_RTwriteIndex - 1; i >= 1 && fmv >= 2; i -= 2, fmv -= 2) {
+		if (s_RepetitionTable[i] == pos){
+			return true;
+		}
 	}
-	
+
 	return false;
 }
 

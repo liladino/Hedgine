@@ -15,8 +15,8 @@
 
 int readLineDynamic(char** str, const size_t maxSize);
 
-move parseLongAlgebraicNotation(char str[]);
+move parseLongAlgebraicNotation(const char str[]);
 
-int setboardFEN(char FEN[], bitboard* bboard, bool *tomove, int *fmv, int *movenum);
+int setboardFEN(const char FEN[], bitboard* bboard, sidetomove *tomove, int *fmv, int *movenum);
 
 #endif

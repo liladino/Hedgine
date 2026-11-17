@@ -1,12 +1,205 @@
-Date:	Oct 31 2026:
-	With some more rigorous testing, one decision from yesterday proved to 
-	be able to result in infinite recursion: "quiescence search no longer 
-	uses the repetition table". Since evasions can too be checks, this was 
-	troublesome. Fix: maximum quiescence search qdepth, and evasions only at
-	nodes where qdepth < 4.
+Date:	Nov 17 2026:
+	Added stronger late move reduction, currently only a simple if that reduces
+	2 moves instead of one, if we are not deep in the search, and even later 
+	moves. Did this on the PVsearch and dev branches, comparing the results to 
+	the "last" used in the previous tests:
 
-	Search speed test: ./hedgine testSearch N (ucinewgame, position fen,
-	go depth N for every perft test position). Built with -O3 (BENCH=1).
+	Results in game pairs (from the first engine's perspective):
+	                                pairs   LL   LD  WL/DD   WD   WW   score    Elo   95% CI
+	reduce more vs dev               1000   74  197    375  249  105   52.8%    +20   +8 .. +31
+	PV and reduce more vs dev        1000   67  168    379  239  147   55.8%    +40  +28 .. +52
+	PV reduce more vs reduce more    4000  365  841   1450  914  430   51.3%     +9   +3 .. +15
+
+	The results shows, that using the PV search along with other heuristics is 
+	beneficial, even when previous attempts showed no gain. The main differences 
+	now are the limited search extensions and the addition of null move pruning. 
+
+Date:	Nov 13 2026:
+	Played around with PV search again. With it it's easier to tell whether we 
+	are on a PV node, so it seemed reasonable to use it with null move pruning.
+	With search extensions limited to 5, tests showed no measurable difference
+	compared with commit "fixes". The commit "search inCheck refactor" was a 
+	mistake, that little refactor made the search ever so slightly slower.
+	Comparing the fixes and PVsearch with an in-between, fix+max 5 extensions 
+	version yielded undecisive results.
+	
+	Results in game pairs (from the first engine's perspective):
+	                          pairs  LL   LD  WL/DD   WD  WW   score    Elo   95% CI
+	against baseline tt_fix:
+	fixes vs tt_fix             387  27   68    139   87  66   56.3%    +44  +24 .. +64
+	PV_max5 vs tt_fix           386  25   53    135  103  70   59.1%    +64  +44 .. +84
+
+	directly:
+	PV_max5 vs fixes            400  41   66    166   81  46   51.6%    +11   -8 .. +30
+	fixes_max5 vs fixes         500  49  113    202   91  45   48.5%    -10  -27 ..  +6
+	fixes_max5 vs PV_max5       500  46   95    204  116  39   50.3%     +2  -14 .. +18
+
+Date:	Nov 12 2026:
+	Null move pruning: if the side to move passes, and a reduced (R = 3)
+	null window search still fails high, cut off. Skipped when in check, when
+	the side to move has only pawns (zugzwang), and right after a null move.
+
+	Fixes after the first test:
+	 - restore the en passant target after the null search (the hash was
+	   restored, the board was not, so the children got corrupted keys),
+	 - no null move at the root or while following the PV (the null subtree
+	   turned PV following off),
+	 - the zugzwang check only looks at the side to move's pieces,
+	 - the fifty move counter is reset for the null search, so repetitions
+	   are not searched across the null move.
+
+	Results in game pairs (from the new engine's perspective):
+	                            pairs  LL  LD  WL/DD  WD  WW   score    Elo   95% CI
+	null move vs last             200  17  36     79  38  30   53.5%    +24   -3 .. +52
+	null move with fixes vs last  200  20  27     78  39  36   55.5%    +38  +10 .. +68
+
+	The fixed version's interval is entirely positive, so null move pruning
+	is a gain. The two intervals overlap, so the fixes' own share is not
+	measured; they are kept as correctness fixes.
+
+Date:	Nov 10 2026:
+	Added a sanity check for the PV line - it should always copy from the stored
+	PV line, when available. Results show that this is identical, and shouldn't 
+	affect the performance.
+
+	Tuned minor piece evaluation: bishop pair bonus, knight positions refined.
+
+	Changed all tomove signatures to sidetomove from bool. This ensures compiler
+	warning when passing pointer as value and vice versa. This made one present
+	error visible, when storing in the repetition table.
+
+	Added 50 move rule awareness: the search is terminated at ply 100, the eval
+	is tapered after the 60th ply, to prioritize deciding moves in the endgame,
+	and the repetition table now only searches back until the last capture/pawn
+	move.
+
+	TT fix: in each game, age the results (newSearchTT). With 512 MB hash the
+	table is rarely full, so the replacement hardly matters: inconclusive. With
+	1 MB hash the table is under pressure, and the fix is a clear gain.
+
+	Results in game pairs (from the first engine's perspective):
+	                                    pairs  LL  LD  WL/DD  WD  WW   score    Elo   95% CI
+	minor pieces vs previous              200  16  39     76  39  30   53.5%    +24   -3 .. +52
+	50 move rule vs minor pieces          200  17  30     87  44  22   53.0%    +21   -5 .. +47
+	50 move vs TT age fix (512 MB hash)   400  37  74    174  74  41   50.5%     +3  -15 .. +22
+	TT age fix vs 50 move (1 MB)          500  44  83    195 116  62   53.5%    +24   +7 .. +41
+
+Date:	Nov 09 2026:
+	Added PV null window search yesterday, but in tests it proved to be 
+	disadvantegous with searching more nodes.
+	TT fix: if a replacement comes in with a nullmove, don't throw away the 
+	currently stored move, that may still be effective. This resulted in a big
+	improvement.  
+	
+	New TT strategy: depth aware replacement. 
+
+	Results in game pairs (from the first engine's perspective):
+	                                            pairs  LL  LD  WL/DD  WD  WW   score    Elo   95% CI
+	fixed always replace TT vs original           100   2  19     39  23  17   58.5%    +60  +24 .. +97
+	fixed always replace TT + PV vs fixed TT      100  10  24     40  21   5   46.8%    -23  -58 .. +12
+	fixed always replace TT vs new TT strategy    100   8  32     29  22   9   48.0%    -14  -52 .. +24
+
+	Tinkered with the LMR slightly: removing evasions proved to be beneficial, 
+	but removing checking moves are not, the cost of bitInCheck may be too high.
+
+Date:	Nov 08 2026:
+	Added king safety evaluations:
+		1. Attacking side gets a bonus based on how many important squares are 
+		attacked, and how many pieces are attacking
+		2. king gets a bonus when shielded by pawns
+		3. king gets a penalty based on how many squares a queen could reach 
+		from there.
+	Ran tests against the rook fix:
+	only 1: 287W 212D 251L
+	only 2: 280W 207D 263L
+	1+2:    318W 205D 227L
+	1+2+3:  317W 180D 253L.
+
+	The third and second versions results in detail per 2 games:
+	       pairs  LL  LD  WL/DD  WD  WW   score    Elo   95% CI
+	1+2      375  36  59    126  86  68   56.1%    +42  +21 .. +64
+	1+2+3    375  47  60    123  72  73   54.3%    +30   +7 .. +52
+	
+	In conclusion, I won't keep the king mobility penalty.
+
+Date:	Nov 06 2026:
+	Potential issue: the quiescence search did not use the repetitions. because
+	this is a long standing question, whether to use the repetition table there,
+	I made a longer test. Out of the 1000 games, the one using repetitions in 
+	quiescence search scored 336W 333D 331L against a version where all store 
+	and remove repetition calls were removed. This test result is inconclusive,
+	but because the no repetition version did not take the lead after the 40th
+	game at all, and at times got to -20 points, I will say that I keep the 
+	repetition checking, as it at least doesn't make the negine weaker.
+
+	A bug in yesterday's code is fixed: the rooks mobility was masked with the
+	wrong color's pawns when calculating black's sideEval. Corrected version 
+	against the original, still very well working rook version: 149W 122D 129L, 
+	coming in at +17 Elo. Added tests for the staticEval function, assuming 
+	staticEval(&board, white) == -staticEval(&board, black).
+	
+Date:	Nov 05 2026:
+	Added past pawn bonuses. Logic: passed pawns worth more when they are 
+	further up the board, and mean less when there are more pieces left on the
+	board. Scored 88W 90D 62L against the drawn endgames.
+
+	Tested the number of cutovvs vs number of cutoffs in the first searched 
+	legal move. The results show that the move orderer is "good enough" at 
+	around 88% of beta cutoffs happening in the first move. 
+	| depth              |     6 |     7 |     8 |     9 |    10 |    11 |
+    | first-move cutoffs | 92.8% | 91.5% | 89.1% | 86.6% | 88.0% | 87.9% |
+
+	Added more refined rook bonuses for open files, semi open files, and 
+	activity. Significant gain in 240 games, more than 30 more wins than loss.
+	Estimated 50 Elo gain. against passed pawns version. 
+
+Date:	Nov 04 2026:
+	Further evolving static heuristics.
+	Likely drawn endgames, like KR vs KB, KR vs KN, KRB vs KR, KRN vs KR, KNN vs
+	KR get a dowscale in value, while exact draws get 0 points. This version
+	scores 76W 58D 66L against the pawn structure update. Opposite colored 
+	bishop endgames however didn't benefit from a similar scaling, it tended to
+	score less points against yesterday's version. TODO: open file for rooks, 
+	passed pawn bonus. 
+
+Date:	Nov 03 2026:
+	Improved the move ordering, now it oncrementally orders at each move 
+	request. Tho the gain is not measurable, the code is nicer.
+
+	Started the testing of different static evaluation heuristics.
+	1. favoring open positions for bishops and rooks - out of 500 games, didn't
+	have a measurable effect.
+	2. Pawn structure bonuses: is a pawn is defended, or has a pawn next to it,
+	it get's a bonus. Against the latest version: 78W 27D 55L,
+
+Date:	Nov 02 2026:
+	Added better logging in debug mode. 
+	Repetition errors: indexes were off-by-one, and the search starting position 
+	was added twice.
+	Re-added repetition checks in quiescence search. Against the approximation
+	where the engine plays evasions only in the first 4 moves it scored 71 wins 
+	69 draws and 60 losses out of 200 games.
+	Added killer stages, but they caused more nodes to be searched and produced
+	inconclusive results when letting the engine play aginst itself.
+	evaluation is now faster, instead of masking all 64 squares, now iterates 
+	throughthe pieces similarly to the legalmoves function. Quick tests show 
+	significant improvement: 33W 29D 18L in 80 games
+
+Date:	Nov 01 2026:
+	Added search extensions and late move reduction. Fixed the communication:
+	previosuly the engine didn't have time for the system to communicate the 
+	moves, resulting in timeouts. The GUI now supports tournament mode, so the
+	variations can be tested against each other in random positions.  
+
+Date:	Oct 31 2026:
+	With some more rigorous testing, one decision from yesterday proved to be 
+	able to result in infinite recursion: "quiescence search no longer uses the
+	repetition table". Since evasions can too be checks, this was troublesome. 
+	Fix: maximum quiescence search qdepth, and evasions only at nodes 
+	where qdepth < 4.
+
+	Search speed test: ./hedgine testSearch N (ucinewgame, position fen, go 
+	depth N for every perft test position). Built with -O3 (BENCH=1).
 	Node counts are deterministic, times vary ~20% between runs.
 
 	Depth 6. Before: quiescence capped at MAX_QSEARCH_DEPTH = 16 (without the

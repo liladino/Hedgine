@@ -19,7 +19,7 @@
 
 bool makePerfTestsAssert();
 
-void makePerfTest(bitboard* board, bool tomove);
+void makePerfTest(bitboard* board, sidetomove tomove);
 
 bool testPseudoLegal();
 
@@ -32,5 +32,9 @@ void testLasker();
 void testEnglish();
 
 bool makeMoveTest();
+
+bool assertEval();
+
+bool testFiftyMoveCounter();
 
 #endif

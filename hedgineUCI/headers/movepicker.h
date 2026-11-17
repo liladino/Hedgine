@@ -25,7 +25,7 @@ void initMovePicker(
     bool inCheck,
     bool quiescence);
 
-bool nextMove(MovePicker *picker, const bitboard *board, bool tomove, bitMove *out);
+bool nextMove(MovePicker *picker, const bitboard *board, sidetomove tomove, bitMove *out);
 
 bool sameMove(const bitMove* const a, const bitMove* const b);
 

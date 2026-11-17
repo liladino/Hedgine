@@ -22,13 +22,13 @@ TThashentry* allocTransTable(const unsigned int sizeInMB);
 
 void setHashKey();
 
-u64 hashPosition(const bitboard* const board, bool tomove);
+u64 hashPosition(const bitboard* const board, sidetomove tomove);
 
 TThashentry* lookup(u64 position);
 
 void freeTransTable();
 
-int readHashEntry(u64 hashValue, int remainingDepth, int depth, int alpha, int beta);
+int readHashEntry(u64 hashValue, int remainingDepth, int depth, int alpha, int beta, TThashentry **entry);
 
 //~ move readHashEntryMove(const u64 pos);
 
@@ -48,6 +48,8 @@ void printCollisionStats();
 
 void clearTransTable();
 
+void newSearchTT();
+
 //~ void rmBestMoveFlag(u64 pos);
 
 int getEval(u64 pos);
@@ -60,6 +62,6 @@ void storeRepetiton(const u64 pos);
 
 void rmLastRepetition();
 
-bool isRepetition(const u64 pos);
+bool isRepetition(const u64 pos, int fmv);
 
 #endif

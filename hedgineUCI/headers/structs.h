@@ -61,13 +61,14 @@ typedef struct bitboard{
 	u64 enpassanttarget;
 	u64 hashValue;
 		
-	char castlerights; 
+	uint8_t castlerights; 
 	/*
 	* 0000 0101 => 
 	* least signif 4 bit:
 	*   0                1               0                0 (LSB) 
 	*   black queenside, balck kingside, white queenside, white kingside
 	*/
+	uint8_t fmv;
 	
 	//int eval;
 } bitboard;
@@ -90,7 +91,7 @@ typedef struct bitUndo {
 	 *  black queenside, balck kingside, white queenside, white kingside
 	 * */
 	 
-	//~ uint8_t  prevHalfmove;
+	uint8_t  prevFmv;
 } bitUndo;
 
 typedef struct movearray{
@@ -102,8 +103,9 @@ typedef struct TThashentry{
 	u64 pos; //key
 	int eval;
 	evalflag flag;
-	int depth; 
+	int depth;
 	bitMove m;
+	int age; //the search (go command) that stored the entry
 }TThashentry;
 
 typedef struct gameInfo{
@@ -112,7 +114,8 @@ typedef struct gameInfo{
 	bool timeControl;
 	bool quit;
 	int moveTime;
-	
+	int moveOverhead; //ms reserved for GUI/pipe latency, never spent on searching
+
 	bool newgame;
 	//~ bool OwnBook;
 	//~ int UCI_Elo;
@@ -129,6 +132,7 @@ typedef struct MovePicker {
 
     const int (*history)[64];
     movearray moves;
+	int scores[MAXMOVECOUNT_INPOS];
     int next;
 } MovePicker;
 
@@ -138,5 +142,11 @@ extern const bitMove NULLBITMOVE;
 
 extern FILE* g_debugOutput;
 
+#ifdef DEBUG
+
+extern long int runStartTime;
+#define printf(...) do { fprintf(g_debugOutput, "%ld:\t", getTime_ms() - runStartTime); fprintf(g_debugOutput, __VA_ARGS__); fprintf(stdout, __VA_ARGS__); } while(0)
+
+#endif
 
 #endif

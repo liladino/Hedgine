@@ -2,18 +2,18 @@
 
 gameInfo info;
 
-static char *skip_ws(char *str) {
+static const char *skip_ws(const char *str) {
 	while (*str && isspace((unsigned char)*str)) str++;
 	return *str ? str : NULL;
 }
 
-static char *skip_token(char *str) {
+static const char *skip_token(const char *str) {
 	while (*str && !isspace((unsigned char)*str)) str++;
 	return str;
 }
 
 /* Returns start of next token after the current one (or NULL). */
-static char* jumpToNextToken(char *str) {
+static const char* jumpToNextToken(const char *str) {
 	if (!str) return NULL;
 	str = skip_token(str);
 	return skip_ws(str);
@@ -25,7 +25,7 @@ static inline bool compareToken(const char* str1, const char* str2, size_t n){
 	return (strncmp(str1, str2, n) == 0 && (str1[n] == '\0' || isspace((unsigned char)str1[n])));
 }
 
-static char* findToken(char* str, const char* token) {
+static const char* findToken(const char* str, const char* token) {
 	if (!str || !token) return NULL;
 	size_t n = strlen(token);
 
@@ -49,14 +49,12 @@ static char* findToken(char* str, const char* token) {
 // parse UCI "position" command
 // e.g position startpos moves e2e4 e7e5
 //	position fen ... moves ...
-void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* movenum){
-	char *token = jumpToNextToken(command); // after "position"
+void parsePosition(const char* command, bitboard* board, sidetomove* tomove, int* fmv, int* movenum){
+	const char *token = jumpToNextToken(command); // after "position"
 	if (!token) return;
 
 	g_RTwriteIndex = 0;
-#ifdef DEBUG
-	printDebug(token);
-#endif
+	
 	if (compareToken(token, "startpos", 8)) {
 		setboardFEN(STARTPOS, board, tomove, fmv, movenum);
 		token = jumpToNextToken(token);
@@ -76,12 +74,12 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 	//store the start position in the repetition table too
 	storeRepetiton(board->hashValue);
 	
-	char* currentmove = findToken(command, "moves");
+	const char* currentmove = findToken(command, "moves");
 	if (currentmove == NULL){
 		goto noMovesGiven;
 	}
 	currentmove = jumpToNextToken(currentmove); //skip the "moves" token
-	
+	int movesread = 0;
 	while(currentmove){
 		// parse next move
 		move m = parseLongAlgebraicNotation(currentmove);
@@ -115,33 +113,50 @@ void parsePosition(char* command, bitboard* board, bool* tomove, int* fmv, int* 
 		 * if the move was a capture, castling, a pawn move, or the en 
 		 * passant target square changed(/got deleted), the position can't
 		 * be repeated anymore => the write index can be 0 again */
+		//pawn move or capture: resets the fifty move counter
+		bool irreversible =
+			last.piece[wpawn] != board->piece[wpawn] ||
+			last.piece[bpawn] != board->piece[bpawn] ||
+			lastMoveWasCapture(&last, m, *tomove);
+
+		*fmv = irreversible ? 0 : *fmv + 1;
+
+		#ifdef DEBUG
+		//the board keeps its own counter (updated in makeMove), they must agree
+		if (*fmv != board->fmv){
+			printf("fifty move counter mismatch after %.5s: parsed %d, board %d\n", currentmove, *fmv, board->fmv);
+		}
+		#endif
+
 		if (
-			last.piece[wpawn] != board->piece[wpawn] || 
-			last.piece[bpawn] != board->piece[bpawn] || 
-			last.castlerights != board->castlerights || 
-			last.enpassanttarget != board->enpassanttarget || 
-			lastMoveWasCapture(&last, m, tomove)
+			irreversible ||
+			last.castlerights != board->castlerights ||
+			last.enpassanttarget != board->enpassanttarget
 				){
 			g_RTwriteIndex = 0;
 		}
 		storeRepetiton(board->hashValue);
-		
+		movesread++;
+
 		if (*tomove == black) (*movenum)++;
 		*tomove = !(*tomove);
-		
+
 		currentmove = jumpToNextToken(currentmove);
 	}
-	
+	if (movesread){
+		rmLastRepetition();	
+	}
+
 noMovesGiven:
 	#ifdef DEBUG
-	printDebug( "tomove: %d\tfifty move count: %d\tmove num: %d\n", *tomove, *fmv, *movenum);
+	printf( "tomove: %d\tfifty move count: %d (board: %d)\tmove num: %d\n", *tomove, *fmv, board->fmv, *movenum);
 	#endif
-	return; 
+	return;
 
 posError:
 	setboardFEN(STARTPOS, board, tomove, fmv, movenum);
 	#ifdef DEBUG
-	printDebug( "error in command, startpos set\n");
+	printf( "error in command, startpos set\n");
 	printBitBoard2d(g_debugOutput, *board);
 	#endif
 }
@@ -153,7 +168,7 @@ void resetTimeControl(){
 }
 
 // parse UCI command "go"
-void parseGo(char *command, bitboard* board, bool *tomove) {
+void parseGo(const char *command, const bitboard* board, const sidetomove *tomove) {
 	resetTimeControl();
 
 	bool infinite = false;
@@ -163,9 +178,9 @@ void parseGo(char *command, bitboard* board, bool *tomove) {
 	int depth = 40;
 
 	// Start at first token after "go"
-	char *arg = jumpToNextToken(command);
+	const char *arg = jumpToNextToken(command);
 	for (; arg; arg = jumpToNextToken(arg)) {
-		char* v = NULL;
+		const char* v = NULL;
 		if (compareToken(arg, "infinite", 8)) {
 			infinite = true;
 		}
@@ -207,7 +222,9 @@ void parseGo(char *command, bitboard* board, bool *tomove) {
 		info.timeControl = false;
 	} else if (movetime >= 0) {
 		info.timeControl = true;
-		info.moveTime = movetime;
+		// the GUI measures go -> bestmove, so stop early enough for the reply to arrive in time
+		info.moveTime = movetime - info.moveOverhead;
+		if (info.moveTime < movetime / 2) info.moveTime = movetime / 2;
 	} else {
 		// time controls
 		int inc = (*tomove == white) ? winc : binc;
@@ -223,26 +240,23 @@ void parseGo(char *command, bitboard* board, bool *tomove) {
 	info.startTime = getTime_ms();
 
 	#ifdef DEBUG
-	printDebug( "time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, depth);
-	printBitBoard2d(g_debugOutput, *board);
+	printf( "time control %d\tstart time: %ld\tmoveTime: %d \tdepth: %d\n", info.timeControl, info.startTime, info.moveTime, depth);
+	// printBitBoard2d(g_debugOutput, *board);
 	#endif
 	
 	move m = CPU(depth, *board, *tomove);
-	printf("bestmove ");
-	printmove(stdout, m);
-	printf("\n");
+	char movestr[MOVESTR_LEN];
+	moveToString(movestr, m);
+	printf("bestmove %s\n", movestr);
 	fflush(stdout);
-	
+
 	#ifdef DEBUG
-	fprintf(g_debugOutput, "bestmove: ");
-	printmove(g_debugOutput, m);
-	fprintf(g_debugOutput, "\n");
 	fflush(g_debugOutput);
 	#endif
 }
 
 // main UCI loop
-void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
+void UCIloop(bitboard* board, sidetomove *tomove, int* fmv, int* movenum) {
 	// reset STDIN & STDOUT buffers
 	setbuf(stdin, NULL);
 	setbuf(stdout, NULL);
@@ -294,10 +308,11 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 			printf("id name Hedgine\n");
 			printf("id author B.M.\n");
 			printf("option name Hash type spin default %d min %d max %d\n", TT_DEF_SIZE_MB, TT_MIN_SIZE_MB, TT_MAX_SIZE_MB);
+			printf("option name Move Overhead type spin default %d min %d max %d\n", MOVE_OVERHEAD_DEF, MOVE_OVERHEAD_MIN, MOVE_OVERHEAD_MAX);
 			printf("uciok\n");
 		}
 		else if (compareToken(input, "setoption", 9)) {
-			char* temp = jumpToNextToken(input);
+			const char* temp = jumpToNextToken(input);
 			if (compareToken(temp, "name", 4)){
 				if (compareToken(temp = jumpToNextToken(temp), "Hash", 4)){
 					if (compareToken(temp = jumpToNextToken(temp), "value", 5)){
@@ -312,6 +327,16 @@ void UCIloop(bitboard* board, bool *tomove, int* fmv, int* movenum) {
 							}
 							
 							printf("info set hash table size to %dMB\n", mb);
+						}
+					}
+				}
+				else if (compareToken(temp, "Move", 4) && compareToken(temp = jumpToNextToken(temp), "Overhead", 8)){
+					if (compareToken(temp = jumpToNextToken(temp), "value", 5)){
+						if ((temp = jumpToNextToken(temp))){
+							int ms = atoi(temp);
+							if(ms < MOVE_OVERHEAD_MIN) ms = MOVE_OVERHEAD_MIN;
+							if(ms > MOVE_OVERHEAD_MAX) ms = MOVE_OVERHEAD_MAX;
+							info.moveOverhead = ms;
 						}
 					}
 				}
@@ -342,6 +367,7 @@ void initializeAll(){
 	//set game info
 	info.quit = false;
 	info.moveTime = -1;
+	info.moveOverhead = MOVE_OVERHEAD_DEF;
 	info.timeControl = false;
 	info.newgame = false;
 
@@ -355,7 +381,16 @@ void initializeAll(){
 // get time in milliseconds
 long int getTime_ms(){
 	#ifdef WIN64
-		return GetTickCount();
+		// GetTickCount only ticks every ~15.6ms, too coarse for short move times
+		static LARGE_INTEGER freq, base;
+		LARGE_INTEGER now;
+		if (freq.QuadPart == 0){
+			QueryPerformanceFrequency(&freq);
+			QueryPerformanceCounter(&base);
+		}
+		QueryPerformanceCounter(&now);
+		// relative to the first call, so it fits in a 32 bit long
+		return (long int)((now.QuadPart - base.QuadPart) * 1000 / freq.QuadPart);
 	#else
 		struct timeval time_value;
 		gettimeofday(&time_value, NULL);
@@ -442,7 +477,20 @@ void readInput() {
 }
 	
 
+static void baseMoveTime(int increment);
+
 void setMoveTime(int increment){
+	baseMoveTime(increment);
+
+	/* The increment is only credited after the move, so the budget must fit
+	 * in what is on the clock now, minus the latency reserve. Never spend
+	 * more than half of it on one move. */
+	int available = info.timeRemaining - info.moveOverhead;
+	if (info.moveTime > available / 2) info.moveTime = available / 2;
+	if (info.moveTime < 1) info.moveTime = 1;
+}
+
+static void baseMoveTime(int increment){
 	#define SECOND 1000
 	info.moveTime = increment - 100;
 	if (info.moveTime < 0) info.moveTime = 0;
