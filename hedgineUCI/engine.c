@@ -5,7 +5,7 @@
  * */
 const move    NULLMOVE = {{-1, -1}, {-1, -1}, 0};
 const bitMove NULLBITMOVE = {0, 0, 0, -1, 0};
-#define MAX_EXTENSIONS 10
+#define MAX_EXTENSIONS 5
 #define PosINF   2147480000  //less than 2^31 to avoid possible overflow
 #define NegINF  -2147480000
 #define MATE_NOW WHITEWON //2147400000 much less than infinities
@@ -277,7 +277,7 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 
 	// null move pruning
 	if (allowNullMove && 
-		!s_followPV &&
+		beta == alpha + 1 && 
 		depth > 0 &&
 		!inCheck && 
 		remainingDepth >= 3 &&
@@ -360,21 +360,26 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 
 		bool isQuiet = !(currentMove.flags & (CAPTURE_FLAG | EN_PASSANT_FLAG | PROMOTION_FLAG));
 
-		/*
-		 * Reduce?
-		 * */
-		bool needsFullSearch = true;
-		if (!inCheck && extension == 0 && remainingDepth >= 3 && actualLegalMoves >= 3 && isQuiet) {
-			// if (!bitInCheck(&s_searchBoard, !tomove)){ }
-			eval = -search(!tomove, remainingDepth-1-1, depth+1, -alpha-1, -alpha, numExtensions, true);
-			needsFullSearch = eval > alpha;
-		}
-
-		/*
-		 * Search
-		 * */
-		if (needsFullSearch){
+		if (1 == actualLegalMoves){
 			eval = -search(!tomove, remainingDepth-1+extension, depth+1, -beta, -alpha, numExtensions + extension, true);
+		}
+		else {
+			bool needsFullSearch = true;
+			if (!inCheck && extension == 0 && remainingDepth >= 3 && actualLegalMoves >= 3 && isQuiet) {
+				int reduction = 1;
+				if (remainingDepth >= 6 && actualLegalMoves >= 8) {
+					reduction = 2;
+				}
+				eval = -search(!tomove, remainingDepth-1-reduction, depth+1, -alpha-1, -alpha, numExtensions, true);
+				needsFullSearch = eval > alpha;
+			}
+			else {
+				eval = -search(!tomove, remainingDepth-1+extension, depth+1, -alpha-1, -alpha, numExtensions + extension, true);
+				needsFullSearch = alpha < eval && eval < beta;
+			}
+			if (needsFullSearch && !g_stopSearch){
+				eval = -search(!tomove, remainingDepth-1+extension, depth+1, -beta, -alpha, numExtensions + extension, true);
+			}
 		}
 
 		undoMove(&s_searchBoard, &currentMove, &u);
