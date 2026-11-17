@@ -366,7 +366,11 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 		else {
 			bool needsFullSearch = true;
 			if (!inCheck && extension == 0 && remainingDepth >= 3 && actualLegalMoves >= 3 && isQuiet) {
-				eval = -search(!tomove, remainingDepth-1-1, depth+1, -alpha-1, -alpha, numExtensions, true);
+				int reduction = 1;
+				if (remainingDepth >= 6 && actualLegalMoves >= 8) {
+					reduction = 2;
+				}
+				eval = -search(!tomove, remainingDepth-1-reduction, depth+1, -alpha-1, -alpha, numExtensions, true);
 				needsFullSearch = eval > alpha;
 			}
 			else {
