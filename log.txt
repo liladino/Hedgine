@@ -1,3 +1,19 @@
+Date:	Nov 17 2026:
+	Added stronger late move reduction, currently only a simple if that reduces
+	2 moves instead of one, if we are not deep in the search, and even later 
+	moves. Did this on the PVsearch and dev branches, comparing the results to 
+	the "last" used in the previous tests:
+
+	Results in game pairs (from the first engine's perspective):
+	                                pairs   LL   LD  WL/DD   WD   WW   score    Elo   95% CI
+	reduce more vs dev               1000   74  197    375  249  105   52.8%    +20   +8 .. +31
+	PV and reduce more vs dev        1000   67  168    379  239  147   55.8%    +40  +28 .. +52
+	PV reduce more vs reduce more    4000  365  841   1450  914  430   51.3%     +9   +3 .. +15
+
+	The results shows, that using the PV search along with other heuristics is 
+	beneficial, even when previous attempts showed no gain. The main differences 
+	now are the limited search extensions and the addition of null move pruning. 
+
 Date:	Nov 13 2026:
 	Played around with PV search again. With it it's easier to tell whether we 
 	are on a PV node, so it seemed reasonable to use it with null move pruning.
@@ -76,10 +92,11 @@ Date:	Nov 09 2026:
 	
 	New TT strategy: depth aware replacement. 
 
-	                                           LL, LD, WL/DD, WD, WW
-	fixed always replace TT vs original:        2, 19,    39, 23, 17
-	fixed always replace TT + PV vs fixed TT:  10, 24,    40, 21, 5
-	fixed always replace TT vs new TT strategy: 8, 32,    29, 22, 9
+	Results in game pairs (from the first engine's perspective):
+	                                            pairs  LL  LD  WL/DD  WD  WW   score    Elo   95% CI
+	fixed always replace TT vs original           100   2  19     39  23  17   58.5%    +60  +24 .. +97
+	fixed always replace TT + PV vs fixed TT      100  10  24     40  21   5   46.8%    -23  -58 .. +12
+	fixed always replace TT vs new TT strategy    100   8  32     29  22   9   48.0%    -14  -52 .. +24
 
 	Tinkered with the LMR slightly: removing evasions proved to be beneficial, 
 	but removing checking moves are not, the cost of bitInCheck may be too high.
@@ -98,9 +115,9 @@ Date:	Nov 08 2026:
 	1+2+3:  317W 180D 253L.
 
 	The third and second versions results in detail per 2 games:
-	       LL  DL/LD  WL/LW/DD  WD/DW  WW    Elo
-	1+2    36     59       126     86  68   +42.4
-	1+2+3  47     60       123     72  73   +29.7
+	       pairs  LL  LD  WL/DD  WD  WW   score    Elo   95% CI
+	1+2      375  36  59    126  86  68   56.1%    +42  +21 .. +64
+	1+2+3    375  47  60    123  72  73   54.3%    +30   +7 .. +52
 	
 	In conclusion, I won't keep the king mobility penalty.
 
