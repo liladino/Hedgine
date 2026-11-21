@@ -273,7 +273,7 @@ static inline u64 soutFillSingle(int square) {
     return 0x0080808080808080ULL >> (63 - square);
 }
 
-static inline int sideEval(
+static inline int handCraftedEval(
 	const bitboard* const board, 
 	sidetomove tomove, 
 	const int pieces,
@@ -532,11 +532,16 @@ int staticEval(bitboard *board, sidetomove tomove)
 	u64 whitePieces = enemypieces(board, white);
 	u64 blackPieces = enemypieces(board, black);
 	
+	/** 
+	 * TODO: switch with a flag, whether to use the hand crafted of NNUE eval.
+	 */
 	int score = 
-		sideEval(board, white, pieces, pawncount, whitePieces, blackPieces) - 
-		sideEval(board, black, pieces, pawncount, blackPieces, whitePieces);
+		handCraftedEval(board, white, pieces, pawncount, whitePieces, blackPieces) - 
+		handCraftedEval(board, black, pieces, pawncount, blackPieces, whitePieces);
 
-	/* KR vs KB, 
+	/**
+	 * TODO: only include these if handcrafted evaluation is present
+	 * KR vs KB, 
 	 * KR vs KN,
 	 * KRB vs KR, 
 	 * KRN vs KR, 
