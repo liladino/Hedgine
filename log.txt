@@ -1,3 +1,11 @@
+Date:	Nov 21 2026:
+	The GUI now stores each played game's pgn with the engine scores for each 
+	move that isn't a "book move", or a mate score. By book move, I mean the N 
+	random moves the GUI plays after the initial position: to produce more 
+	possible starting positions. A python script turns the games into positions,
+	filtering those, where the side to move is in check, the best move is a not 
+	a quiet one, |score| > max-score, or the same zobrist hash appeared before.
+
 Date:	Nov 17 2026:
 	Added stronger late move reduction, currently only a simple if that reduces
 	2 moves instead of one, if we are not deep in the search, and even later 

@@ -84,3 +84,6 @@ dkms.conf
 ##VSCodium garbage
 *.json
 .vscode/
+
+# NNUE training data and nets
+nnue/data/
