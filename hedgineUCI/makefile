@@ -6,6 +6,10 @@ ifdef DEBUG
 CFLAGS += -g -DDEBUG
 endif
 
+ifdef NNUE
+CFLAGS += -USE_NNUE
+endif
+
 ifdef BENCH
 CFLAGS += -O3 -DBENCH
 endif

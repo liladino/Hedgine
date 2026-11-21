@@ -532,15 +532,12 @@ int staticEval(bitboard *board, sidetomove tomove)
 	u64 whitePieces = enemypieces(board, white);
 	u64 blackPieces = enemypieces(board, black);
 	
-	/** 
-	 * TODO: switch with a flag, whether to use the hand crafted of NNUE eval.
-	 */
+	#ifndef USE_NNUE
 	int score = 
 		handCraftedEval(board, white, pieces, pawncount, whitePieces, blackPieces) - 
 		handCraftedEval(board, black, pieces, pawncount, blackPieces, whitePieces);
 
 	/**
-	 * TODO: only include these if handcrafted evaluation is present
 	 * KR vs KB, 
 	 * KR vs KN,
 	 * KRB vs KR, 
@@ -584,6 +581,12 @@ int staticEval(bitboard *board, sidetomove tomove)
 			}
 		}
 	}
+	#else
+		/**
+		 * TODO: NNUE here
+		 */
+		int score = 0;
+	#endif
 
 	/* scale near the 50 move rule:
 	 *  (x -  60) / y = 1
