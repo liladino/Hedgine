@@ -87,3 +87,5 @@ dkms.conf
 
 # NNUE training data and nets
 nnue/data/
+nnue/__pycache__/
+nnue/games/
