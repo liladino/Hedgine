@@ -376,6 +376,14 @@ void initializeAll(){
 	if (allocTransTable(TT_DEF_SIZE_MB) == NULL){
 		exit(1);
 	}
+
+	#ifdef USE_NNUE
+	// relative to the working directory the GUI starts the engine in
+	if (!NNUEload(NNUE_DEFAULT_FILE)){
+		freeTransTable();
+		exit(1);
+	}
+	#endif
 }
 
 // get time in milliseconds

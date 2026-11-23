@@ -89,3 +89,4 @@ dkms.conf
 nnue/data/
 nnue/__pycache__/
 nnue/games/
+*.bin

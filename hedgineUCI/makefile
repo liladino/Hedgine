@@ -7,7 +7,7 @@ CFLAGS += -g -DDEBUG
 endif
 
 ifdef NNUE
-CFLAGS += -USE_NNUE
+CFLAGS += -DUSE_NNUE
 endif
 
 ifdef BENCH

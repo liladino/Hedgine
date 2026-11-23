@@ -529,10 +529,11 @@ int staticEval(bitboard *board, sidetomove tomove)
 			return 0;  
 	} 
 
+	#ifndef USE_NNUE
 	u64 whitePieces = enemypieces(board, white);
 	u64 blackPieces = enemypieces(board, black);
 	
-	#ifndef USE_NNUE
+
 	int score = 
 		handCraftedEval(board, white, pieces, pawncount, whitePieces, blackPieces) - 
 		handCraftedEval(board, black, pieces, pawncount, blackPieces, whitePieces);
@@ -582,10 +583,10 @@ int staticEval(bitboard *board, sidetomove tomove)
 		}
 	}
 	#else
-		/**
-		 * TODO: NNUE here
-		 */
-		int score = 0;
+		int score = NNUEeval(board, tomove);
+		if (tomove == black) {
+			score = -score;
+		}
 	#endif
 
 	/* scale near the 50 move rule:

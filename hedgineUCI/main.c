@@ -51,6 +51,20 @@ int main(int argc, char* argv[]){
 		else if (strncmp(argv[1], "testMakeMove", 15) == 0){
 			if (!makeMoveTest()) { goto endEverything; }
 		}
+		else if (strncmp(argv[1], "testNNUE", 9) == 0){
+			#ifdef USE_NNUE
+			//./hedgine testNNUE net128.bin net128.golden.txt
+			if (argc < 4) {
+				printf("usage: hedgine testNNUE <net.bin> <net.golden.txt>\n");
+			}
+			else if (NNUEload(argv[2])) {
+				NNUEgoldenTest(argv[3]);
+			}
+			#else
+			printf("NNUE not available.\n");
+			#endif
+			goto endEverything;
+		}
 		else if (strncmp(argv[1], "testFifty", 10) == 0){
 			if (!testFiftyMoveCounter()) { goto endEverything; }
 		}
