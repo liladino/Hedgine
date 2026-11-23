@@ -1,6 +1,7 @@
 #include "headers/nnue.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /**
@@ -30,34 +31,44 @@ static Network net;
 
 /**
  * Loading
+ *
+ * The embedded net and a net file both go through parseNet(); a file is read
+ * into memory first. The bytes are copied out with memcpy, because an embedded
+ * byte array has no float alignment.
  */
-static bool readExact(FILE *f, void *dst, size_t size, size_t count, const char *what){
-	if (fread(dst, size, count, f) != count){
-		printf("info string NNUE: file ended while reading %s\n", what);
+typedef struct Reader {
+	const unsigned char *data;
+	size_t size;
+	size_t pos;
+} Reader;
+
+static bool take(Reader *r, void *dst, size_t bytes, const char *what){
+	if (r->size - r->pos < bytes){
+		printf("info string NNUE: data ended while reading %s\n", what);
 		return false;
 	}
+	memcpy(dst, r->data + r->pos, bytes);
+	r->pos += bytes;
 	return true;
 }
 
-bool NNUEload(const char *path){
-	FILE *f = fopen(path, "rb");
-	if (f == NULL){
-		printf("info string NNUE: cannot open %s\n", path);
-		return false;
-	}
+static bool parseNet(const unsigned char *data, size_t size, const char *name){
+	/* parsed into a copy first, so a bad file can't leave the current net half overwritten */
+	static Network tmp;
+	Reader r = {data, size, 0};
 
-	/** 
-	 * header: "HNNU", version, hidden size, scale (uint32, little endian like x86) 
+	/**
+	 * header: "HNNU", version, hidden size, scale (uint32, little endian)
 	 */
 	char magic[4];
 	uint32_t version, hidden, scale;
-	bool ok = readExact(f, magic, 1, 4, "header")
-		&& readExact(f, &version, sizeof version, 1, "header")
-		&& readExact(f, &hidden, sizeof hidden, 1, "header")
-		&& readExact(f, &scale, sizeof scale, 1, "header");
+	bool ok = take(&r, magic, sizeof magic, "header")
+		&& take(&r, &version, sizeof version, "header")
+		&& take(&r, &hidden, sizeof hidden, "header")
+		&& take(&r, &scale, sizeof scale, "header");
 
 	if (ok && memcmp(magic, "HNNU", 4) != 0){
-		printf("info string NNUE: %s is not a net file\n", path);
+		printf("info string NNUE: %s is not a net file\n", name);
 		ok = false;
 	}
 	if (ok && version != 1){
@@ -74,23 +85,66 @@ bool NNUEload(const char *path){
 	 * the arrays are stored in the same order and layout as the struct fields
 	 */
 	ok = ok
-		&& readExact(f, net.ftWeight, sizeof(float), NNUE_FEATURES * NNUE_HIDDEN, "feature weights")
-		&& readExact(f, net.ftBias, sizeof(float), NNUE_HIDDEN, "feature biases")
-		&& readExact(f, net.outWeight, sizeof(float), 2 * NNUE_HIDDEN, "output weights")
-		&& readExact(f, &net.outBias, sizeof(float), 1, "output bias");
+		&& take(&r, tmp.ftWeight, sizeof tmp.ftWeight, "feature weights")
+		&& take(&r, tmp.ftBias, sizeof tmp.ftBias, "feature biases")
+		&& take(&r, tmp.outWeight, sizeof tmp.outWeight, "output weights")
+		&& take(&r, &tmp.outBias, sizeof tmp.outBias, "output bias");
 
-	if (ok && fgetc(f) != EOF){
-		printf("info string NNUE: unexpected data at the end of %s\n", path);
+	if (ok && r.pos != r.size){
+		printf("info string NNUE: unexpected data at the end of %s\n", name);
 		ok = false;
 	}
-	fclose(f);
 
 	if (ok){
-		net.scale = (int)scale;
-		printf("info string NNUE: loaded %s\n", path);
+		tmp.scale = (int)scale;
+		net = tmp;
+		printf("info string NNUE: loaded %s\n", name);
 	}
 	return ok;
 }
+
+bool NNUEload(const char *path){
+	FILE *f = fopen(path, "rb");
+	if (f == NULL){
+		printf("info string NNUE: cannot open %s\n", path);
+		return false;
+	}
+
+	unsigned char *data = NULL;
+	long size = -1;
+	if (fseek(f, 0, SEEK_END) == 0 && (size = ftell(f)) >= 0 && fseek(f, 0, SEEK_SET) == 0){
+		data = malloc(size > 0 ? (size_t)size : 1);
+	}
+
+	bool ok = data != NULL && fread(data, 1, (size_t)size, f) == (size_t)size;
+	if (!ok){
+		printf("info string NNUE: cannot read %s\n", path);
+	}
+	fclose(f);
+
+	ok = ok && parseNet(data, (size_t)size, path);
+	free(data);
+	return ok;
+}
+
+/**
+ * The net the makefile embedded at build time (NNUE_EMBED_FILE).
+ * #embed path is relative to this source file
+ */
+#ifdef NNUE_EMBED_FILE
+static const unsigned char embeddedNet[] = {
+	#embed NNUE_EMBED_FILE
+};
+
+bool NNUEloadEmbedded(void){
+	return parseNet(embeddedNet, sizeof embeddedNet, "embedded net " NNUE_EMBED_FILE);
+}
+#else
+bool NNUEloadEmbedded(void){
+	printf("info string NNUE: no net was embedded at build time\n");
+	return false;
+}
+#endif
 
 /** 
  * Features

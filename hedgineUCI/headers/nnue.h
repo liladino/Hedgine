@@ -8,12 +8,17 @@
 
 #define NNUE_FEATURES 768   /* 12 pieces * 64 squares */
 #define NNUE_HIDDEN 128     /* must match the trained net, checked when loading */
-#define NNUE_DEFAULT_FILE "net128.bin"
 
 /**
- * Loads a net written by nnue/train.py. Returns false (and prints why) on failure. 
+ * Loads a net written by nnue/train.py. Returns false on failure, and keeps the
+ * previously loaded net in that case.
  */
 bool NNUEload(const char *path);
+
+/**
+ * Loads the net that was embedded in the executable at build time.
+ */
+bool NNUEloadEmbedded(void);
 
 /**
  * Centipawns from the side to move's point of view. 

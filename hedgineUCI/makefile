@@ -6,8 +6,10 @@ ifdef DEBUG
 CFLAGS += -g -DDEBUG
 endif
 
+# another net: make mingwall NNUE=1 NNUE_NET=../nnue/data/other.bin
 ifdef NNUE
-CFLAGS += -DUSE_NNUE
+NNUE_NET ?= ../nnue/data/net128.bin
+CFLAGS += -DUSE_NNUE -DNNUE_EMBED_FILE='"$(NNUE_NET)"'
 endif
 
 ifdef BENCH

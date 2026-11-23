@@ -86,7 +86,9 @@ dkms.conf
 .vscode/
 
 # NNUE training data and nets
-nnue/data/
 nnue/__pycache__/
 nnue/games/
+nnue/data/*
 *.bin
+!nnue/data/net128.bin
+!nnue/data/net128.golden.txt

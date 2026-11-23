@@ -378,8 +378,7 @@ void initializeAll(){
 	}
 
 	#ifdef USE_NNUE
-	// relative to the working directory the GUI starts the engine in
-	if (!NNUEload(NNUE_DEFAULT_FILE)){
+	if (!NNUEloadEmbedded()){
 		freeTransTable();
 		exit(1);
 	}
