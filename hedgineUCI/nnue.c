@@ -180,19 +180,22 @@ static void refreshAccumulator(Accumulator *acc, const bitboard *board){
 	memcpy(acc->v[white], net.ftBias, sizeof net.ftBias);
 	memcpy(acc->v[black], net.ftBias, sizeof net.ftBias);
 
-	for (int i = 0; i < NNUE_HIDDEN; i++){
-		for (int p = 0; p < 12; p++){
-			u64 curr = board->piece[p];
-			while (curr) {
-				int sq = __builtin_ctzll(curr);
-				curr &= curr - 1;
+	for (int p = 0; p < 12; p++){
+		u64 curr = board->piece[p];
+		while (curr) {
+			int sq = __builtin_ctzll(curr);
+			curr &= curr - 1;
 
-				acc->v[white][i] += net.ftWeight[featureWhite(p, sq)][i];
-				acc->v[black][i] += net.ftWeight[featureBlack(p, sq)][i];
+			const float *w = net.ftWeight[featureWhite(p, sq)];
+			const float *b = net.ftWeight[featureBlack(p, sq)];
+			for (int i = 0; i < NNUE_HIDDEN; i++){
+				acc->v[white][i] += w[i];
+				acc->v[black][i] += b[i];
 			}
 		}
 	}
 }
+
 
 /** 
  * Forward pass

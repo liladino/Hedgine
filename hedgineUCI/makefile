@@ -8,7 +8,7 @@ endif
 
 # another net: make mingwall NNUE=1 NNUE_NET=../nnue/data/other.bin
 ifdef NNUE
-NNUE_NET ?= ../nnue/data/net128.bin
+NNUE_NET ?= ../nnue/data/lc_full.bin
 CFLAGS += -DUSE_NNUE -DNNUE_EMBED_FILE='"$(NNUE_NET)"'
 endif
 

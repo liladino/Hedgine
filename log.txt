@@ -1,3 +1,53 @@
+Date:	Nov 23 2026:
+	Added C inference. NNUE can be turned on and off with a compiler flag. With
+	some loop reorganization, the accumulator refresh gained some speed, going
+	from 118 seconds to 31 seconds in the speed test at depth 8. Evaluations
+	differ in some places.
+
+	Speed test at depth 8 (83 positions):
+	                                  time (ms)      nodes   knps
+	h25pv (handcrafted eval)               9556   35446131   3709
+	nnue, original loop order            117636   36590440    311
+	nnue, weight row loop innermost       30656   36590440   1193
+	The three nnue runs search identically, only the times differ.
+
+	Final depth 8 scores, nnue vs h25pv (81 positions with cp scores):
+	correlation                       0.96, nnue ~ 1.35 * h25pv + 13
+	mean difference (nnue - h25pv)    +15 cp (median +9)
+	mean |difference|                  36 cp (median 24)
+	within 25 / 50 / 100 cp           41 / 64 / 76 of 81
+	same best move                    48 of 83
+
+	Largest differences, in cp (white to move), stockfish at depth 24:
+
+	                   h25pv          nnue           stockfish
+	                 score  move    score  move    score  move
+	Middlegame 65      +10  g5e3     +127  g5e3      +80  g5e3
+	Middlegame 45       -7  e2d3      +79  e2f3      -10  e2e3
+	Middlegame 3        -6  d4d5      +67  d1d3      +80  d1d3
+	Middlegame 62       +4  b3d5      +71  e1e3      +40  b3c2 or b1d1
+	Position 3         +27  b4c4      +98  b4f4        0  b4f4 or b4c4
+	Middlegame 48      +60  d4e2      +24  c4b3      +30  c4b3
+
+	Model:
+	expected score = sigmoid(cp / K) = 1 / (1 + e^(-cp / K))
+	  => -inf cp = 0 
+	      0cp = 0.5 
+	      inf cp = 1
+	K = saturation: the bigger K, the bigger advantage means a clear win
+
+	At first, the training used K=400. This seemed overly optimistic about 
+	positions. To get a better K value:
+	 - input: (White's pov)
+	 	score = the search score 
+		result = 2 W / 1 D / 0 L
+	 - Error for a given K: 
+	 	E(K) = mean over all positions of (sigmoid(score / K) − result / 2)^2.
+	 - Search for K with the smallest error value:
+		s = score; r = result / 2
+		def mse(K): return np.mean((1 / (1 + np.exp(-s / K)) - r) ** 2)
+		best = min(range(100, 801, 10), key=mse)
+
 Date:	Nov 21 2026:
 	The GUI now stores each played game's pgn with the engine scores for each 
 	move that isn't a "book move", or a mate score. By book move, I mean the N 

@@ -177,6 +177,9 @@ def main():
     ap.add_argument("--scale", type=int, default=400, help="cp = net output * scale")
     ap.add_argument("--clip", type=float, default=1.98, help="weight clipping, keeps later quantization simple")
     ap.add_argument("--val", type=float, default=0.02, help="fraction held out for validation")
+    ap.add_argument("--max-positions", type=int, default=0,
+                    help="train on at most this many positions (0 = all). The validation set stays "
+                         "the same, so runs with different limits are comparable (learning curve)")
     ap.add_argument("--seed", type=int, default=1)
     args = ap.parse_args()
 
@@ -186,6 +189,8 @@ def main():
     data = np.memmap(args.data, dtype=RECORD, mode="r")
     n_val = max(1, int(len(data) * args.val))
     train, val = data[:-n_val], data[-n_val:]  # the converter already shuffled the file
+    if args.max_positions > 0:
+        train = train[:args.max_positions]  # a random subset, since the file is shuffled
     batches_per_epoch = math.ceil(len(train) / args.batch)
     print(f"{len(train)} training / {len(val)} validation positions, {batches_per_epoch} batches per epoch")
 
