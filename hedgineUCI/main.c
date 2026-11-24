@@ -57,22 +57,45 @@ int main(int argc, char* argv[]){
 			if (argc < 4) {
 				printf("usage: hedgine testNNUE <net.bin> <net.golden.txt>\n");
 			}
-			else if (NNUEload(argv[2])) {
-				NNUEgoldenTest(argv[3]);
+			else if (!NNUEload(argv[2]) || !NNUEgoldenTest(argv[3])){
+				goto endEverything;
 			}
 			#else
 			printf("NNUE not available.\n");
 			#endif
-			goto endEverything;
+		}
+		else if (strncmp(argv[1], "testNNUEInc", 12) == 0){
+			#ifdef NNUE_INCREMENTAL
+			//./hedgine testNNUEInc [net.bin]   (the embedded net if no file is given)
+			if (argc >= 3 ? NNUEload(argv[2]) : NNUEloadEmbedded()) {
+				if (!NNUEincrementalTest()){
+					goto endEverything;
+				}
+			}
+			#else
+			printf("Incremental NNUE not compiled in (make NNUE=1 NNUE_INC=1).\n");
+			#endif
 		}
 		else if (strncmp(argv[1], "testFifty", 10) == 0){
 			if (!testFiftyMoveCounter()) { goto endEverything; }
 		}
 		else if (strncmp(argv[1], "testAll", 8) == 0){
-			if (!(makeMoveTest() && testMovePicker() && testPseudoLegal() && makePerfTestsAssert() && assertEval() && testFiftyMoveCounter())) {
+			if (!(makeMoveTest() && 
+				testMovePicker() && 
+				testPseudoLegal() && 
+				makePerfTestsAssert() && 
+				#ifndef NNUE_INCREMENTAL
+				assertEval() && 
+				#endif
+				testFiftyMoveCounter()
+				#ifdef NNUE_INCREMENTAL
+				&& NNUEloadEmbedded()
+				&& NNUEincrementalTest()
+				#endif
+			)) {
 				printf("fail, quitting\n");
-				goto endEverything; 
 			}
+			goto endEverything; 
 		}
 	}
 	if (argc >= 3 && strncmp(argv[2], "quit", 4) == 0){

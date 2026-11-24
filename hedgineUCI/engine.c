@@ -182,8 +182,10 @@ static int quiescenceSearch(sidetomove tomove, int alpha, int beta, int ply, int
 		}
 
 		++actualLegalMoves;
+		NNUE_PUSH(&currentMove, &u);
 
 		int eval = -quiescenceSearch(!tomove, -beta, -alpha, ply+1, qdepth+1);
+		NNUE_POP();
 		undoMove(&s_searchBoard, &currentMove, &u);
 		if (g_stopSearch) { 
 			rmLastRepetition();
@@ -290,6 +292,8 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 		int origFmv  = s_searchBoard.fmv;
 		s_searchBoard.fmv = 0;
 		hashNullMove(&s_searchBoard);
+		/* no NNUE_PUSH: a null move moves no pieces, so the accumulators stay
+		 * the same. */
 
 		eval = -search(!tomove, remainingDepth -1 -3, depth+1, -beta, -beta+1, numExtensions, false);
 		s_searchBoard.hashValue = origHash;
@@ -342,6 +346,7 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 		}
 
 		++actualLegalMoves;
+		NNUE_PUSH(&currentMove, &u);
 
 		//do we follow PV?
 		if (s_followPV && !sameMove(&currentMove, &hint)){
@@ -382,6 +387,7 @@ int search(sidetomove tomove, int remainingDepth, int depth, int alpha, int beta
 			}
 		}
 
+		NNUE_POP();
 		undoMove(&s_searchBoard, &currentMove, &u);
 
 		if (g_stopSearch) {
@@ -535,7 +541,9 @@ move iterativeDeepening(bitboard board, sidetomove tomove){
 		s_maxdepth = i;
 		s_searchBoard = board;
 		s_followPV = true;
+		NNUE_BEGIN_SEARCH(&s_searchBoard);
 		eval = search(tomove, i, 0, NegINF, PosINF, 0, true);
+		NNUE_END_SEARCH();
 		if (!sameMove(&NULLBITMOVE, &s_PVcommit[0])) nextm = convertBitMoveToMove(s_PVcommit[0]);
 		
 		// usleep(500);
@@ -547,7 +555,7 @@ move iterativeDeepening(bitboard board, sidetomove tomove){
 				printf("info depth %d score cp %d\n", i-1, lastEval);
 			}
 			#ifdef DEBUG
-			printf("cutoffs:\n%llu \tin the first move\n%llu \toverall\n\n", s_cutoffsFirst, s_cutoffs);
+			printf("cutoffs:\t\t%llu \tin the first move\t\t%llu \toverall\n", s_cutoffsFirst, s_cutoffs);
 			#endif
 			break;
 		}
@@ -575,7 +583,7 @@ move iterativeDeepening(bitboard board, sidetomove tomove){
 		printf("%s\n", line);
 
 		#ifdef DEBUG
-		printf("cutoffs:\n%llu \tin the first move\n%llu \toverall\n\n", s_cutoffsFirst, s_cutoffs);
+		printf("cutoffs:\t\t%llu \tin the first move\t\t%llu \toverall\n", s_cutoffsFirst, s_cutoffs);
 		#endif
 
 		if (mate) break;

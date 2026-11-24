@@ -9,11 +9,7 @@ endif
 # another net: make mingwall NNUE=1 NNUE_NET=../nnue/data/other.bin
 ifdef NNUE
 NNUE_NET ?= ../nnue/data/k140_5m.bin
-CFLAGS += -DUSE_NNUE -DNNUE_EMBED_FILE='"$(NNUE_NET)"'
-# incremental accumulator: make mingwall NNUE=1 NNUE_INC=1
-ifdef NNUE_INC
-CFLAGS += -DNNUE_INCREMENTAL
-endif
+CFLAGS += -DUSE_NNUE -DNNUE_EMBED_FILE='"$(NNUE_NET)"' -march=native
 endif
 
 ifdef BENCH
