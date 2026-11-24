@@ -90,5 +90,5 @@ nnue/__pycache__/
 nnue/games/
 nnue/data/*
 *.bin
-!nnue/data/net128.bin
-!nnue/data/net128.golden.txt
+!nnue/data/k140_5m.bin
+!nnue/data/k140_5m.golden.txt
