@@ -1,3 +1,26 @@
+Date:	Nov 24 2026:
+	Implemented incremental nnue updating. The nnue produced approximately 10x 
+	worse speeds than the standard evaluation (searchtest_nnue_inc vs
+	searchtest_h25pv) After some loop reordering in the	refresher 
+	(pieces -> piece -> node vector) for cache locality, this got to 30% 
+	(searchtest_nnue4). A bigger increment came in the form of incremental
+	accumulator updating (searchtest_nnue_inc). A slight gain was produced with 
+	the -march=native compile flag (searchtest_nnue_inc2), but a substential 
+	increase was produced by -ffast-math, which brough the search to be on pair 
+	with the original (searchtest_nnue_inc3).
+
+	Some quick tests comparing the baseline with the nnue with time medians 
+	from 10 runs:
+
+	build                       time for depth 8   knps
+	hand-crafted                        ~8642 ms  ~4410
+	hand-crafted, -march=native         ~8010 ms  ~4420
+	NNUE incremental, fast-math         ~7020 ms  ~4810
+
+	Results in game pairs (from the first engine's perspective):
+	                pairs   LL   LD  WL/DD   WD   WW   score    Elo   95% CI
+	nnue vs dev       396    2   15    102   88  189   78.2%   +222  +199 .. +247
+
 Date:	Nov 23 2026:
 	Added C inference. NNUE can be turned on and off with a compiler flag. With
 	some loop reorganization, the accumulator refresh gained some speed, going
