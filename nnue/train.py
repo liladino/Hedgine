@@ -43,13 +43,34 @@ net.bin format, little endian:
   float32  out_weight[2H]      first H: side to move's accumulator, then the other
   float32  out_bias
 
+Other input feature sets (--arch, see featuresets.py)
+------------------------------------------------------
+The default, --arch psq, is the net described above. --arch blind trains the
+"blind" net on the same data: occupancy, piece counts and one-hot king
+rank/file, every group optional (--features occ,counts,kings). Everything else
+(perspective, output layer, training target) is the same; the accumulator
+becomes  bias + sum of value * row  over (input, value) pairs.
+
+blind .bin format, little endian:
+  char[4]  "HNNB"
+  uint32   version (1)
+  uint32   H
+  uint32   SCALE
+  uint32   feature groups (bit 0 occ, bit 1 counts, bit 2 kings)
+  uint32   N, number of inputs
+  float32  ft_weight[N][H]
+  float32  ft_bias[H]
+  float32  out_weight[2H]
+  float32  out_bias
+
 Usage:
   python train.py nnue/data/train.bin -o nnue/data/net --epochs 20
+  python train.py nnue/data/train.bin -o nnue/data/blind --arch blind
+  python train.py nnue/data/train.bin -o nnue/data/material --arch blind --features counts
 """
 
 import argparse
 import math
-import struct
 import time
 
 import chess
@@ -57,9 +78,8 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from convert import PAD, RECORD, features
-
-NUM_FEATURES = 768
+from convert import RECORD, features
+from featuresets import make_feature_set
 
 GOLDEN_FENS = [
     "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
@@ -71,34 +91,24 @@ GOLDEN_FENS = [
 ]
 
 
-def make_black_lut():
-    """Maps a white-view feature index to the black-view index. PAD stays PAD."""
-    lut = np.full(NUM_FEATURES + 1, PAD, dtype=np.int64)
-    for f in range(NUM_FEATURES):
-        piece, sq = divmod(f, 64)
-        lut[f] = ((piece + 6) % 12) * 64 + (sq ^ 56)
-    return torch.from_numpy(lut)
-
-
-BLACK_LUT = make_black_lut()
-
-
 class Net(nn.Module):
-    def __init__(self, hidden):
+    def __init__(self, hidden, num_inputs):
         super().__init__()
         self.hidden = hidden
-        # one weight row per feature, plus a zero row for PAD that is left out of the sum
-        self.ft = nn.EmbeddingBag(NUM_FEATURES + 1, hidden, mode="sum", padding_idx=PAD)
+        self.num_inputs = num_inputs
+        # one weight row per input, plus a zero row for padding (index num_inputs) left out of the sum
+        self.ft = nn.EmbeddingBag(num_inputs + 1, hidden, mode="sum", padding_idx=num_inputs)
         self.ft_bias = nn.Parameter(torch.zeros(hidden))
         self.out = nn.Linear(2 * hidden, 1)
         with torch.no_grad():
             # small init: ~30 pieces summed should land around the 0..1 clamp range
             self.ft.weight.uniform_(-0.15, 0.15)
-            self.ft.weight[PAD].zero_()
+            self.ft.weight[num_inputs].zero_()
 
-    def forward(self, white_idx, black_idx, stm):
-        acc_white = self.ft(white_idx) + self.ft_bias
-        acc_black = self.ft(black_idx) + self.ft_bias
+    def forward(self, white_idx, white_val, black_idx, black_val, stm):
+        """*_val: per-input values, None means all 1 (the psq net)."""
+        acc_white = self.ft(white_idx, per_sample_weights=white_val) + self.ft_bias
+        acc_black = self.ft(black_idx, per_sample_weights=black_val) + self.ft_bias
         black_to_move = stm.unsqueeze(1)
         us = torch.where(black_to_move, acc_black, acc_white)
         them = torch.where(black_to_move, acc_white, acc_black)
@@ -106,61 +116,58 @@ class Net(nn.Module):
         return self.out(h).squeeze(1)
 
 
-def to_tensors(rec):
+def to_tensors(rec, fs):
     """numpy records -> model inputs and side-to-move POV labels."""
-    white_idx = torch.from_numpy(rec["feat"].astype(np.int64))
-    black_idx = BLACK_LUT[white_idx]
+    views = fs.views(torch.from_numpy(rec["feat"].astype(np.int64)))
     stm = torch.from_numpy(rec["stm"].astype(np.bool_))
     score = torch.from_numpy(rec["score"].astype(np.float32))
     result = torch.from_numpy(rec["result"].astype(np.float32)) / 2
     score = torch.where(stm, -score, score)
     result = torch.where(stm, 1 - result, result)
-    return white_idx, black_idx, stm, score, result
+    return views, stm, score, result
 
 
-def batch_loss(model, rec, scale, lam):
-    white_idx, black_idx, stm, score, result = to_tensors(rec)
-    out = model(white_idx, black_idx, stm)
+def batch_loss(model, fs, rec, scale, lam):
+    views, stm, score, result = to_tensors(rec, fs)
+    out = model(*views, stm)
     target = lam * torch.sigmoid(score / scale) + (1 - lam) * result
     return ((torch.sigmoid(out) - target) ** 2).mean()
 
 
-def evaluate(model, data, batch, scale, lam):
+def evaluate(model, fs, data, batch, scale, lam):
     model.eval()
     total, n = 0.0, 0
     with torch.no_grad():
         for i in range(0, len(data), batch):
             rec = data[i:i + batch]
-            total += batch_loss(model, rec, scale, lam).item() * len(rec)
+            total += batch_loss(model, fs, rec, scale, lam).item() * len(rec)
             n += len(rec)
     model.train()
     return total / max(n, 1)
 
 
-def eval_fen(model, fen, scale):
+def eval_fen(model, fs, fen, scale):
     """Centipawns from the side to move's POV, computed like the engine will."""
     board = chess.Board(fen)
-    white_idx = torch.from_numpy(features(board).astype(np.int64)).unsqueeze(0)
-    black_idx = BLACK_LUT[white_idx]
+    views = fs.views(torch.from_numpy(features(board).astype(np.int64)).unsqueeze(0))
     stm = torch.tensor([board.turn == chess.BLACK])
     with torch.no_grad():
-        return model(white_idx, black_idx, stm).item() * scale
+        return model(*views, stm).item() * scale
 
 
-def export(model, path, scale):
-    h = model.hidden
+def export(model, fs, path, scale):
     with open(path, "wb") as f:
-        f.write(struct.pack("<4sIII", b"HNNU", 1, h, scale))
-        for t in (model.ft.weight[:NUM_FEATURES], model.ft_bias, model.out.weight, model.out.bias):
+        f.write(fs.header(model.hidden, scale))
+        for t in (model.ft.weight[:fs.num_inputs], model.ft_bias, model.out.weight, model.out.bias):
             f.write(t.detach().numpy().astype("<f4").tobytes())
 
 
-def write_golden(model, path, scale):
+def write_golden(model, fs, path, scale):
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         for fen in GOLDEN_FENS:
-            f.write(f"{fen} | {eval_fen(model, fen, scale):.4f}\n")
+            f.write(f"{fen} | {eval_fen(model, fs, fen, scale):.4f}\n")
     # perspective sanity check: colour-mirrored positions must get the same score
-    worst = max(abs(eval_fen(model, fen, scale) - eval_fen(model, chess.Board(fen).mirror().fen(), scale))
+    worst = max(abs(eval_fen(model, fs, fen, scale) - eval_fen(model, fs, chess.Board(fen).mirror().fen(), scale))
                 for fen in GOLDEN_FENS)
     print(f"mirror check: max difference {worst:.6f} cp (should be ~0)")
 
@@ -169,6 +176,9 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("data", help=".bin file written by convert.py")
     ap.add_argument("-o", "--out", required=True, help="output path without extension, e.g. nnue/data/net")
+    ap.add_argument("--arch", choices=("psq", "blind"), default="psq", help="input feature set, see featuresets.py")
+    ap.add_argument("--features", default=None,
+                    help="blind only: comma separated groups from occ,counts,kings (default: all)")
     ap.add_argument("--hidden", type=int, default=128)
     ap.add_argument("--epochs", type=int, default=20)
     ap.add_argument("--batch", type=int, default=16384)
@@ -183,6 +193,12 @@ def main():
     ap.add_argument("--seed", type=int, default=1)
     args = ap.parse_args()
 
+    try:
+        fs = make_feature_set(args.arch, args.features)
+    except ValueError as e:
+        ap.error(str(e))
+    print(f"inputs: {fs.describe()}")
+
     torch.manual_seed(args.seed)
     rng = np.random.default_rng(args.seed)
 
@@ -194,19 +210,19 @@ def main():
     batches_per_epoch = math.ceil(len(train) / args.batch)
     print(f"{len(train)} training / {len(val)} validation positions, {batches_per_epoch} batches per epoch")
 
-    model = Net(args.hidden)
+    model = Net(args.hidden, fs.num_inputs)
     opt = torch.optim.Adam(model.parameters(), lr=args.lr)
     # learning rate decays smoothly to 1% of the start over the run
     sched = torch.optim.lr_scheduler.CosineAnnealingLR(
         opt, T_max=args.epochs * batches_per_epoch, eta_min=args.lr * 0.01)
 
-    print(f"epoch {0:3}  val loss {evaluate(model, val, args.batch, args.scale, args.lam):.6f}  (untrained)")
+    print(f"epoch {0:3}  val loss {evaluate(model, fs, val, args.batch, args.scale, args.lam):.6f}  (untrained)")
     t0 = time.time()
     for epoch in range(1, args.epochs + 1):
         total = 0.0
         for b in rng.permutation(batches_per_epoch):
             rec = train[b * args.batch:(b + 1) * args.batch]
-            loss = batch_loss(model, rec, args.scale, args.lam)
+            loss = batch_loss(model, fs, rec, args.scale, args.lam)
             opt.zero_grad()
             loss.backward()
             opt.step()
@@ -215,13 +231,13 @@ def main():
                 for p in model.parameters():
                     p.clamp_(-args.clip, args.clip)
             total += loss.item() * len(rec)
-        val_loss = evaluate(model, val, args.batch, args.scale, args.lam)
+        val_loss = evaluate(model, fs, val, args.batch, args.scale, args.lam)
         print(f"epoch {epoch:3}  train loss {total / len(train):.6f}  val loss {val_loss:.6f}  "
-              f"startpos {eval_fen(model, GOLDEN_FENS[0], args.scale):+.0f} cp  {time.time() - t0:.0f}s")
+              f"startpos {eval_fen(model, fs, GOLDEN_FENS[0], args.scale):+.0f} cp  {time.time() - t0:.0f}s")
         torch.save({"model": model.state_dict(), "args": vars(args), "epoch": epoch}, args.out + ".pt")
 
-    export(model, args.out + ".bin", args.scale)
-    write_golden(model, args.out + ".golden.txt", args.scale)
+    export(model, fs, args.out + ".bin", args.scale)
+    write_golden(model, fs, args.out + ".golden.txt", args.scale)
     print(f"wrote {args.out}.pt, {args.out}.bin, {args.out}.golden.txt")
 
 
