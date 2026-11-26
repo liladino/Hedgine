@@ -184,7 +184,7 @@ def main():
     ap.add_argument("--batch", type=int, default=16384)
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--lam", type=float, default=0.75, help="weight of the search score vs the game result")
-    ap.add_argument("--scale", type=int, default=400, help="cp = net output * scale")
+    ap.add_argument("--scale", type=int, default=140, help="cp = net output * scale")
     ap.add_argument("--clip", type=float, default=1.98, help="weight clipping, keeps later quantization simple")
     ap.add_argument("--val", type=float, default=0.02, help="fraction held out for validation")
     ap.add_argument("--max-positions", type=int, default=0,

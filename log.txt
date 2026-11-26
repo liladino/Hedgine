@@ -1,3 +1,38 @@
+Date:	Nov 26 2026:
+	Added blind networks. They conatin less information than the full 
+	piece-square net:
+	- occupancy: 128 bit
+	- counts:    10 bit
+	- kings:     32 bit
+	The occupancy is the all bitboards ord together for the two sides, making 
+	the network "feature blind". The counts are the number of pieces 
+	(normalized, so each type sums to 1 at the start). The kings have one-hot
+	vectors for their file and rank information, compressing the information of 
+	the one-hot 64 long vectors of the psq network 
+
+	Every blind input is a sum over the pieces, so each piece-square feature of
+	the 768 net stands for a few (blind input, value) pairs. The loader folds 
+	the blind weights into the ordinary ftWeight[768][H] table:
+	
+	   ftWeight[feature] = sum of value * blindWeight[input]  over its pairs
+	
+	and from there on the engine can't tell the two kinds of nets apart: the
+	accumulator, the incremental updates and the forward pass are all unchanged.
+
+	TODO: round robin tournament of 8 players:
+	1. hce	
+	2. full_psq
+	3. blind_all
+	4. blind_occ
+	5. blind_counts
+	6. blind_counts_kings
+	7. blind_occ_counts
+	8. blind_occ_kings
+	compare two methods:
+	- Ordo over the whole round robin, for the overall picture (ranking)
+	- Pentanomial head-to-heads on the few close pairs that answer specific 
+	questions
+
 Date:	Nov 24 2026:
 	Implemented incremental nnue updating. The nnue produced approximately 10x 
 	worse speeds than the standard evaluation (searchtest_nnue_inc vs
