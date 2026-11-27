@@ -1,9 +1,15 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -MMD
+CFLAGS = -Wall -Wextra -pedantic -MMD -MP
 INC_DIR = headers
 
 ifdef DEBUG
 CFLAGS += -g -DDEBUG
+endif
+
+# another net: make mingwall NNUE=1 NNUE_NET=../nnue/data/other.bin
+ifdef NNUE
+NNUE_NET ?= ../nnue/data/full_psq.bin
+CFLAGS += -DUSE_NNUE -DNNUE_EMBED_FILE='"$(NNUE_NET)"'
 endif
 
 ifdef BENCH
@@ -42,21 +48,19 @@ opt3: CFLAGS += -O3
 opt3: $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $^
 
-opt: CFLAGS += -O3
+opt: CFLAGS += -O3 -march=native
 opt: $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $^
+
+nnue.o: CFLAGS += -ffast-math
 	
-profiling: CFLAGS += -pg
+profiling: CFLAGS += -pg -O3 -march=native
 profiling: $(OBJS)
-	$(CC) $(CFLAGS) -o $(TARGET) $^
+	$(CC) $(CFLAGS) -o $(TARGET) $^ -Wl,--disable-dynamicbase,--disable-high-entropy-va
 
 clean:
 	rm -f *.o *.d *.out $(FLAGS_STAMP)
 
-# Rebuild everything only when the flags change (e.g. switching between a debug
-# and a bench build). The stamp is rewritten only if its content differs, so
-# with the same flags make stays incremental. Target specific flags (debug: ...)
-# reach this rule too, because they are inherited by the prerequisites.
 FLAGS_STAMP = .cflags
 $(FLAGS_STAMP): FORCE
 	@echo '$(CFLAGS)' | cmp -s - $@ || echo '$(CFLAGS)' > $@

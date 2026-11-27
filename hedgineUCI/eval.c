@@ -123,6 +123,28 @@ const int endgamecenter[8][8] = {
 	{   0,   1,   2,   3,   3,   2,   1,   0}, //8
 };
 
+const int h1a8SquareBonus[8][8] = {
+	{  -5,  -5,   0,   2,   4,   8,  14,  14}, //1
+	{  -5,  -3,   0,   1,   2,   4,   8,  14}, //2
+	{   0,   0,   0,   0,   1,   2,   4,   8}, //3
+	{   2,   1,   0,   0,   0,   1,   2,   4}, //4
+	{   4,   2,   1,   0,   0,   0,   1,   2}, //5
+	{   8,   4,   2,   1,   0,   0,   0,   0}, //6
+	{  14,   8,   4,   2,   1,   0,  -3,  -5}, //7
+	{  14,  14,   8,   4,   2,   0,  -5,  -5}, //8
+};
+
+const int a1h8SquareBonus[8][8] = {
+    {  14,  14,   8,   4,   2,   0,  -5,  -5}, //1
+    {  14,   8,   4,   2,   1,   0,  -3,  -5}, //2
+    {   8,   4,   2,   1,   0,   0,   0,   0}, //3
+    {   4,   2,   1,   0,   0,   0,   1,   2}, //4
+    {   2,   1,   0,   0,   0,   1,   2,   4}, //5
+    {   0,   0,   0,   0,   1,   2,   4,   8}, //6
+    {  -5,  -3,   0,   1,   2,   4,   8,  14}, //7
+    {  -5,  -5,   0,   2,   4,   8,  14,  14}, //8
+};
+
 
 #define KNIGHT_ATTACK_WEIGHT 2
 #define BISHOP_ATTACK_WEIGHT 2 
@@ -273,7 +295,7 @@ static inline u64 soutFillSingle(int square) {
     return 0x0080808080808080ULL >> (63 - square);
 }
 
-static inline int sideEval(
+static inline int handCraftedEval(
 	const bitboard* const board, 
 	sidetomove tomove, 
 	const int pieces,
@@ -506,37 +528,17 @@ static inline int sideEval(
 // 	return ((sq >> 3) ^ (sq & 7)) & 1;
 // }
 
-int staticEval(bitboard *board, sidetomove tomove)
-{
-	const int pieces = i_min(MAX_PIECE_COUNT, countPieces(board));
-	const int pawncount = counter((board->piece[wpawn] | board->piece[bpawn]));
-
-	if (0 == pawncount){
-		// if only knight or bishop left, draw
-		if (1 == pieces && ((board->piece[wknight] | board->piece[bknight])
-			|| (board->piece[wbishop] | board->piece[bbishop])	
-		)){
-			return 0;
-		}
-
-		// both KNN-K and KN-KN are likely draws
-		if (2 == pieces && counter((board->piece[wknight] | board->piece[bknight])) == 2){
-			return 0;
-		}
-
-		// Bare kings
-		if (pieces == 0)
-			return 0;  
-	} 
-
+static int hceScore(const bitboard* board, int pieces, int pawncount){
 	u64 whitePieces = enemypieces(board, white);
 	u64 blackPieces = enemypieces(board, black);
 	
-	int score = 
-		sideEval(board, white, pieces, pawncount, whitePieces, blackPieces) - 
-		sideEval(board, black, pieces, pawncount, blackPieces, whitePieces);
 
-	/* KR vs KB, 
+	int score = 
+		handCraftedEval(board, white, pieces, pawncount, whitePieces, blackPieces) - 
+		handCraftedEval(board, black, pieces, pawncount, blackPieces, whitePieces);
+
+	/**
+	 * KR vs KB, 
 	 * KR vs KN,
 	 * KRB vs KR, 
 	 * KRN vs KR, 
@@ -553,6 +555,32 @@ int staticEval(bitboard *board, sidetomove tomove)
 			else if (board->piece[brook]){
 				if (board->piece[wbishop] | board->piece[wknight]){
 					score /= 8;	
+				}
+			}
+			else if (board->piece[wbishop] && board->piece[wknight]){
+				int bishopSq = __builtin_ctzll(board->piece[wbishop]);
+				bool darkBishop = ((bishopSq >> 3) + (bishopSq & 7)) % 2 == 0;
+				
+				int enemyKingSq = __builtin_ctzll(board->piece[bking]);
+
+				if (darkBishop){
+					score += a1h8SquareBonus[enemyKingSq / 8][enemyKingSq % 8];
+				}
+				else {
+					score += h1a8SquareBonus[enemyKingSq / 8][enemyKingSq % 8];
+				}
+			}
+			else if (board->piece[bbishop] && board->piece[bknight]){
+				int bishopSq = __builtin_ctzll(board->piece[bbishop]);
+				bool darkBishop = ((bishopSq >> 3) + (bishopSq & 7)) % 2 == 0;
+				
+				int enemyKingSq = __builtin_ctzll(board->piece[wking]);
+
+				if (darkBishop){
+					score -= a1h8SquareBonus[enemyKingSq / 8][enemyKingSq % 8];
+				}
+				else {
+					score -= h1a8SquareBonus[enemyKingSq / 8][enemyKingSq % 8];
 				}
 			}
 		}
@@ -579,6 +607,56 @@ int staticEval(bitboard *board, sidetomove tomove)
 			}
 		}
 	}
+
+	return score;
+}
+
+int staticEval(bitboard *board, sidetomove tomove)
+{
+	const int pieces = i_min(MAX_PIECE_COUNT, countPieces(board));
+	const int pawncount = counter((board->piece[wpawn] | board->piece[bpawn]));
+
+	if (0 == pawncount){
+		// if only knight or bishop left, draw
+		if (1 == pieces && ((board->piece[wknight] | board->piece[bknight])
+			|| (board->piece[wbishop] | board->piece[bbishop])	
+		)){
+			return 0;
+		}
+
+		// both KNN-K and KN-KN are likely draws
+		if (2 == pieces && counter((board->piece[wknight] | board->piece[bknight])) == 2){
+			return 0;
+		}
+
+		// Bare kings
+		if (pieces == 0){
+			return 0;  
+		}
+	} 
+
+	#ifndef USE_NNUE
+		int score = hceScore(board, pieces, pawncount);
+	#else
+		int score = 0;
+		int material[2] = {
+			counter(board->piece[wqueen]) * 9 + counter(board->piece[wrook]) * 5 + counter(board->piece[wknight]) * 3 + counter(board->piece[wbishop]) * 3 + counter(board->piece[wpawn]),
+			counter(board->piece[bqueen]) * 9 + counter(board->piece[brook]) * 5 + counter(board->piece[bknight]) * 3 + counter(board->piece[bbishop]) * 3 + counter(board->piece[bpawn])
+		};
+		sidetomove weaker = material[0] > material[1] ? black : white;
+		if (0 == board->piece[wpawn + weaker * 6] &&
+			3 >= material[weaker] &&
+			5 <= material[1-weaker] - material[weaker]	
+		){
+			score = hceScore(board, pieces, pawncount);
+		}
+		else {
+			score = NNUEeval(board, tomove);
+			if (tomove == black) {
+				score = -score;
+			}
+		}
+	#endif
 
 	/* scale near the 50 move rule:
 	 *  (x -  60) / y = 1

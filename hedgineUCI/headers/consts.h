@@ -34,6 +34,10 @@
 	#define TT_MAX_SIZE_MB 4
 #endif
 
+#ifdef USE_NNUE
+	#define NNUE_INCREMENTAL 1
+#endif
+
 #define HASHING_ENABLED 1
 #define REPETITION_TABLE_SIZE 1024
 
