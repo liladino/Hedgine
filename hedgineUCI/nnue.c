@@ -39,6 +39,98 @@ typedef struct Accumulator {
 static Network net;
 
 /**
+ * Blind net (file magic "HNNB", written by train.py --arch blind)
+ *
+ * Inputs (nnue/featuresets.py) in this order, each group optional:
+ *   occ     128  friendly (64) and opponent pieces' squares (64), value 1
+ *   counts   10  number of Q R B N P per side (us, them) / divisor(piece)
+ *   kings    32  king's rank (8), file (8), per side (us, them)
+ * "our/us" is the color with the accumulator (white for the white view).
+ *
+ * Every blind input is a sum over the pieces, so each piece-square feature of
+ * the 768 net stands for a few (blind input, value) pairs. The loader folds the
+ * blind weights into the ordinary ftWeight[768][H] table:
+ *
+ *   ftWeight[feature] = sum of value * blindWeight[input]  over its pairs
+ *
+ * and from there on the engine can't tell the two kinds of nets apart: the
+ * accumulator, the incremental updates and the forward pass are all unchanged.
+ */
+#define BLIND_OCC    1u
+#define BLIND_COUNTS 2u
+#define BLIND_KINGS  4u
+#define BLIND_MAX_INPUTS (128 + 10 + 32)
+#define BLIND_MAX_PAIRS 3   /* occupancy + (count, or king rank + king file) */
+
+/** where each enabled group starts among the blind inputs, -1 if it's off */
+typedef struct BlindLayout {
+	int occ, counts, kings;
+	int numInputs;
+} BlindLayout;
+
+static BlindLayout blindLayout(uint32_t groups){
+	BlindLayout layout = {-1, -1, -1, 0};
+	if (groups & BLIND_OCC)    { layout.occ = layout.numInputs;    layout.numInputs += 128; }
+	if (groups & BLIND_COUNTS) { layout.counts = layout.numInputs; layout.numInputs += 10; }
+	if (groups & BLIND_KINGS)  { layout.kings = layout.numInputs;  layout.numInputs += 32; }
+	return layout;
+}
+
+/**
+ * The blind inputs that "piece on square" turns on, as seen by white:
+ * writes them to idx / val and returns how many there are (at most BLIND_MAX_PAIRS).
+ * Matches BlindFeatures.__init__ in nnue/featuresets.py.
+ */
+static int blindPairs(const BlindLayout *layout, int piece, int square, int idx[], float val[]){
+	const int colour = piece / 6;   /* 0: ours (white), 1: theirs */
+	const int type = piece % 6;     /* 0: king ... 5: pawn */
+	int n = 0;
+
+	if (layout->occ >= 0){
+		idx[n] = layout->occ + colour * 64 + square;
+		val[n++] = 1.0f;
+	}
+
+	if (type == 0){
+		if (layout->kings >= 0){
+			idx[n] = layout->kings + colour * 16 + square / 8;
+			val[n++] = 1.0f;
+			idx[n] = layout->kings + colour * 16 + 8 + square % 8;
+			val[n++] = 1.0f;
+		}	
+	}
+	else {
+		if (layout->counts >= 0 && type > 0){
+			static float divisors[] = {1.0f, 1.0f, 0.5f, 0.5f, 0.5f, 0.125f};
+
+			idx[n] = layout->counts + colour * 5 + type-1;
+			val[n++] = divisors[type];
+		}
+	}
+
+	return n;
+}
+
+/**
+ * Fills dst->ftWeight from the blind weights w[numInputs][H].
+ */
+static void foldBlind(Network *dst, const float w[][NNUE_HIDDEN], const BlindLayout *layout){
+	for (int f = 0; f < NNUE_FEATURES; f++){
+		int idx[BLIND_MAX_PAIRS];
+		float val[BLIND_MAX_PAIRS];
+		const int n = blindPairs(layout, f / 64, f % 64, idx, val);
+
+		float *row = dst->ftWeight[f];
+		memset(row, 0, sizeof(float) * NNUE_HIDDEN);
+		for (int k = 0; k < n; k++){
+			for (int i = 0; i < NNUE_HIDDEN; i++){
+				row[i] += val[k] * w[idx[k]][i];
+			}
+		}
+	}
+}
+
+/**
  * Loading
  *
  * The embedded net and a net file both go through parseNet(); a file is read
@@ -64,10 +156,12 @@ static bool take(Reader *r, void *dst, size_t bytes, const char *what){
 static bool parseNet(const unsigned char *data, size_t size, const char *name){
 	/* parsed into a copy first, so a bad file can't leave the current net half overwritten */
 	static Network tmp;
+	static float blindWeight[BLIND_MAX_INPUTS][NNUE_HIDDEN];
 	Reader r = {data, size, 0};
 
 	/**
-	 * header: "HNNU", version, hidden size, scale (uint32, little endian)
+	 * header: "HNNU" or "HNNB", version, hidden size, scale (uint32, little endian)
+	 * "HNNB" (blind net) adds: feature groups, number of inputs
 	 */
 	char magic[4];
 	uint32_t version, hidden, scale;
@@ -76,9 +170,15 @@ static bool parseNet(const unsigned char *data, size_t size, const char *name){
 		&& take(&r, &hidden, sizeof hidden, "header")
 		&& take(&r, &scale, sizeof scale, "header");
 
-	if (ok && memcmp(magic, "HNNU", 4) != 0){
-		printf("info string NNUE: %s is not a net file\n", name);
-		ok = false;
+	bool blind = false;
+	if (ok){
+		if (memcmp(magic, "HNNB", 4) == 0){
+			blind = true;
+		}
+		else if (memcmp(magic, "HNNU", 4) != 0){
+			printf("info string NNUE: %s is not a net file\n", name);
+			ok = false;
+		}
 	}
 	if (ok && version != 1){
 		printf("info string NNUE: unsupported version %u\n", (unsigned)version);
@@ -90,11 +190,35 @@ static bool parseNet(const unsigned char *data, size_t size, const char *name){
 		ok = false;
 	}
 
+	uint32_t groups = 0, inputs = 0;
+	BlindLayout layout = {-1, -1, -1, 0};
+	if (ok && blind){
+		ok = take(&r, &groups, sizeof groups, "header")
+			&& take(&r, &inputs, sizeof inputs, "header");
+		layout = blindLayout(groups);
+		if (ok && (groups == 0 || (groups & ~(BLIND_OCC | BLIND_COUNTS | BLIND_KINGS)) != 0
+				|| inputs != (uint32_t)layout.numInputs)){
+			printf("info string NNUE: bad blind net header (groups %u, %u inputs)\n",
+				(unsigned)groups, (unsigned)inputs);
+			ok = false;
+		}
+	}
+
 	/**
-	 * the arrays are stored in the same order and layout as the struct fields
+	 * the arrays are stored in the same order and layout as the struct fields,
+	 * except that a blind net stores its own feature weights, folded here
 	 */
+	if (ok && blind){
+		ok = take(&r, blindWeight, inputs * sizeof blindWeight[0], "blind feature weights");
+		if (ok){
+			foldBlind(&tmp, blindWeight, &layout);
+		}
+	}
+	else if (ok){
+		ok = take(&r, tmp.ftWeight, sizeof tmp.ftWeight, "feature weights");
+	}
+
 	ok = ok
-		&& take(&r, tmp.ftWeight, sizeof tmp.ftWeight, "feature weights")
 		&& take(&r, tmp.ftBias, sizeof tmp.ftBias, "feature biases")
 		&& take(&r, tmp.outWeight, sizeof tmp.outWeight, "output weights")
 		&& take(&r, &tmp.outBias, sizeof tmp.outBias, "output bias");
@@ -107,7 +231,16 @@ static bool parseNet(const unsigned char *data, size_t size, const char *name){
 	if (ok){
 		tmp.scale = (int)scale;
 		net = tmp;
-		printf("info string NNUE: loaded %s\n", name);
+		if (blind){
+			printf("info string NNUE: loaded %s (blind:%s%s%s, %u inputs)\n", name,
+				layout.occ >= 0 ? " occ" : "",
+				layout.counts >= 0 ? " counts" : "",
+				layout.kings >= 0 ? " kings" : "",
+				(unsigned)inputs);
+		}
+		else {
+			printf("info string NNUE: loaded %s\n", name);
+		}
 	}
 	return ok;
 }
@@ -415,8 +548,7 @@ void NNUEpop(void){
 
 /**
  * A float accumulator built by + and - drifts a little from the one summed in a
- * different order, so the comparison has a tolerance. (An int16 quantized
- * accumulator would be exact.)
+ * different order, so the comparison has a tolerance. 
  */
 static bool sameAccumulator(const Accumulator *a, const Accumulator *b, float *maxDiff){
 	*maxDiff = 0;
