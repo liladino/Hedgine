@@ -3,6 +3,7 @@
 
 #include "structs.h"
 #include "legalmoves.h"
+#include "nnue.h"
 
 #ifdef DEBUG
 	#include "debugmalloc.h"

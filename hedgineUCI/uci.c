@@ -376,6 +376,13 @@ void initializeAll(){
 	if (allocTransTable(TT_DEF_SIZE_MB) == NULL){
 		exit(1);
 	}
+
+	#ifdef USE_NNUE
+	if (!NNUEloadEmbedded()){
+		freeTransTable();
+		exit(1);
+	}
+	#endif
 }
 
 // get time in milliseconds
