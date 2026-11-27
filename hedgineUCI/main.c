@@ -2,7 +2,7 @@
 
 FILE* g_debugOutput;
 
-//test run:  ./hedgine test quit
+//test run:  ./hedgine test
 
 #ifdef DEBUG
 long int runStartTime;
@@ -23,33 +23,37 @@ int main(int argc, char* argv[]){
     }
 	#endif
 
+	/**
+	 * ./hedgine <test> [arguments]
+	 * Every test exits when it's done, passed or not. Any other first argument
+	 * (or none) starts the engine as usual.
+	 */
 	if (argc >= 2){
+		bool isTest = true;
+
 		if (strncmp(argv[1], "test", 5) == 0){
-			if (!makePerfTestsAssert()){
-				goto endEverything;
-			}
+			makePerfTestsAssert();
 		}
-		else if (strncmp(argv[1], "testLasker", 10) == 0){
+		else if (strncmp(argv[1], "testLasker", 11) == 0){
 			testLasker();
 		}
 		else if (strncmp(argv[1], "testEnglish", 12) == 0){
 			testEnglish();
 		}
 		else if (strncmp(argv[1], "testPseudo", 11) == 0){
-			if (!testPseudoLegal()) { goto endEverything; }
+			testPseudoLegal();
 		}
 		else if (strncmp(argv[1], "testMovePicker", 15) == 0){
-			if (!testMovePicker()) { goto endEverything; }
+			testMovePicker();
 		}
 		else if (strncmp(argv[1], "testSearch", 11) == 0){
 			//./hedgine testSearch [depth]
 			int depth = (argc >= 3) ? atoi(argv[2]) : 6;
 			if (depth < 1) depth = 4;
 			testSearchSpeed(depth);
-			goto endEverything;
 		}
-		else if (strncmp(argv[1], "testMakeMove", 15) == 0){
-			if (!makeMoveTest()) { goto endEverything; }
+		else if (strncmp(argv[1], "testMakeMove", 13) == 0){
+			makeMoveTest();
 		}
 		else if (strncmp(argv[1], "testNNUE", 9) == 0){
 			#ifdef USE_NNUE
@@ -57,8 +61,8 @@ int main(int argc, char* argv[]){
 			if (argc < 4) {
 				printf("usage: hedgine testNNUE <net.bin> <net.golden.txt>\n");
 			}
-			else if (!NNUEload(argv[2]) || !NNUEgoldenTest(argv[3])){
-				goto endEverything;
+			else if (NNUEload(argv[2])){
+				NNUEgoldenTest(argv[3]);
 			}
 			#else
 			printf("NNUE not available.\n");
@@ -68,16 +72,14 @@ int main(int argc, char* argv[]){
 			#ifdef NNUE_INCREMENTAL
 			//./hedgine testNNUEInc [net.bin]   (the embedded net if no file is given)
 			if (argc >= 3 ? NNUEload(argv[2]) : NNUEloadEmbedded()) {
-				if (!NNUEincrementalTest()){
-					goto endEverything;
-				}
+				NNUEincrementalTest();
 			}
 			#else
-			printf("Incremental NNUE not compiled in (make NNUE=1 NNUE_INC=1).\n");
+			printf("Incremental NNUE not compiled in (make NNUE=1).\n");
 			#endif
 		}
 		else if (strncmp(argv[1], "testFifty", 10) == 0){
-			if (!testFiftyMoveCounter()) { goto endEverything; }
+			testFiftyMoveCounter();
 		}
 		else if (strncmp(argv[1], "testAll", 8) == 0){
 			if (!(makeMoveTest() && 
@@ -95,12 +97,14 @@ int main(int argc, char* argv[]){
 			)) {
 				printf("fail, quitting\n");
 			}
-			goto endEverything; 
 		}
-	}
-	if (argc >= 3 && strncmp(argv[2], "quit", 4) == 0){
-		goto endEverything;
-		return 0;
+		else {
+			isTest = false;
+		}
+
+		if (isTest){
+			goto endEverything;
+		}
 	}
 	
 	initializeAll();
